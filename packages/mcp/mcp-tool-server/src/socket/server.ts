@@ -1,5 +1,6 @@
 import { WebSocket, WebSocketServer } from 'ws'
 import { genClientId } from '../utils/genClientId'
+import { MessageType } from '.'
 
 export default class SocketServer {
   private wss: WebSocketServer
@@ -20,7 +21,7 @@ export default class SocketServer {
 
         this.clientMap.set(clientId, ws)
         responseMessage = {
-          clientId
+          clientId,
         }
       } else {
         const clientId = parsedMessgae.id
@@ -35,8 +36,8 @@ export default class SocketServer {
       }
 
       ws.send(JSON.stringify(responseMessage))
-    } catch(e) {
-      console.log('error log: ' , e)
+    } catch (e) {
+      console.log('error log: ', e)
     }
   }
 
@@ -48,11 +49,42 @@ export default class SocketServer {
     })
   }
 
-  sendMsg(clientId: string, message: string) {
-     const ws = this.clientMap.get(clientId)
+  sendMsg(clientId: string, message: string): Promise<WebSocket> {
+    return new Promise((resolve, reject) => {
+      const ws = this.clientMap.get(clientId)
 
-     if (ws) {
-      ws.send(message)
-     }
+      if (ws) {
+        ws.send(message)
+        resolve(ws)
+      } else {
+        reject()
+      }
+    })
+  }
+
+  sendAndWaitTaskMsg(clientId: string, message: string) {
+    return new Promise((resolve, reject) => {
+      this.sendMsg(clientId, message)
+        .then((ws: WebSocket) => {
+          ws.on('message', (message) => {
+            try {
+              const parsedMessgae = JSON.parse(String(message))
+              const messageTypes = [
+                MessageType.TaskSuccess,
+                MessageType.TaskFail,
+              ]
+
+              if (messageTypes.includes(parsedMessgae.type)) {
+                resolve(parsedMessgae)
+              }
+            } catch (e) {
+              reject(e)
+            }
+          })
+        })
+        .catch(() => {
+          reject('invail client')
+        })
+    })
   }
 }

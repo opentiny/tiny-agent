@@ -1,10 +1,10 @@
 import express, { Express, Request, Response } from 'express'
 import fs from 'fs/promises'
-import { z, ZodRawShape } from "zod";
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import SocketServer from "../socket";
-import { McpToolParam, McpToolSchema } from '.';
+import { z, ZodRawShape } from 'zod'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
+import SocketServer from '../socket/server'
+import { McpToolParam, McpToolSchema } from '.'
 
 export default class TinyAgentMcpServer {
   private server: McpServer
@@ -21,7 +21,7 @@ export default class TinyAgentMcpServer {
 
     this.server = new McpServer({
       name: 'tiny-agent-mcp-server',
-      version: '1.0.0'
+      version: '1.0.0',
     })
   }
 
@@ -32,7 +32,7 @@ export default class TinyAgentMcpServer {
   ) {
     let scheamStr = JSON.stringify(inputSchema)
 
-    funcParams.forEach(({ type, name }) => {
+    funcParams?.forEach(({ type, name }) => {
       scheamStr = scheamStr.split(`{{${name}}}`).join(actualParams[name])
     })
 
@@ -59,7 +59,7 @@ export default class TinyAgentMcpServer {
         const toolParams: ZodRawShape = {}
 
         if (params?.length) {
-          (params as McpToolParam[]).forEach(({ type, name }) => {
+          ;(params as McpToolParam[]).forEach(({ type, name }) => {
             toolParams[name] = (z as any)[type]()
           })
         }
@@ -72,14 +72,20 @@ export default class TinyAgentMcpServer {
             const tabId = this.sessionConntionMap.get(sessionId)
 
             if (tabId) {
-              this.socketServer.sendMsg(
-                tabId,
-                this.replacePlaceholder(inputSchema, params, _)
-              )
+              try {
+                const res = await this.socketServer.sendAndWaitTaskMsg(
+                  tabId,
+                  this.replacePlaceholder(inputSchema, params, _)
+                )
+
+                console.log('tash execute res：', res)
+              } catch (e) {
+                console.log('send msg error:', e)
+              }
             }
 
             return {
-              content: [{ type: 'text', text: `tools: ${tabId}` }]
+              content: [{ type: 'text', text: `tools: ${tabId}` }],
             }
           }
         )
@@ -96,33 +102,33 @@ export default class TinyAgentMcpServer {
   start(file: string) {
     this.registerMcpTools(file)
 
-    this.app.get("/sse", async (req: Request, res: Response) => {
+    this.app.get('/sse', async (req: Request, res: Response) => {
       const { client } = req.query
-      const transport = new SSEServerTransport('/messages', res);
+      const transport = new SSEServerTransport('/messages', res)
 
-      this.transports[transport.sessionId] = transport;
+      this.transports[transport.sessionId] = transport
       this.sessionConntionMap.set(transport.sessionId, String(client))
 
-      res.on("close", () => {
-        delete this.transports[transport.sessionId];
-      });
+      res.on('close', () => {
+        delete this.transports[transport.sessionId]
+      })
 
-      await this.server.connect(transport);
-    });
+      await this.server.connect(transport)
+    })
 
-    this.app.post("/messages", async (req: Request, res: Response) => {
-      const sessionId = req.query.sessionId as string;
+    this.app.post('/messages', async (req: Request, res: Response) => {
+      const sessionId = req.query.sessionId as string
 
       if (sessionId) {
-        const transport = this.transports[sessionId];
+        const transport = this.transports[sessionId]
         if (transport) {
-          await transport.handlePostMessage(req, res);
+          await transport.handlePostMessage(req, res)
         } else {
-          res.status(400).send('No transport found for sessionId');
+          res.status(400).send('No transport found for sessionId')
         }
       }
-    });
+    })
 
-    this.app.listen(3001, '0.0.0.0');
+    this.app.listen(3001, '0.0.0.0')
   }
 }
