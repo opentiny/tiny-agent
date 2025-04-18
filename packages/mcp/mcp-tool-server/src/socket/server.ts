@@ -1,6 +1,13 @@
 import { WebSocket, WebSocketServer } from 'ws'
 import { genClientId } from '../utils/genClientId'
-import { MessageType } from '.'
+
+enum MessageType {
+  Connection = 'connection',
+  TaskSuccess = 'taskSuccess',
+  TaskFail = 'taskFail',
+  Chat = 'chat',
+  Ping = 'ping',
+}
 
 export default class SocketServer {
   private wss: WebSocketServer
