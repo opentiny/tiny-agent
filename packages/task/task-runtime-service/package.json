@@ -1,3 +1,7 @@
 {
-    "name": "@opentiny/tiny-agent-task-runtime-service"
+  "name": "@opentiny/tiny-agent-task-runtime-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "type": "module"
 }
