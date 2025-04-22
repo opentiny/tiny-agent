@@ -4,7 +4,7 @@ import { z, ZodRawShape } from 'zod'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import SocketServer from '../socket/server'
-import { McpToolParam, McpToolSchema } from '.'
+import { McpToolParam, McpToolTaskSchema } from '.'
 
 export default class TinyAgentMcpServer {
   private server: McpServer
@@ -26,11 +26,11 @@ export default class TinyAgentMcpServer {
   }
 
   private replacePlaceholder(
-    inputSchema: McpToolSchema,
+    task: McpToolTaskSchema,
     funcParams: McpToolParam[],
     actualParams: any
   ) {
-    let scheamStr = JSON.stringify(inputSchema)
+    let scheamStr = JSON.stringify(task)
 
     funcParams?.forEach(({ type, name }) => {
       scheamStr = scheamStr.split(`{{${name}}}`).join(actualParams[name])
@@ -55,7 +55,7 @@ export default class TinyAgentMcpServer {
       const fileJson = JSON.parse(fileContent)
 
       Object.keys(fileJson).forEach((key) => {
-        const { name, description, params, inputSchema } = fileJson[key]
+        const { name, description, params, task } = fileJson[key]
         const toolParams: ZodRawShape = {}
 
         if (params?.length) {
@@ -75,10 +75,10 @@ export default class TinyAgentMcpServer {
               try {
                 const res = await this.socketServer.sendAndWaitTaskMsg(
                   tabId,
-                  this.replacePlaceholder(inputSchema, params, _)
+                  this.replacePlaceholder(task, params, _)
                 )
 
-                console.log('tash execute res：', res)
+                console.log('tash execute res:', res)
               } catch (e) {
                 console.log('send msg error:', e)
               }

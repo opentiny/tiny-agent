@@ -2,7 +2,7 @@
   "jumpToAddUser": {
     "name": "jumpToAddUser",
     "description": "跳到员工详情页面",
-    "inputSchema": {
+    "task": {
       "id": "123",
       "instructions": [
         {
@@ -25,7 +25,7 @@
         "type": "string"
       }
     ],
-    "inputSchema": {
+    "task": {
       "id": "123",
       "instructions": [
         {

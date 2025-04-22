@@ -14,7 +14,7 @@ export type McpToolParam = {
   name: string
 }
 
-export type McpToolSchema = {
+export type McpToolTaskSchema = {
   id: string
   instruction: Array<Instruction>
 }

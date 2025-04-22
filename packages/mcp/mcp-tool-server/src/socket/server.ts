@@ -11,6 +11,7 @@ enum MessageType {
 
 export default class SocketServer {
   private wss: WebSocketServer
+
   private clientMap: Map<string, WebSocket>
 
   constructor(port: number) {
