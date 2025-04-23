@@ -55,11 +55,11 @@ export default class TinyAgentMcpServer {
       const fileJson = JSON.parse(fileContent)
 
       Object.keys(fileJson).forEach((key) => {
-        const { name, description, params, task } = fileJson[key]
+        const { name, description, inputSchema, task } = fileJson[key]
         const toolParams: ZodRawShape = {}
 
-        if (params?.length) {
-          ;(params as McpToolParam[]).forEach(({ type, name }) => {
+        if (inputSchema?.length) {
+          ;(inputSchema as McpToolParam[]).forEach(({ type, name }) => {
             toolParams[name] = (z as any)[type]()
           })
         }
@@ -75,7 +75,7 @@ export default class TinyAgentMcpServer {
               try {
                 const res = await this.socketServer.sendAndWaitTaskMsg(
                   tabId,
-                  this.replacePlaceholder(task, params, _)
+                  this.replacePlaceholder(task, inputSchema, _)
                 )
 
                 console.log('tash execute res:', res)

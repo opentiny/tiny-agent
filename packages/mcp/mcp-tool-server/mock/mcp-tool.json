@@ -15,7 +15,7 @@
   "addUser": {
     "name": "addUser",
     "description": "新增员工；录入员工",
-    "params": [
+    "inputSchema": [
       {
         "name": "name",
         "type": "string"
@@ -44,7 +44,7 @@
           "action": "input",
           "params": {
             "selector": ".tiny-modal.active .tiny-form div:nth-child(1) div:nth-child(1) .tiny-form-item input",
-            "value": "岑子轩"
+            "value": "{{name}}"
           }
         },
         {
@@ -87,7 +87,7 @@
           "action": "input",
           "params": {
             "selector": ".tiny-modal.active .tiny-form div:nth-child(3) div:nth-child(1) .tiny-form-item input",
-            "value": "cenzixuan@test.com"
+            "value": "{{email}}"
           }
         },
         {
