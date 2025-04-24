@@ -36,10 +36,63 @@ export default class TinyAgentMcpServer {
       scheamStr = scheamStr.split(`{{${name}}}`).join(actualParams[name])
     })
 
-    return scheamStr
+    return JSON.parse(scheamStr)
   }
 
-  async registerMcpTools(file: string) {
+  async registerMcpTools(resource) {
+    Object.keys(resource).forEach((key) => {
+      const { name, description, inputSchema, task, type } = resource[key]
+      const toolParams: ZodRawShape = {}
+
+      if (inputSchema?.length) {
+        ;(inputSchema as McpToolParam[]).forEach(({ type, name }) => {
+          toolParams[name] = (z as any)[type]()
+        })
+      }
+
+      this.server.tool(
+        name,
+        description,
+        toolParams,
+        async (actualParams, { sessionId = '' }) => {
+          const clientId = this.sessionConntionMap.get(sessionId)
+
+          if (clientId) {
+            try {
+              let message: any = null
+
+              if (type === 'ui') {
+                message = {
+                  type,
+                  content: this.replacePlaceholder(
+                    task,
+                    inputSchema,
+                    actualParams
+                  ),
+                }
+              } else {
+                message = { type, content: { func: key, args: actualParams } }
+              }
+
+              this.socketServer
+                .sendAndWaitTaskMsg(clientId, JSON.stringify(message))
+                .then((res) => {
+                  console.log('tash execute res:', res)
+                })
+            } catch (e) {
+              console.log('send msg error:', e)
+            }
+          }
+
+          return {
+            content: [{ type: 'text', text: `tools: ${clientId}` }],
+          }
+        }
+      )
+    })
+  }
+
+  async registerUIMcpTools(file: string) {
     try {
       try {
         await fs.access(file)
@@ -54,42 +107,7 @@ export default class TinyAgentMcpServer {
       const fileContent = await fs.readFile(file, 'utf-8')
       const fileJson = JSON.parse(fileContent)
 
-      Object.keys(fileJson).forEach((key) => {
-        const { name, description, inputSchema, task } = fileJson[key]
-        const toolParams: ZodRawShape = {}
-
-        if (inputSchema?.length) {
-          ;(inputSchema as McpToolParam[]).forEach(({ type, name }) => {
-            toolParams[name] = (z as any)[type]()
-          })
-        }
-
-        this.server.tool(
-          name,
-          description,
-          toolParams,
-          async (_, { sessionId = '' }) => {
-            const tabId = this.sessionConntionMap.get(sessionId)
-
-            if (tabId) {
-              try {
-                const res = await this.socketServer.sendAndWaitTaskMsg(
-                  tabId,
-                  this.replacePlaceholder(task, inputSchema, _)
-                )
-
-                console.log('tash execute res:', res)
-              } catch (e) {
-                console.log('send msg error:', e)
-              }
-            }
-
-            return {
-              content: [{ type: 'text', text: `tools: ${tabId}` }],
-            }
-          }
-        )
-      })
+      this.registerMcpTools(fileJson)
     } catch (error) {
       if (error instanceof SyntaxError) {
         console.error('error: 文件内容不是有效的JSON格式')
@@ -99,8 +117,15 @@ export default class TinyAgentMcpServer {
     }
   }
 
+  registerOperationMcpTools() {
+    this.socketServer.onRegisterMessage((toolData) => {
+      this.registerMcpTools(toolData)
+    })
+  }
+
   start(file: string) {
-    this.registerMcpTools(file)
+    this.registerUIMcpTools(file)
+    this.registerOperationMcpTools()
 
     this.app.get('/sse', async (req: Request, res: Response) => {
       const { client } = req.query

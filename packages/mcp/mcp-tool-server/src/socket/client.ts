@@ -121,4 +121,6 @@ export function startClient(taskScheduler, port) {
       client.sendMessage('ping', {})
     }, 3000)
   })
+
+  return client
 }

@@ -7,6 +7,7 @@ enum MessageType {
   TaskFail = 'taskFail',
   Chat = 'chat',
   Ping = 'ping',
+  RegisterTool = 'registerTool',
 }
 
 export default class SocketServer {
@@ -19,27 +20,37 @@ export default class SocketServer {
     this.clientMap = new Map()
   }
 
-  private handleClientMessage(ws: WebSocket, messages: string) {
+  private handleClientMessage(
+    ws: WebSocket,
+    message: string,
+    callback = (data) => {}
+  ) {
     try {
-      const parsedMessgae = JSON.parse(String(messages))
+      const parsedMessgae = JSON.parse(String(message))
       let responseMessage: any = null
 
-      if (parsedMessgae.type === 'connection') {
-        const clientId = genClientId()
+      switch (parsedMessgae.type) {
+        case MessageType.Connection: {
+          const clientId = genClientId()
 
-        this.clientMap.set(clientId, ws)
-        responseMessage = {
-          clientId,
+          this.clientMap.set(clientId, ws)
+          responseMessage = {
+            clientId,
+          }
         }
-      } else {
-        const clientId = parsedMessgae.id
+        case MessageType.RegisterTool: {
+          callback(parsedMessgae.data)
+        }
+        default: {
+          const clientId = parsedMessgae.id
 
-        if (!parsedMessgae.id || !this.clientMap.get(clientId)) {
-          throw new Error(`未知客户端：${JSON.stringify(parsedMessgae)}`)
-        } else {
-          console.log(`${clientId}的消息：`, parsedMessgae)
+          if (!parsedMessgae.id || !this.clientMap.get(clientId)) {
+            throw new Error(`未知客户端：${JSON.stringify(parsedMessgae)}`)
+          } else {
+            console.log(`${clientId}的消息：`, parsedMessgae)
 
-          responseMessage = 'Hello! Message from server...'
+            responseMessage = 'Hello! Message from server...'
+          }
         }
       }
 
@@ -53,6 +64,14 @@ export default class SocketServer {
     this.wss.on('connection', (ws) => {
       ws.on('message', (message) => {
         this.handleClientMessage(ws, String(message))
+      })
+    })
+  }
+
+  onRegisterMessage(callback) {
+    this.wss.on('connection', (ws) => {
+      ws.on('message', (message) => {
+        this.handleClientMessage(ws, String(message), callback)
       })
     })
   }

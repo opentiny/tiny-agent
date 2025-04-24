@@ -2,6 +2,7 @@
   "jumpToAddUser": {
     "name": "jumpToAddUser",
     "description": "跳到员工详情页面",
+    "type": "ui",
     "task": {
       "id": "123",
       "instructions": [
@@ -11,6 +12,21 @@
         }
       ]
     }
+  },
+  "registerUser": {
+    "name": "registerUser",
+    "description": "添加员工api",
+    "type": "operation",
+    "inputSchema": [
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "email",
+        "type": "string"
+      }
+    ]
   },
   "addUser": {
     "name": "addUser",
