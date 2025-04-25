@@ -2,16 +2,17 @@ import { ZodRawShape } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
 export interface ITool {
-    name: string;
-    description: string;
-    inputSchema: ZodRawShape;
+  name: string;
+  description: string;
+  inputSchema: ZodRawShape;
+  handler: (...args: any[]) => Promise<any>;
 }
 export interface IResource {
-    name: string;
-    description: string;
-    element: HTMLElement;
+  name: string;
+  description: string;
+  element: HTMLElement;
 }
-export interface IUIResource extends IResource {}
+export interface IUIResource extends IResource { }
 
 export const MCP_SERVICE = Symbol('MCP_SERVICE');
 
@@ -23,7 +24,7 @@ export class McpService {
       inputSchema: Object.fromEntries(
         Object.entries(tool.inputSchema)
           .map(([key, value]) => [key, zodToJsonSchema(value)]
-        )
+          )
       )
     };
   }
@@ -54,6 +55,7 @@ export class McpService {
     }
     this.uiResources.set(resource.name, resource);
   }
+
   unregisterUIResource(name: string) {
     if (!this.uiResources.has(name)) {
       throw new Error(`UI Resource with name ${name} does not exist`);
@@ -62,14 +64,22 @@ export class McpService {
   }
   getUIResource(name: string): IUIResource | undefined {
     return this.uiResources.get(name);
-  } 
+  }
 
   getAllTools(): ITool[] {
     return Array.from(this.tools.values());
   }
 
-  getAllResources(): IUIResource[] {
+  getAllUIResources(): IUIResource[] {
     return Array.from(this.uiResources.values());
   }
 
+  getContext() {
+    return {
+      tools: Object.fromEntries(this.getAllTools().map(tool => [tool.name, tool.handler])),
+      resources: {
+        ui: Object.fromEntries(this.getAllUIResources().map(resource => [resource.name, resource.element]))
+      },
+    };
+  }
 }
