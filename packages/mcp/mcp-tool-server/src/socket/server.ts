@@ -1,13 +1,13 @@
 import { WebSocket, WebSocketServer } from 'ws'
 import { genClientId } from '../utils/genClientId'
 
-enum MessageType {
+export enum MessageType {
   Connection = 'connection',
   TaskSuccess = 'taskSuccess',
   TaskFail = 'taskFail',
   Chat = 'chat',
   Ping = 'ping',
-  RegisterTool = 'registerTool',
+  McpTool = 'mcpTool',
 }
 
 export default class SocketServer {
@@ -37,9 +37,6 @@ export default class SocketServer {
           responseMessage = {
             clientId,
           }
-        }
-        case MessageType.RegisterTool: {
-          callback(parsedMessgae.data)
         }
         default: {
           const clientId = parsedMessgae.id
@@ -89,7 +86,11 @@ export default class SocketServer {
     })
   }
 
-  sendAndWaitTaskMsg(clientId: string, message: string) {
+  sendAndWaitTaskMsg(
+    clientId: string,
+    message: string,
+    responseMessageTypes?: MessageType[]
+  ) {
     return new Promise((resolve, reject) => {
       this.sendMsg(clientId, message)
         .then((ws: WebSocket) => {
@@ -101,7 +102,11 @@ export default class SocketServer {
                 MessageType.TaskFail,
               ]
 
-              if (messageTypes.includes(parsedMessgae.type)) {
+              if (
+                (responseMessageTypes || messageTypes).includes(
+                  parsedMessgae.type
+                )
+              ) {
                 resolve(parsedMessgae)
               }
             } catch (e) {
