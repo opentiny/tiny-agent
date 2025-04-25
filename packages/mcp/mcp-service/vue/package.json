@@ -1,0 +1,7 @@
+{
+    "name": "@opentiny/tiny-agent-mcp-service-vue",
+    "dependencies": {
+        "@opentiny/tiny-agent-mcp-service": "workspace:*",
+        "vue": "^3.2.47"
+    }
+}
