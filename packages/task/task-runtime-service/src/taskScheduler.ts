@@ -1,4 +1,4 @@
-import type { Task, TaskResult } from './index.d';
+import type { Task, TaskResult } from './types';
 import ActionScheduler from './actionScheduler';
 
 class TaskScheduler {

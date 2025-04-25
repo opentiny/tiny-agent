@@ -1,4 +1,4 @@
-import { Action, ActionResult } from './index.d';
+import { Action, ActionResult } from './types';
 
 // ACTION管理类
 class ActionManager {

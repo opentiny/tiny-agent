@@ -1,4 +1,4 @@
-import type { ActionsResult, Instruction } from './index.d';
+import type { ActionsResult, Instruction } from './types';
 import ActionManager from './actionManager';
 import EventEmitter from './eventEmitter';
 
@@ -92,8 +92,8 @@ class ActionScheduler {
         const { status, result, error } =
           await this.actionManager.executeAction(action, params, this.context);
 
-        // 延迟等待1s，模拟异步操作
         await new Promise((resolve) => setTimeout(resolve, 1000));
+
         if (status === 'success') {
           this.finalResult = result;
           this.resultStatus = 'partial completed';
