@@ -8,11 +8,23 @@ importers:
 
   .: {}
 
+  packages/mcp/mcp-service:
+    dependencies:
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.3
+      zod-to-json-schema:
+        specifier: ^3.24.5
+        version: 3.24.5(zod@3.24.3)
+
   packages/mcp/mcp-tool-server:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.9.0
         version: 1.10.0
+      '@opentiny/tiny-agent-mcp-service':
+        specifier: workspace:*
+        version: link:../mcp-service
       commander:
         specifier: ^13.1.0
         version: 13.1.0
