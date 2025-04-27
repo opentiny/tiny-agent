@@ -1,98 +1,58 @@
 import express, { Express, Request, Response } from 'express'
 import fs from 'fs/promises'
 import { z, ZodRawShape } from 'zod'
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { Server } from '@modelcontextprotocol/sdk/server/index.js'
+import {
+  ListToolsRequestSchema,
+  CallToolRequestSchema,
+  Tool,
+} from '@modelcontextprotocol/sdk/types.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
-import SocketServer from '../socket/server'
-import { McpToolParam, McpToolTaskSchema } from '.'
+import SocketServer, { MessageType } from '../socket/server'
+import { McpTool, McpToolParam, McpToolTaskSchema } from '.'
 
 export default class TinyAgentMcpServer {
-  private server: McpServer
   private socketServer: SocketServer
   private transports: any
   private sessionConntionMap: Map<string, string>
   private app: Express
+  private serverMap: Map<string, Server>
+  private mcpToolFilePath: string
+  private tools: McpTool[]
 
   constructor(socketServer: SocketServer) {
     this.socketServer = socketServer
     this.transports = {}
     this.sessionConntionMap = new Map()
+    this.serverMap = new Map()
+    this.tools = []
     this.app = express()
-
-    this.server = new McpServer({
-      name: 'tiny-agent-mcp-server',
-      version: '1.0.0',
-    })
   }
 
   private replacePlaceholder(
     task: McpToolTaskSchema,
-    funcParams: McpToolParam[],
-    actualParams: any
+    inputSchema: any,
+    actualParams: Record<string, unknown>
   ) {
-    let scheamStr = JSON.stringify(task)
+    let schemaStr = JSON.stringify(task)
+    let taskSchema
 
-    funcParams?.forEach(({ type, name }) => {
-      scheamStr = scheamStr.split(`{{${name}}}`).join(actualParams[name])
+    Object.keys(inputSchema)?.forEach((param) => {
+      schemaStr = schemaStr
+        .split(`{{${param}}}`)
+        .join(actualParams[param].toString())
     })
 
-    return JSON.parse(scheamStr)
+    try {
+      taskSchema = JSON.parse(schemaStr)
+    } catch {
+      taskSchema = task
+    }
+
+    return taskSchema
   }
 
-  async registerMcpTools(resource) {
-    Object.keys(resource).forEach((key) => {
-      const { name, description, inputSchema, task, type } = resource[key]
-      const toolParams: ZodRawShape = {}
-
-      if (inputSchema?.length) {
-        ;(inputSchema as McpToolParam[]).forEach(({ type, name }) => {
-          toolParams[name] = (z as any)[type]()
-        })
-      }
-
-      this.server.tool(
-        name,
-        description,
-        toolParams,
-        async (actualParams, { sessionId = '' }) => {
-          const clientId = this.sessionConntionMap.get(sessionId)
-
-          if (clientId) {
-            try {
-              let message: any = null
-
-              if (type === 'ui') {
-                message = {
-                  type,
-                  content: this.replacePlaceholder(
-                    task,
-                    inputSchema,
-                    actualParams
-                  ),
-                }
-              } else {
-                message = { type, content: { func: key, args: actualParams } }
-              }
-
-              this.socketServer
-                .sendAndWaitTaskMsg(clientId, JSON.stringify(message))
-                .then((res) => {
-                  console.log('tash execute res:', res)
-                })
-            } catch (e) {
-              console.log('send msg error:', e)
-            }
-          }
-
-          return {
-            content: [{ type: 'text', text: `tools: ${clientId}` }],
-          }
-        }
-      )
-    })
-  }
-
-  async registerUIMcpTools(file: string) {
+  async handleStaticMcpTools(file: string) {
     try {
       try {
         await fs.access(file)
@@ -105,9 +65,9 @@ export default class TinyAgentMcpServer {
       }
 
       const fileContent = await fs.readFile(file, 'utf-8')
-      const fileJson = JSON.parse(fileContent)
+      const tools = JSON.parse(fileContent)
 
-      this.registerMcpTools(fileJson)
+      return tools
     } catch (error) {
       if (error instanceof SyntaxError) {
         console.error('error: 文件内容不是有效的JSON格式')
@@ -115,17 +75,118 @@ export default class TinyAgentMcpServer {
         console.error(error)
       }
     }
+
+    return []
   }
 
-  registerOperationMcpTools() {
-    this.socketServer.onRegisterMessage((toolData) => {
-      this.registerMcpTools(toolData)
+  async mergeMcpTools(sessionId: string) {
+    // 从websocket client查找tools
+    const clientId = this.sessionConntionMap.get(sessionId)
+    let tools = []
+
+    if (clientId) {
+      const message = JSON.stringify({
+        type: 'quertTools',
+        message: 'query mcp tool',
+      })
+
+      try {
+        const res: any = await this.socketServer.sendAndWaitTaskMsg(
+          clientId,
+          message,
+          [MessageType.McpTool]
+        )
+
+        if (res?.data?.length) {
+          tools = JSON.parse(res.data)
+        }
+      } catch (e) {
+        tools = []
+        console.error(`send msg error: ${e}`)
+      }
+    }
+
+    // 静态mcp tool
+    const staticTools = await this.handleStaticMcpTools(this.mcpToolFilePath)
+
+    return [...tools, ...staticTools]
+  }
+
+  private setupRequestHandler(server: Server, sessionId: string) {
+    server.setRequestHandler(ListToolsRequestSchema, async () => {
+      this.tools = await this.mergeMcpTools(sessionId)
+
+      return {
+        tools: this.tools.map((tool) => ({
+          ...tool,
+          inputSchema: {
+            type: 'object',
+            properties: tool.inputSchema,
+          },
+        })),
+      }
+    })
+
+    server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params
+      const targetTool = this.tools.find((tool) => name === tool.name)
+      const clientId = this.sessionConntionMap.get(sessionId)
+
+      if (targetTool?.task) {
+        targetTool.task = this.replacePlaceholder(
+          targetTool.task,
+          targetTool.inputSchema,
+          args
+        )
+      }
+
+      const message = {
+        type: MessageType.DoTask,
+        data: targetTool,
+      }
+
+      await this.socketServer.sendAndWaitTaskMsg(
+        clientId,
+        JSON.stringify(message)
+      )
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `tool is ${name}`,
+          },
+        ],
+      }
     })
   }
 
+  private initServer(sessionId) {
+    let server = this.serverMap.get(sessionId)
+
+    if (!server) {
+      server = new Server(
+        {
+          name: 'tiny-agent-mcp-server' + sessionId,
+          version: '1.0.0',
+        },
+        {
+          capabilities: {
+            tools: {},
+          },
+        }
+      )
+    }
+
+    this.setupRequestHandler(server, sessionId)
+
+    return server
+  }
+
   start(file: string) {
-    this.registerUIMcpTools(file)
-    this.registerOperationMcpTools()
+    // this.registerUIMcpTools(file)
+    // this.registerOperationMcpTools()
+    this.mcpToolFilePath = file
 
     this.app.get('/sse', async (req: Request, res: Response) => {
       const { client } = req.query
@@ -138,7 +199,9 @@ export default class TinyAgentMcpServer {
         delete this.transports[transport.sessionId]
       })
 
-      await this.server.connect(transport)
+      const server = this.initServer(transport.sessionId)
+
+      await server.connect(transport)
     })
 
     this.app.post('/messages', async (req: Request, res: Response) => {

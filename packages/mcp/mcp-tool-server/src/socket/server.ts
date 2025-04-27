@@ -3,6 +3,7 @@ import { genClientId } from '../utils/genClientId'
 
 enum MessageType {
   Connection = 'connection',
+  DoTask = 'doTask',
   TaskSuccess = 'taskSuccess',
   TaskFail = 'taskFail',
   Chat = 'chat',
@@ -20,43 +21,34 @@ export default class SocketServer {
     this.clientMap = new Map()
   }
 
-  private handleClientMessage(
-    ws: WebSocket,
-    message: string,
-    callback = (data) => {}
-  ) {
+  private handleClientMessage(ws: WebSocket, message: string) {
     try {
       const parsedMessgae = JSON.parse(String(message))
       let responseMessage: any = null
 
-      switch (parsedMessgae.type) {
-        case MessageType.Connection: {
-          const clientId = genClientId()
+      if (parsedMessgae.type === MessageType.Connection) {
+        const clientId = genClientId()
 
-          this.clientMap.set(clientId, ws)
-          responseMessage = {
-            clientId,
-          }
+        this.clientMap.set(clientId, ws)
+        responseMessage = {
+          type: MessageType.Connection,
+          clientId,
         }
-        case MessageType.RegisterTool: {
-          callback(parsedMessgae.data)
-        }
-        default: {
-          const clientId = parsedMessgae.id
+      } else {
+        const clientId = parsedMessgae.id
 
-          if (!parsedMessgae.id || !this.clientMap.get(clientId)) {
-            throw new Error(`未知客户端：${JSON.stringify(parsedMessgae)}`)
-          } else {
-            console.log(`${clientId}的消息：`, parsedMessgae)
+        if (!parsedMessgae.id || !this.clientMap.get(clientId)) {
+          throw new Error(`invalid client: ${JSON.stringify(parsedMessgae)}`)
+        } else {
+          console.log(`from ${clientId}: `, parsedMessgae)
 
-            responseMessage = 'Hello! Message from server...'
-          }
+          responseMessage = 'Hello! Message from server...'
         }
       }
 
       ws.send(JSON.stringify(responseMessage))
     } catch (e) {
-      console.log('error log: ', e)
+      console.error('error log: ', e)
     }
   }
 
@@ -64,14 +56,6 @@ export default class SocketServer {
     this.wss.on('connection', (ws) => {
       ws.on('message', (message) => {
         this.handleClientMessage(ws, String(message))
-      })
-    })
-  }
-
-  onRegisterMessage(callback) {
-    this.wss.on('connection', (ws) => {
-      ws.on('message', (message) => {
-        this.handleClientMessage(ws, String(message), callback)
       })
     })
   }
@@ -84,7 +68,7 @@ export default class SocketServer {
         ws.send(message)
         resolve(ws)
       } else {
-        reject()
+        reject('invalid websocket')
       }
     })
   }
@@ -110,7 +94,7 @@ export default class SocketServer {
           })
         })
         .catch(() => {
-          reject('invail client')
+          reject('invalid client')
         })
     })
   }
