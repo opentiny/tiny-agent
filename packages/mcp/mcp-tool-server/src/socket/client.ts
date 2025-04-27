@@ -1,3 +1,5 @@
+import { McpService } from '@opentiny/tiny-agent-mcp-service'
+
 interface SocketMessage {
   type: string
   data: any
@@ -5,9 +7,7 @@ interface SocketMessage {
 
 class WebSocketClient {
   private socket: WebSocket | null
-
   private url: string
-
   private messageHandlerMap: Map<string, (data: any) => void>
 
   clientId: string
@@ -79,7 +79,11 @@ class WebSocketClient {
 
 let client: WebSocketClient
 
-export function startClient(taskScheduler, port) {
+export function startClient(
+  taskScheduler,
+  mcpService: McpService,
+  port: string
+) {
   client = new WebSocketClient(`ws://localhost:${port}`)
 
   client.connect().then(() => {
@@ -96,18 +100,30 @@ export function startClient(taskScheduler, port) {
     client.onMessage('doTask', (message) => {
       const { name, task } = message.data
 
-      if (task) {
-        taskScheduler
-          .doTask(task)
-          .then(() => {
-            client.sendMessage('taskSuccess', {
-              text: 'execute task success!',
-            })
-          })
-          .catch(() => {
-            client.sendMessage('taskFail', { text: 'execute task fail!' })
-          })
+      const doTask = () => {
+        if (task) {
+          return taskScheduler.doTask(task)
+        } else {
+          return mcpService.getContext().tools[name]()
+        }
       }
+
+      doTask()
+        .then(() => {
+          client.sendMessage('taskSuccess', {
+            text: 'execute task success!',
+          })
+        })
+        .catch(() => {
+          client.sendMessage('taskFail', { text: 'execute task fail!' })
+        })
+    })
+
+    client.onMessage('queryTools', () => {
+      client.sendMessage(
+        'mcpTool',
+        JSON.stringify(mcpService.getAllTools().map(McpService.toolToJson))
+      )
     })
 
     // 接收消息
