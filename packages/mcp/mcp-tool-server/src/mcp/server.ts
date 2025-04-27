@@ -52,7 +52,7 @@ export default class TinyAgentMcpServer {
     return taskSchema
   }
 
-  async handleStaticMcpTools(file: string) {
+  private async handleStaticMcpTools(file: string) {
     try {
       try {
         await fs.access(file)
@@ -79,14 +79,14 @@ export default class TinyAgentMcpServer {
     return []
   }
 
-  async mergeMcpTools(sessionId: string) {
+  private async mergeMcpTools(sessionId: string) {
     // 从websocket client查找tools
     const clientId = this.sessionConntionMap.get(sessionId)
     let tools = []
 
     if (clientId) {
       const message = JSON.stringify({
-        type: 'quertTools',
+        type: 'queryTools',
         message: 'query mcp tool',
       })
 
@@ -184,8 +184,6 @@ export default class TinyAgentMcpServer {
   }
 
   start(file: string) {
-    // this.registerUIMcpTools(file)
-    // this.registerOperationMcpTools()
     this.mcpToolFilePath = file
 
     this.app.get('/sse', async (req: Request, res: Response) => {
