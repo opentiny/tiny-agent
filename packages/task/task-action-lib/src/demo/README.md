@@ -37,6 +37,6 @@ executeActions(manager, actionList)
     console.log('最终结果:', finalContext);
   })
   .catch((error) => {
-    console.error('链式执行出错:', error);
+    console.error('链式执行出错 :', error);
   });
 ```

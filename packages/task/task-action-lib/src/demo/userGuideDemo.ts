@@ -15,18 +15,18 @@ const guideContext: any = {}
 
 // 使用示例
 const actionList = [
+  // {
+  //   action: 'userGuide',
+  //   params: { selector: '#dangerous-button', title: '危险操作', text: '请谨慎操作！' },
+  //   context: guideContext,
+  // },
   {
-    action: 'userGuide',
-    params: { selector: '#dangerous-button', title: '危险操作', text: '请谨慎操作！' },
-    context: guideContext,
+    action: 'executeCode',
+    params: { codeParams: {n1: 1, n2: 2}, code: ' return params.n1 + params.n2' },
   },
   {
-    action: 'input',
-    params: { selector: '#name', value: '六的哇哇哇' },
-  },
-  {
-    action: 'input',
-    params: { selector: '#password', value: 'huahua' },
+    action: 'expect',
+    params: { selector: '#password', toBeEmpty: true },
   },
 ];
 

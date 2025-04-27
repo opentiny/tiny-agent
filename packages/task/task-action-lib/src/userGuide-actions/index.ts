@@ -1,11 +1,13 @@
 import { Action } from '../common/action.d';
 import { findElement } from '../common';
-import { simulateClick } from '../dom-actions/dom-simulate';
 import GuideModal from './GuideModal';
+import { executeExpect } from './Expect';
 
 // 定义危险操作类型的枚举
 enum UserGuideActionType {
   USER_GUIDE = 'userGuide',
+  EXPECT = 'expect',
+  EXECUTE_CODE = 'executeCode'
 }
 
 // 危险操作
@@ -19,11 +21,39 @@ const UserGuide: Action = {
 
     return new Promise((resolve) => {
       guideModal.onHide(() => {
-        const pause = context?.$scheduler.pause;
+        const pause = context?.$scheduler?.pause;
         pause && pause();
         resolve({ status: 'success' });
       });
     });
   },
 };
-export default [UserGuide];
+
+const ExecuteCode: Action = {
+  name: UserGuideActionType.EXECUTE_CODE,
+  execute: async (params, context) => {
+    const { code, codeParams } = params;
+    if (typeof code!== 'string') {
+      throw new Error('传入的代码必须是字符串');
+    }
+
+    try {
+      const func = new Function('context', 'params', code);
+      const result = await func(context, codeParams);
+      return {
+        status: 'success',
+        result: { data: result },
+      };
+    } catch (error) {
+      throw new Error(`执行用户代码时出错: ${error}`);
+    }
+  },
+};
+
+// expect action
+const Expect: Action = {
+  name: UserGuideActionType.EXPECT,
+  execute: executeExpect,
+};
+
+export default [UserGuide, ExecuteCode, Expect];
