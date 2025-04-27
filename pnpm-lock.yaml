@@ -8,6 +8,24 @@ importers:
 
   .: {}
 
+  packages/mcp/mcp-service:
+    dependencies:
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
+      zod-to-json-schema:
+        specifier: ^3.24.5
+        version: 3.24.5(zod@3.24.2)
+
+  packages/mcp/mcp-service/vue:
+    dependencies:
+      '@opentiny/tiny-agent-mcp-service':
+        specifier: workspace:*
+        version: link:..
+      vue:
+        specifier: ^3.2.47
+        version: 3.5.13(typescript@5.8.3)
+
   packages/mcp/mcp-tool-server:
     dependencies:
       '@modelcontextprotocol/sdk':
