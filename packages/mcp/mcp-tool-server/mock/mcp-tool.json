@@ -1,0 +1,120 @@
+{
+  "jumpToAddUser": {
+    "name": "jumpToAddUser",
+    "description": "跳到员工详情页面",
+    "type": "ui",
+    "task": {
+      "id": "123",
+      "instructions": [
+        {
+          "action": "vue_push",
+          "params": { "to": "/vue-pro/userManager/allInfo" }
+        }
+      ]
+    }
+  },
+  "registerUser": {
+    "name": "registerUser",
+    "description": "添加员工api",
+    "type": "operation",
+    "inputSchema": [
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "email",
+        "type": "string"
+      }
+    ]
+  },
+  "addUser": {
+    "name": "addUser",
+    "description": "新增员工；录入员工",
+    "inputSchema": [
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "email",
+        "type": "string"
+      }
+    ],
+    "task": {
+      "id": "123",
+      "instructions": [
+        {
+          "action": "vue_push",
+          "params": { "to": "/vue-pro/userManager/allInfo" }
+        },
+        {
+          "action": "userGuide",
+          "params": {
+            "selector": ".user-add-btn > button",
+            "title": "提示",
+            "text": "请先点击添加员工！"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".tiny-modal.active .tiny-form div:nth-child(1) div:nth-child(1) .tiny-form-item input",
+            "value": "{{name}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".tiny-modal.active .tiny-form div:nth-child(1) div:nth-child(2) .tiny-form-item input"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": "body > div.tiny-select-dropdown.tiny-popper > div > div.tiny-select-dropdown__wrap.tiny-scrollbar__wrap > ul > li:nth-child(1) > div > span"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".tiny-modal.active .tiny-form div:nth-child(2) div:nth-child(1) .tiny-form-item input"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": "body  .tiny-select-dropdown:not([style*=\"display: none\"])  div.tiny-select-dropdown__wrap.tiny-scrollbar__wrap > ul > li:nth-child(1) > div > span"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".tiny-modal.active .tiny-form div:nth-child(2) div:nth-child(2) .tiny-form-item input"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": "body > div.tiny-picker-panel.tiny-date-picker.tiny-popper > div.tiny-picker-panel__body-wrapper > div > div.tiny-picker-panel__content > table > tbody > tr:nth-child(3) > td:nth-child(5) > div > span"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".tiny-modal.active .tiny-form div:nth-child(3) div:nth-child(1) .tiny-form-item input",
+            "value": "{{email}}"
+          }
+        },
+        {
+          "action": "userGuide",
+          "params": {
+            "selector": ".tiny-modal.active .general-btn > button",
+            "title": "高危操作",
+            "text": "请自行提交新增员工操作！"
+          }
+        }
+      ]
+    }
+  }
+}
