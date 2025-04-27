@@ -6,6 +6,11 @@ const initUI = (actionScheduler) => {
 
   actionScheduler.on('start', () => {
     ui = new SchedulerUI({ title: 'AI操作中' });
+    actionScheduler.provideContext({
+      $ui: {
+        tipToResume: ui.tipToResume.bind(ui),
+      },
+    });
     ui.on('pause', () => {
       actionScheduler.waitPause();
     });
@@ -22,6 +27,10 @@ const initUI = (actionScheduler) => {
 
   actionScheduler.on('pause', () => {
     ui.pause();
+  });
+
+  actionScheduler.on('resume', () => {
+    ui.resume();
   });
 
   actionScheduler.on('finish', () => {

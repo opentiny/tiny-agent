@@ -1,5 +1,10 @@
 import EventEmitter from './eventEmitter';
 
+import { addTooltip, removeTooltip } from './addTooltip';
+
+const addTwinkle = () => {};
+const removeTwinkle = () => {};
+
 // TODO: 使用时不应该每次都要new一个实例，全局new一次即可
 
 const skipBtnStyles = {
@@ -141,7 +146,7 @@ export class BreathAni {
     }
     if (isPaused) {
       this.pauseBtn.textContent = '继续';
-      this.pauseBtn.onclick = () => this.resume();
+      this.pauseBtn.onclick = () => this.doResume();
       this.skipBtn.disabled = false;
       this.stopBtn.disabled = false;
       this.pauseLight(); // 暂停呼吸灯动画
@@ -167,9 +172,15 @@ export class BreathAni {
     this.emit('skip');
   }
 
+  doResume() {
+    this.resume();
+    this.emit('resume');
+  }
+
   resume() {
     this.changeState({ isPaused: false });
-    this.emit('resume');
+    removeTwinkle(this.pauseBtn);
+    removeTooltip(this.pauseBtn);
   }
 
   doStop() {
@@ -231,6 +242,11 @@ export class BreathAni {
 
   private continueLight() {
     this.light.style.animationPlayState = 'running';
+  }
+
+  tipToResume(tip) {
+    addTwinkle(this.pauseBtn);
+    addTooltip(this.pauseBtn, '完成操作后点击继续');
   }
 }
 
