@@ -1,3 +1,5 @@
+import { McpService } from '@opentiny/tiny-agent-mcp-service'
+
 interface SocketMessage {
   type: string
   data: any
@@ -5,9 +7,7 @@ interface SocketMessage {
 
 class WebSocketClient {
   private socket: WebSocket | null
-
   private url: string
-
   private messageHandlerMap: Map<string, (data: any) => void>
 
   clientId: string
@@ -29,20 +29,21 @@ class WebSocketClient {
       this.socket.onmessage = (event: MessageEvent) => {
         try {
           let message: SocketMessage
+          const data = JSON.parse(event.data)
 
-          if (typeof event.data === 'string') {
+          if (typeof data === 'string') {
             message = {
               type: 'chat',
               data: event.data,
             }
           } else {
-            message = JSON.parse(event.data)
+            message = data
           }
 
           const handler = this.messageHandlerMap.get(message.type)
 
           if (handler) {
-            handler(message.data)
+            handler(message)
           }
         } catch (error) {
           console.log('消息解析错误：', error)
@@ -78,42 +79,56 @@ class WebSocketClient {
 
 let client: WebSocketClient
 
-export function startClient(taskScheduler, port) {
+export function startClient(
+  taskScheduler,
+  mcpService: McpService,
+  port: string
+) {
   client = new WebSocketClient(`ws://localhost:${port}`)
 
   client.connect().then(() => {
     // 发送消息
     client.sendMessage('connection', { text: 'Hello, Socket Server!' })
 
-    // 接收消息
-    client.onMessage('chat', (data) => {
-      let message: any
-
-      try {
-        message = JSON.parse(data)
-      } catch {
-        message = null
-      }
-
+    client.onMessage('connection', (message) => {
       if (message?.clientId) {
         client.clientId = message.clientId
         console.log('建立握手：', client.clientId)
-      } else {
-        if (typeof message === 'object') {
-          taskScheduler
-            .doTask(message)
-            .then(() => {
-              client.sendMessage('taskSuccess', {
-                text: 'execute task success!',
-              })
-            })
-            .catch(() => {
-              client.sendMessage('taskFail', { text: 'execute task fail!' })
-            })
-        }
-
-        console.log('收到消息:', data)
       }
+    })
+
+    client.onMessage('doTask', (message) => {
+      const { name, task } = message.data
+
+      const doTask = () => {
+        if (task) {
+          return taskScheduler.doTask(task)
+        } else {
+          return mcpService.getContext().tools[name]()
+        }
+      }
+
+      doTask()
+        .then(() => {
+          client.sendMessage('taskSuccess', {
+            text: 'execute task success!',
+          })
+        })
+        .catch(() => {
+          client.sendMessage('taskFail', { text: 'execute task fail!' })
+        })
+    })
+
+    client.onMessage('queryTools', () => {
+      client.sendMessage(
+        'mcpTool',
+        JSON.stringify(mcpService.getAllTools().map(McpService.toolToJson))
+      )
+    })
+
+    // 接收消息
+    client.onMessage('chat', (message) => {
+      console.log('收到消息:', message)
     })
 
     // 心跳检测

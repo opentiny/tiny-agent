@@ -18,3 +18,10 @@ export type McpToolTaskSchema = {
   id: string
   instruction: Array<Instruction>
 }
+
+export type McpTool = {
+  name: string
+  description: string
+  inputSchema: any
+  task: McpToolTaskSchema
+}
