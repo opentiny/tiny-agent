@@ -49,85 +49,96 @@ const click: Action = {
 ```
 
 ```js
-// 填写表单示例
+// 新增员工场景测试instructions
 window.sendMessage({
   id: '123',
   instructions: [
     { action: 'vue_push', params: { to: '/vue-pro/userManager/allInfo' } },
     {
-      action: 'userGuide',
+      action: 'click',
       params: {
         selector: '.user-add-btn > button',
-        title: '提示',
-        text: '请先点击添加员工！',
       },
     },
     {
       action: 'input',
       params: {
-        selector:
-          '.tiny-modal.active .tiny-form div:nth-child(1) div:nth-child(1) .tiny-form-item input',
+        selector: '.ta-mark__user-add-modal .ta-mark__name-input input',
         value: '岑子轩',
       },
     },
     {
       action: 'click',
       params: {
-        selector:
-          '.tiny-modal.active .tiny-form div:nth-child(1) div:nth-child(2) .tiny-form-item input',
+        selector: '.ta-mark__user-add-modal .ta-mark__sex-select input',
+      },
+    },
+    {
+      action: 'clickByText',
+      params: {
+        selector: '.ta-mark__sex-select-panel',
+        text: '男',
+      },
+    },
+    {
+      action: 'click',
+      params: {
+        selector: '.ta-mark__user-add-modal .ta-mark__department-select input',
+      },
+    },
+    {
+      action: 'clickByText',
+      params: {
+        selector: '.ta-mark__department-select-panel',
+        text: '用户体验部',
       },
     },
     {
       action: 'click',
       params: {
         selector:
-          'body > div.tiny-select-dropdown.tiny-popper > div > div.tiny-select-dropdown__wrap.tiny-scrollbar__wrap > ul > li:nth-child(1) > div > span',
+          '.ta-mark__user-add-modal .ta-mark__protocol-start-select input',
       },
     },
     {
-      action: 'click',
+      action: 'selectDate',
       params: {
-        selector:
-          '.tiny-modal.active .tiny-form div:nth-child(2) div:nth-child(1) .tiny-form-item input',
-      },
-    },
-    {
-      action: 'click',
-      params: {
-        selector:
-          'body  .tiny-select-dropdown:not([style*="display: none"])  div.tiny-select-dropdown__wrap.tiny-scrollbar__wrap > ul > li:nth-child(1) > div > span',
-      },
-    },
-    {
-      action: 'click',
-      params: {
-        selector:
-          '.tiny-modal.active .tiny-form div:nth-child(2) div:nth-child(2) .tiny-form-item input',
-      },
-    },
-    {
-      action: 'click',
-      params: {
-        selector:
-          'body > div.tiny-picker-panel.tiny-date-picker.tiny-popper > div.tiny-picker-panel__body-wrapper > div > div.tiny-picker-panel__content > table > tbody > tr:nth-child(3) > td:nth-child(5) > div > span',
+        selector: '.ta-mark__protocol-start-select-panel',
+        date: '2015-04-15',
       },
     },
     {
       action: 'input',
       params: {
-        selector:
-          '.tiny-modal.active .tiny-form div:nth-child(3) div:nth-child(1) .tiny-form-item input',
+        selector: '.ta-mark__user-add-modal .ta-mark__email-input input',
         value: 'cenzixuan@test.com',
+      },
+    },
+    {
+      action: 'apiConfirmStart',
+      params: {
+        url: '/api/user/reg',
       },
     },
     {
       action: 'userGuide',
       params: {
-        selector: '.tiny-modal.active .general-btn > button',
+        selector: '.ta-mark__user-add-modal .general-btn > button',
+        type: 'click',
         title: '高危操作',
         text: '请自行提交新增员工操作！',
       },
     },
+    {
+      action: 'apiConfirmEnd',
+      params: {
+        url: '/api/user/reg',
+      },
+    },
   ],
 });
+```
+
+```js
+// 删除员工
 ```

@@ -44,7 +44,10 @@ class ActionScheduler {
     this.context = {
       ...this.context,
       ...context,
-      $scheduler: { pause: (...args) => this.pause(...args) },
+      $scheduler: {
+        pause: (...args) => this.pause(...args),
+        resume: () => this.resume(),
+      },
     };
   }
 
@@ -92,8 +95,10 @@ class ActionScheduler {
         const { status, result, error } =
           await this.actionManager.executeAction(action, params, this.context);
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
+        // 延迟等待1s，模拟异步操作，api-confirm指令不能延迟，否则接口返回会比执行早
+        if (this.instructions[this.currentIndex + 1]?.name !== 'api-confirm') {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
         if (status === 'success') {
           this.finalResult = result;
           this.resultStatus = 'partial completed';
@@ -168,7 +173,8 @@ class ActionScheduler {
 
   // 恢复执行
   async resume(): Promise<ActionsResult> {
-    if (this.currentIndex >= this.instructions.length - 1) {
+    this.emit('resume');
+    if (this.currentIndex > this.instructions.length - 1) {
       return this.finish();
     }
     this.status = ExecutorStatus.Running;
