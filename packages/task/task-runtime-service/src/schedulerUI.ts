@@ -1,4 +1,10 @@
 import EventEmitter from './eventEmitter';
+import {
+  addTwinkle,
+  removeTwinkle,
+} from '@opentiny/tiny-agent-task-action-lib';
+
+import { addTooltip, removeTooltip } from './addTooltip';
 
 import { addTooltip, removeTooltip } from './addTooltip';
 
