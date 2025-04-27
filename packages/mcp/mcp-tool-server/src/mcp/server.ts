@@ -9,15 +9,16 @@ import {
 } from '@modelcontextprotocol/sdk/types.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import SocketServer, { MessageType } from '../socket/server'
-import { McpToolParam, McpToolTaskSchema } from '.'
+import { McpTool, McpToolParam, McpToolTaskSchema } from '.'
 
 export default class TinyAgentMcpServer {
   private socketServer: SocketServer
   private transports: any
   private sessionConntionMap: Map<string, string>
   private app: Express
-  private tools: Tool[]
   private serverMap: Map<string, Server>
+  private mcpToolFilePath: string
+  private tools: McpTool[]
 
   constructor(socketServer: SocketServer) {
     this.socketServer = socketServer
@@ -28,103 +29,56 @@ export default class TinyAgentMcpServer {
     this.app = express()
   }
 
-  // private replacePlaceholder(
-  //   task: McpToolTaskSchema,
-  //   funcParams: McpToolParam[],
-  //   actualParams: any
-  // ) {
-  //   let scheamStr = JSON.stringify(task)
+  private replacePlaceholder(
+    task: McpToolTaskSchema,
+    inputSchema: any,
+    actualParams: Record<string, unknown>
+  ) {
+    let schemaStr = JSON.stringify(task)
+    let taskSchema
 
-  //   funcParams?.forEach(({ type, name }) => {
-  //     scheamStr = scheamStr.split(`{{${name}}}`).join(actualParams[name])
-  //   })
+    Object.keys(inputSchema)?.forEach((param) => {
+      schemaStr = schemaStr
+        .split(`{{${param}}}`)
+        .join(actualParams[param].toString())
+    })
 
-  //   return JSON.parse(scheamStr)
-  // }
+    try {
+      taskSchema = JSON.parse(schemaStr)
+    } catch {
+      taskSchema = task
+    }
 
-  // async registerMcpTools(resource) {
-  //   Object.keys(resource).forEach((key) => {
-  //     const { name, description, inputSchema, task, type } = resource[key]
-  //     const toolParams: ZodRawShape = {}
+    return taskSchema
+  }
 
-  //     if (inputSchema?.length) {
-  //       ;(inputSchema as McpToolParam[]).forEach(({ type, name }) => {
-  //         toolParams[name] = (z as any)[type]()
-  //       })
-  //     }
+  async handleStaticMcpTools(file: string) {
+    try {
+      try {
+        await fs.access(file)
+      } catch {
+        throw new Error(`文件不存在： ${file}`)
+      }
 
-  //     this.server.tool(
-  //       name,
-  //       description,
-  //       toolParams,
-  //       async (actualParams, { sessionId = '' }) => {
-  //         const clientId = this.sessionConntionMap.get(sessionId)
+      if (!file.toLocaleLowerCase().endsWith('.json')) {
+        console.warn('警告：文件扩展名不是 .json')
+      }
 
-  //         if (clientId) {
-  //           try {
-  //             let message: any = null
+      const fileContent = await fs.readFile(file, 'utf-8')
+      const tools = JSON.parse(fileContent)
 
-  //             if (type === 'ui') {
-  //               message = {
-  //                 type,
-  //                 content: this.replacePlaceholder(
-  //                   task,
-  //                   inputSchema,
-  //                   actualParams
-  //                 ),
-  //               }
-  //             } else {
-  //               message = { type, content: { func: key, args: actualParams } }
-  //             }
+      return tools
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        console.error('error: 文件内容不是有效的JSON格式')
+      } else {
+        console.error(error)
+      }
+    }
 
-  //             this.socketServer
-  //               .sendAndWaitTaskMsg(clientId, JSON.stringify(message))
-  //               .then((res) => {
-  //                 console.log('tash execute res:', res)
-  //               })
-  //           } catch (e) {
-  //             console.log('send msg error:', e)
-  //           }
-  //         }
+    return []
+  }
 
-  //         return {
-  //           content: [{ type: 'text', text: `tools: ${clientId}` }],
-  //         }
-  //       }
-  //     )
-  //   })
-  // }
-
-  // async registerUIMcpTools(file: string) {
-  //   try {
-  //     try {
-  //       await fs.access(file)
-  //     } catch {
-  //       throw new Error(`文件不存在： ${file}`)
-  //     }
-
-  //     if (!file.toLocaleLowerCase().endsWith('.json')) {
-  //       console.warn('警告：文件扩展名不是 .json')
-  //     }
-
-  //     const fileContent = await fs.readFile(file, 'utf-8')
-  //     const fileJson = JSON.parse(fileContent)
-
-  //     this.registerMcpTools(fileJson)
-  //   } catch (error) {
-  //     if (error instanceof SyntaxError) {
-  //       console.error('error: 文件内容不是有效的JSON格式')
-  //     } else {
-  //       console.error(error)
-  //     }
-  //   }
-  // }
-
-  // registerOperationMcpTools() {
-  //   this.socketServer.onRegisterMessage((toolData) => {
-  //     this.registerMcpTools(toolData)
-  //   })
-  // }
   async mergeMcpTools(sessionId: string) {
     // 从websocket client查找tools
     const clientId = this.sessionConntionMap.get(sessionId)
@@ -135,45 +89,67 @@ export default class TinyAgentMcpServer {
         type: 'quertTools',
         message: 'query mcp tool',
       })
-      const res: any = await this.socketServer.sendAndWaitTaskMsg(
-        clientId,
-        message,
-        [MessageType.McpTool]
-      )
 
-      if (res?.data?.length) {
-        tools = res.data
+      try {
+        const res: any = await this.socketServer.sendAndWaitTaskMsg(
+          clientId,
+          message,
+          [MessageType.McpTool]
+        )
+
+        if (res?.data?.length) {
+          tools = JSON.parse(res.data)
+        }
+      } catch (e) {
+        tools = []
+        console.error(`send msg error: ${e}`)
       }
     }
 
-    return tools
+    // 静态mcp tool
+    const staticTools = await this.handleStaticMcpTools(this.mcpToolFilePath)
+
+    return [...tools, ...staticTools]
   }
 
   private setupRequestHandler(server: Server, sessionId: string) {
     server.setRequestHandler(ListToolsRequestSchema, async () => {
-      const tools = await this.mergeMcpTools(sessionId)
+      this.tools = await this.mergeMcpTools(sessionId)
 
       return {
-        tools: tools || [
-          {
-            name: 'addUser',
-            description: '添加员工',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                a: {
-                  type: 'string',
-                  description: '姓名',
-                },
-              },
-            },
+        tools: this.tools.map((tool) => ({
+          ...tool,
+          inputSchema: {
+            type: 'object',
+            properties: tool.inputSchema,
           },
-        ],
+        })),
       }
     })
 
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params
+      const targetTool = this.tools.find((tool) => name === tool.name)
+      const clientId = this.sessionConntionMap.get(sessionId)
+
+      if (targetTool?.task) {
+        targetTool.task = this.replacePlaceholder(
+          targetTool.task,
+          targetTool.inputSchema,
+          args
+        )
+      }
+
+      const message = {
+        type: MessageType.DoTask,
+        data: targetTool,
+      }
+
+      await this.socketServer.sendAndWaitTaskMsg(
+        clientId,
+        JSON.stringify(message)
+      )
+
       return {
         content: [
           {
@@ -210,6 +186,7 @@ export default class TinyAgentMcpServer {
   start(file: string) {
     // this.registerUIMcpTools(file)
     // this.registerOperationMcpTools()
+    this.mcpToolFilePath = file
 
     this.app.get('/sse', async (req: Request, res: Response) => {
       const { client } = req.query

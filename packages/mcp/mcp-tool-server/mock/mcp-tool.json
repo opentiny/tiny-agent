@@ -1,8 +1,8 @@
-{
-  "jumpToAddUser": {
+[
+  {
     "name": "jumpToAddUser",
     "description": "跳到员工详情页面",
-    "type": "ui",
+    "inputSchema": {},
     "task": {
       "id": "123",
       "instructions": [
@@ -13,34 +13,19 @@
       ]
     }
   },
-  "registerUser": {
-    "name": "registerUser",
-    "description": "添加员工api",
-    "type": "operation",
-    "inputSchema": [
-      {
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "name": "email",
-        "type": "string"
-      }
-    ]
-  },
-  "addUser": {
+  {
     "name": "addUser",
     "description": "新增员工；录入员工",
-    "inputSchema": [
-      {
-        "name": "name",
-        "type": "string"
+    "inputSchema": {
+      "name": {
+        "type": "string",
+        "description": "员工姓名"
       },
-      {
-        "name": "email",
-        "type": "string"
+      "email": {
+        "type": "string",
+        "description": "员工邮箱"
       }
-    ],
+    },
     "task": {
       "id": "123",
       "instructions": [
@@ -117,4 +102,4 @@
       ]
     }
   }
-}
+]
