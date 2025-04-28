@@ -2,16 +2,16 @@
   "name": "@opentiny/tiny-agent-mcp-tool-server",
   "version": "0.0.1",
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "dev": "ts-node src/start.ts",
     "build": "tsc -p tsconfig.json",
     "start": "pm2 start dist/index.js",
     "stop": "pm2 stop dist/index.js",
     "restart": "pm2 restart dist/index.js",
-    "mock:mcp": "ts-node src/index.ts -f ./mock/mcp-tool.json"
+    "mock:mcp": "ts-node src/start.ts -f ./mock/mcp-tool.json"
   },
   "main": "src/index.ts",
   "bin": {
-    "@opentiny/tiny-agent-mcp-tool-server": "src/index.ts"
+    "@opentiny/tiny-agent-mcp-tool-server": "src/start.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
