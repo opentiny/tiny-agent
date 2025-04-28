@@ -79,11 +79,7 @@ class WebSocketClient {
 
 let client: WebSocketClient
 
-export function startClient(
-  taskScheduler,
-  mcpService: McpService,
-  port: string
-) {
+export function startClient(onTask, mcpService: McpService, port: string) {
   client = new WebSocketClient(`ws://localhost:${port}`)
 
   client.connect().then(() => {
@@ -102,7 +98,7 @@ export function startClient(
 
       const doTask = () => {
         if (task) {
-          return taskScheduler.doTask(task)
+          return onTask(task)
         } else {
           return mcpService.getContext().tools[name]()
         }
