@@ -2,6 +2,7 @@ import { program } from 'commander'
 import path from 'node:path'
 import TinyAgentMcpServer from './mcp/server'
 import SocketServer from './socket/server'
+export * from './socket/client'
 
 program
   .name('@opentiny/tiny-agent-mcp-tool-server')

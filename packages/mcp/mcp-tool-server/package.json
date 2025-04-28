@@ -9,6 +9,7 @@
     "restart": "pm2 restart dist/index.js",
     "mock:mcp": "ts-node src/index.ts -f ./mock/mcp-tool.json"
   },
+  "main": "src/index.ts",
   "bin": {
     "@opentiny/tiny-agent-mcp-tool-server": "src/index.ts"
   },
