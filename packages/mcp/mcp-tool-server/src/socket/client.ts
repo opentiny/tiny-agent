@@ -94,13 +94,13 @@ export function startClient(onTask, mcpService: McpService, port: string) {
     })
 
     client.onMessage('doTask', (message) => {
-      const { name, task } = message.data
+      const { name, task, args } = message.data
 
       const doTask = () => {
         if (task) {
           return onTask(task)
         } else {
-          return mcpService.getContext().tools[name]()
+          return mcpService.getContext().tools[name](args)
         }
       }
 
