@@ -6,11 +6,6 @@ import {
 
 import { addTooltip, removeTooltip } from './addTooltip';
 
-import { addTooltip, removeTooltip } from './addTooltip';
-
-const addTwinkle = () => {};
-const removeTwinkle = () => {};
-
 // TODO: 使用时不应该每次都要new一个实例，全局new一次即可
 
 const skipBtnStyles = {
@@ -252,7 +247,7 @@ export class BreathAni {
 
   tipToResume(tip) {
     addTwinkle(this.pauseBtn);
-    addTooltip(this.pauseBtn, '完成操作后点击继续');
+    addTooltip(this.pauseBtn, tip);
   }
 }
 

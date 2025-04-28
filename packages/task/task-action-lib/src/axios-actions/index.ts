@@ -35,10 +35,9 @@ const start = {
 
     let isRemove = false;
 
-    console.log('apiConfirmStart');
     const responseInterceptor = axios.interceptors.response.use(
       (response) => {
-        console.log('responseInterceptor1111111', response);
+        console.log('axios action', response);
         if (!isTargetUrl(url, response)) {
           return response;
         }
@@ -61,13 +60,13 @@ const start = {
         return response;
       },
       (error) => {
-        console.log('error responseInterceptor1111111', response);
-        if (!isTargetUrl(url, response)) {
+        console.log('axios action', error);
+        if (!isTargetUrl(url, error)) {
           return Promise.reject(error);
         }
         resultMap[url].push({
           status: 'error',
-          error: error?.data,
+          error: error?.response?.data,
         });
         isRemove = true;
         axios.interceptors.response.eject(responseInterceptor);

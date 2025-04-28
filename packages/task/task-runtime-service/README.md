@@ -141,4 +141,43 @@ window.sendMessage({
 
 ```js
 // 删除员工
+window.sendMessage({
+  id: '123',
+  instructions: [
+    { action: 'vue_push', params: { to: '/vue-pro/userManager/allInfo' } },
+    {
+      action: 'input',
+      params: { selector: '.ta-mark__search-input input', value: '岑子轩' },
+    },
+    {
+      action: 'click',
+      params: { selector: '.ta-mark__search-btn' },
+    },
+    {
+      action: 'click',
+      params: { selector: '.tiny-grid-body__row .operation-delete' },
+    },
+    {
+      action: 'apiConfirmStart',
+      params: {
+        url: '/api/user/reg',
+      },
+    },
+    {
+      action: 'userGuide',
+      params: {
+        selector: '.ta-mark__del-modal .tiny-button--primary',
+        type: 'click',
+        title: '高危操作',
+        text: '请您确认是否删除该员工！',
+      },
+    },
+    {
+      action: 'apiConfirmEnd',
+      params: {
+        url: '/api/user/reg',
+      },
+    },
+  ],
+});
 ```

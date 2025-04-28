@@ -32,7 +32,7 @@ const UserGuide: Action = {
     }
 
     guideModal.onHide(() => {
-      tipToResume && tipToResume();
+      tipToResume && tipToResume('完成操作后点击继续');
     });
 
     return { status: 'success' };
