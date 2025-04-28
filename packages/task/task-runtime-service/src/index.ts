@@ -55,7 +55,7 @@ const initConnect = (taskScheduler) => {
 
   window.sendMessage = async (task: any) => {
     try {
-      const result = onMessage(task)
+      const result = await onMessage(task)
       console.log('Result:', result)
     } catch (err) {
       console.error('Error:', err)
