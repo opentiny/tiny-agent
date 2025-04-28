@@ -1,19 +1,5 @@
 [
   {
-    "name": "jumpToAddUser",
-    "description": "跳到员工详情页面",
-    "inputSchema": {},
-    "task": {
-      "id": "123",
-      "instructions": [
-        {
-          "action": "vue_push",
-          "params": { "to": "/vue-pro/userManager/allInfo" }
-        }
-      ]
-    }
-  },
-  {
     "name": "addUser",
     "description": "新增员工；录入员工",
     "inputSchema": {
