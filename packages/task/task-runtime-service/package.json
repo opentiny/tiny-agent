@@ -5,6 +5,7 @@
   "main": "src/index.ts",
   "type": "module",
   "dependencies": {
-    "@opentiny/tiny-agent-task-action-lib": "workspace:*"
+    "@opentiny/tiny-agent-task-action-lib": "workspace:*",
+    "@floating-ui/dom": "^1.6.0"
   }
 }

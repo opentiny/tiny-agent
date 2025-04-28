@@ -9,11 +9,11 @@ export const inputEvents = {
   // 按下鼠标聚焦到输入框
   get mouseClickFocus() {
     return [
-      rawEvents.pointerdown,
-      rawEvents.mousedown,
-      rawEvents.pointerup,
-      rawEvents.mouseup,
-      rawEvents.click,
+      rawEvents.pointerdown(),
+      rawEvents.mousedown(),
+      rawEvents.pointerup(),
+      rawEvents.mouseup(),
+      rawEvents.click(),
     ];
   },
 
@@ -23,7 +23,7 @@ export const inputEvents = {
     rawEvents.keypress(char),
     rawEvents.beforeinput(char),
     rawEvents.input(char),
-    rawEvents.selectionchange,
+    rawEvents.selectionchange(),
     rawEvents.keyup(char),
   ],
   get mouseLeave() {
@@ -39,14 +39,14 @@ export const selectEvents = {
   //  按下鼠标打开下拉框
   get mouseClickFocus() {
     return [
-      rawEvents.pointerdown,
-      rawEvents.mousedown,
-      rawEvents.focus,
-      rawEvents.pointerrawupdate,
-      rawEvents.pointermove,
-      rawEvents.pointerup,
-      rawEvents.mouseup,
-      rawEvents.click,
+      rawEvents.pointerdown(),
+      rawEvents.mousedown(),
+      rawEvents.focus(),
+      rawEvents.pointerrawupdate(),
+      rawEvents.pointermove(),
+      rawEvents.pointerup(),
+      rawEvents.mouseup(),
+      rawEvents.click(),
     ];
   },
 

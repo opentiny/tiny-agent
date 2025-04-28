@@ -19,18 +19,19 @@ export const findElement = async (
 };
 
 export const rawEvents = {
-  pointerrawupdate: new PointerEvent('pointerrawupdate', { bubbles: true }),
-  pointerover: new PointerEvent('pointerover', { bubbles: true }),
-  pointerenter: new PointerEvent('pointerenter', { bubbles: true }),
-  mouseover: new MouseEvent('mouseover', { bubbles: true }),
-  mouseenter: new MouseEvent('mouseenter', { bubbles: true }),
-  pointermove: new PointerEvent('pointermove', { bubbles: true }),
-  mousemove: new MouseEvent('mousemove', { bubbles: true }),
-  pointerdown: new PointerEvent('pointerdown', { bubbles: true }),
-  mousedown: new MouseEvent('mousedown', { bubbles: true }),
-  pointerup: new PointerEvent('pointerup', { bubbles: true }),
-  mouseup: new MouseEvent('mouseup', { bubbles: true }),
-  click: new MouseEvent('click', { bubbles: true }),
+  pointerrawupdate: () =>
+    new PointerEvent('pointerrawupdate', { bubbles: true }),
+  pointerover: () => new PointerEvent('pointerover', { bubbles: true }),
+  pointerenter: () => new PointerEvent('pointerenter', { bubbles: true }),
+  mouseover: () => new MouseEvent('mouseover', { bubbles: true }),
+  mouseenter: () => new MouseEvent('mouseenter', { bubbles: true }),
+  pointermove: () => new PointerEvent('pointermove', { bubbles: true }),
+  mousemove: () => new MouseEvent('mousemove', { bubbles: true }),
+  pointerdown: () => new PointerEvent('pointerdown', { bubbles: true }),
+  mousedown: () => new MouseEvent('mousedown', { bubbles: true }),
+  pointerup: () => new PointerEvent('pointerup', { bubbles: true }),
+  mouseup: () => new MouseEvent('mouseup', { bubbles: true }),
+  click: () => new MouseEvent('click', { bubbles: true }),
   keydown: (char: string) =>
     new KeyboardEvent('keydown', { key: char, bubbles: true }),
   keypress: (char: string) =>
@@ -47,55 +48,54 @@ export const rawEvents = {
       data: char,
       bubbles: true,
     }),
-  selectionchange: new Event('selectionchange', { bubbles: true }),
+  selectionchange: () => new Event('selectionchange', { bubbles: true }),
   keyup: (char: string) =>
     new KeyboardEvent('keyup', { key: char, bubbles: true }),
-  pointerout: new PointerEvent('pointerout', { bubbles: true }),
-  pointerleave: new PointerEvent('pointerleave', { bubbles: true }),
-  mouseout: new MouseEvent('mouseout', { bubbles: true }),
-  mouseleave: new MouseEvent('mouseleave', { bubbles: true }),
-  change: new Event('change', { bubbles: true }),
-  focus: new Event('focus', { bubbles: true }),
-  blur: new FocusEvent('blur', { bubbles: true }),
+  pointerout: () => new PointerEvent('pointerout', { bubbles: true }),
+  pointerleave: () => new PointerEvent('pointerleave', { bubbles: true }),
+  mouseout: () => new MouseEvent('mouseout', { bubbles: true }),
+  mouseleave: () => new MouseEvent('mouseleave', { bubbles: true }),
+  change: () => new Event('change', { bubbles: true }),
+  focus: () => new FocusEvent('focus', { bubbles: true }),
+  blur: () => new FocusEvent('blur', { bubbles: true }),
 };
 
 export const commonEvents = {
   // 鼠标从输入框外移入输入框内
   get mouseEnter() {
     return [
-      rawEvents.pointerrawupdate,
-      rawEvents.pointerover,
-      rawEvents.pointerenter,
-      rawEvents.mouseover,
-      rawEvents.mouseenter,
-      rawEvents.pointermove,
-      rawEvents.mousemove,
+      rawEvents.pointerrawupdate(),
+      rawEvents.pointerover(),
+      rawEvents.pointerenter(),
+      rawEvents.mouseover(),
+      rawEvents.mouseenter(),
+      rawEvents.pointermove(),
+      rawEvents.mousemove(),
     ];
   },
   // 点击
   get mouseClickFocus() {
     return [
-      rawEvents.pointerdown,
-      rawEvents.mousedown,
-      rawEvents.focus,
-      rawEvents.pointerup,
-      rawEvents.mouseup,
-      rawEvents.click,
+      rawEvents.pointerdown(),
+      rawEvents.mousedown(),
+      rawEvents.focus(),
+      rawEvents.pointerup(),
+      rawEvents.mouseup(),
     ];
   },
   get mouseLeave() {
     return [
-      rawEvents.pointerrawupdate,
-      rawEvents.pointermove,
-      rawEvents.mousemove,
-      rawEvents.pointerout,
-      rawEvents.pointerleave,
-      rawEvents.mouseout,
-      rawEvents.mouseleave,
+      rawEvents.pointerrawupdate(),
+      rawEvents.pointermove(),
+      rawEvents.mousemove(),
+      rawEvents.pointerout(),
+      rawEvents.pointerleave(),
+      rawEvents.mouseout(),
+      rawEvents.mouseleave(),
     ];
   },
   get mouseBlur() {
-    return [rawEvents.change, rawEvents.blur];
+    return [rawEvents.change(), rawEvents.blur()];
   },
 };
 
@@ -110,4 +110,30 @@ export const dispatchEvent = (
     // 模拟人类操作的延迟
     setTimeout(resolve, delay);
   });
+};
+
+export const getElementByText = async (
+  selector: string | HTMLElement,
+  text: string,
+  timeout: number = 3000
+): Promise<HTMLElement> => {
+  let element: HTMLElement;
+  if (typeof selector === 'string') {
+    element = await findElement(selector, timeout);
+  } else if (selector instanceof HTMLElement) {
+    element = selector;
+  } else {
+    throw new Error('selector 必须是字符串或 HTMLElement');
+  }
+  const result = document.evaluate(
+    `.//*[normalize-space(text())='${text.replace(/'/g, "\\'")}']`,
+    element,
+    null,
+    XPathResult.FIRST_ORDERED_NODE_TYPE,
+    null
+  );
+  if (!result.singleNodeValue) {
+    throw new Error(`未找到文本内容为 '${text}' 的元素`);
+  }
+  return result.singleNodeValue;
 };

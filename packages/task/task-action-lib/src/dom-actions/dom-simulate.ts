@@ -13,7 +13,7 @@ export async function simulateClick(target: HTMLElement): Promise<void> {
   for (const event of commonEvents.mouseClickFocus) {
     await dispatchEvent(target, event);
   }
-  // await dispatchEvent(target, new MouseEvent('click', { bubbles: true }));
+  await dispatchEvent(target, new MouseEvent('click', { bubbles: true }));
 
   // 鼠标移出
   for (const event of commonEvents.mouseLeave) {

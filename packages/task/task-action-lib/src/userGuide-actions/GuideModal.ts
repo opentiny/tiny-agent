@@ -1,3 +1,5 @@
+import { addTwinkle, removeTwinkle } from '../common/addTwinkle';
+
 export default class GuideModal {
   private targetDom: HTMLElement;
   originOutlines: string;
@@ -93,10 +95,7 @@ export default class GuideModal {
   }
 
   show({ title, text }: { title: string; text: string }) {
-    const highlightedStyle = {
-      outline: '2px solid #007bff',
-    };
-    this.targetDom && this.setStyles(this.targetDom, highlightedStyle);
+    this.targetDom && addTwinkle(this.targetDom);
 
     this.title.textContent = title;
     this.content.textContent = text;
@@ -143,7 +142,8 @@ export default class GuideModal {
   }
 
   hide() {
-    this.targetDom.style.outline = this.originOutlines;
+    // this.targetDom.style.outline = this.originOutlines;
+    removeTwinkle(this.targetDom);
     this.modal.style.display = 'none';
     if (this.onHideCallback) {
       this.onHideCallback();
