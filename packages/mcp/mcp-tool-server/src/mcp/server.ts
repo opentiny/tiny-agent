@@ -138,6 +138,8 @@ export default class TinyAgentMcpServer {
           targetTool.inputSchema,
           args
         )
+      } else {
+        targetTool.args = args
       }
 
       const message = {
@@ -145,7 +147,7 @@ export default class TinyAgentMcpServer {
         data: targetTool,
       }
 
-      await this.socketServer.sendAndWaitTaskMsg(
+      const res = await this.socketServer.sendAndWaitTaskMsg(
         clientId,
         JSON.stringify(message)
       )
@@ -154,7 +156,7 @@ export default class TinyAgentMcpServer {
         content: [
           {
             type: 'text',
-            text: `tool is ${name}`,
+            text: res,
           },
         ],
       }

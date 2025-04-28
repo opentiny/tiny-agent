@@ -23,5 +23,6 @@ export type McpTool = {
   name: string
   description: string
   inputSchema: any
-  task: McpToolTaskSchema
+  task?: McpToolTaskSchema
+  args?: Record<string, any>
 }
