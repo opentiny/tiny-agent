@@ -59,6 +59,7 @@ const initConnect = (taskScheduler) => {
       console.log('Result:', result)
     } catch (err) {
       console.error('Error:', err)
+      throw new Error(err)
     }
   }
 }
