@@ -29,7 +29,9 @@
       "instructions": [
         {
           "action": "vue_push",
-          "params": { "to": "/vue-pro/userManager/allInfo" }
+          "params": {
+            "to": "/vue-pro/userManager/allInfo"
+          }
         },
         {
           "action": "click",
@@ -109,6 +111,69 @@
           "action": "apiConfirmEnd",
           "params": {
             "url": "/api/user/reg"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "deleteUser",
+    "description": "删除员工；",
+    "inputSchema": {
+      "name": {
+        "type": "string",
+        "description": "员工姓名"
+      }
+    },
+    "task": {
+      "id": "124",
+      "instructions": [
+        {
+          "action": "vue_push",
+          "params": {
+            "to": "/vue-pro/userManager/allInfo"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".ta-mark__search-input input",
+            "value": "{{name}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__search-btn"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".tiny-grid-body__row .operation-delete"
+          }
+        },
+        {
+          "action": "apiConfirmStart",
+          "params": {
+            "url": "/api/user/:id",
+            "method": "DElETE"
+          }
+        },
+        {
+          "action": "userGuide",
+          "params": {
+            "selector": ".ta-mark__del-modal .tiny-button--primary",
+            "type": "click",
+            "title": "高危操作",
+            "text": "请您确认是否删除该员工！"
+          }
+        },
+        {
+          "action": "apiConfirmEnd",
+          "params": {
+            "url": "/api/user/:id",
+            "method": "DElETE"
           }
         }
       ]
