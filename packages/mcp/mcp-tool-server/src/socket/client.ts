@@ -110,8 +110,8 @@ export function startClient(onTask, mcpService: McpService, port: string) {
             text: 'execute task success!',
           })
         })
-        .catch(() => {
-          client.sendMessage('taskFail', { text: 'execute task fail!' })
+        .catch((err) => {
+          client.sendMessage('taskFail', { text: err })
         })
     })
 
