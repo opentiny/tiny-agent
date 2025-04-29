@@ -111,12 +111,12 @@ const start = {
     params: Params,
     context: Context
   ): Promise<{ status: string }> => {
+    const { $axiosConfig } = context;
     const { axios, timeout: globalTimeout } = $axiosConfig || {};
     if (!axios) {
       return;
     }
     const { url, timeout: actionTime } = params;
-    const { $axiosConfig } = context;
     const timeout = actionTime || globalTimeout || 20000;
 
     if (!resultMap[url]) {
