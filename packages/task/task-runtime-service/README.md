@@ -160,7 +160,8 @@ window.sendMessage({
     {
       action: 'apiConfirmStart',
       params: {
-        url: '/api/user/reg',
+        url: '/api/user/:id',
+        method: 'DElETE',
       },
     },
     {
@@ -175,7 +176,8 @@ window.sendMessage({
     {
       action: 'apiConfirmEnd',
       params: {
-        url: '/api/user/reg',
+        url: '/api/user/:id',
+        method: 'DElETE',
       },
     },
   ],

@@ -23,7 +23,7 @@ class ActionScheduler {
   private emitter: EventEmitter;
 
   constructor() {
-    this.context = {};
+    this.context = { _clearEffect: [] };
     this.actionManager = new ActionManager();
     this.emitter = new EventEmitter();
   }
@@ -97,7 +97,7 @@ class ActionScheduler {
 
         // 延迟等待1s，模拟异步操作，api-confirm指令不能延迟，否则接口返回会比执行早
         if (this.instructions[this.currentIndex + 1]?.name !== 'api-confirm') {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 200));
         }
         if (status === 'success') {
           this.finalResult = result;
@@ -147,6 +147,8 @@ class ActionScheduler {
       });
     }
     this.emit('finish');
+    this.context?._clearEffect.forEach((fn) => fn());
+    this.context?._clearEffect?.length = 0;
     this.instructions = null;
     this.currentIndex = null;
     this.status = ExecutorStatus.Idle;
