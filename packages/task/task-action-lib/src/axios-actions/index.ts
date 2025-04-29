@@ -1,6 +1,32 @@
-const resultMap = {};
+interface Params {
+  url: string;
+  timeout?: number;
+  method?: string;
+}
 
-const defaultValid = (result) => {
+interface Result {
+  response: AxiosResponse;
+  matchInfo?: MatchInfo;
+}
+
+interface Context {
+  $axiosConfig?: {
+    axios: AxiosInstance;
+    timeout?: number;
+    valid?: (result: Result) => boolean;
+  };
+  _clearEffect: (() => void)[];
+}
+
+interface MatchInfo {
+  matched: boolean;
+  params: Record<string, string>;
+  resUrl: string;
+}
+
+const resultMap: Record<string, Result[]> = {};
+
+const defaultValid = (result: Result): boolean => {
   const { response } = result || {};
   const { status } = response || {};
   if (status >= 200 && status < 300) {
@@ -10,13 +36,16 @@ const defaultValid = (result) => {
 };
 
 // 将路径分解为数组并处理动态参数
-const parsePath = (path) => {
+const parsePath = (path: string): string[] => {
   return path.split('/').filter((segment) => segment !== '');
 };
 
 // 提取动态参数
-function extractParams(resUrl, actionUrl) {
-  const params = {};
+function extractParams(
+  resUrl: string,
+  actionUrl: string
+): Record<string, string> {
+  const params: Record<string, string> = {};
   const pathSegments = parsePath(resUrl);
   const routeSegments = parsePath(actionUrl);
 
@@ -31,7 +60,7 @@ function extractParams(resUrl, actionUrl) {
 }
 
 // 将路由路径转换为正则表达式
-function pathToRegex(path) {
+function pathToRegex(path: string): RegExp {
   const segments = parsePath(path);
   const regexParts = segments.map((segment) => {
     if (segment.startsWith(':')) {
@@ -51,13 +80,14 @@ function pathToRegex(path) {
   return new RegExp(regex);
 }
 
-const matchUrl = (params, response) => {
+const matchUrl = (params: Params, response: AxiosResponse): MatchInfo => {
   const { url, method } = params;
-  const { method: reqMethod } = response?.config;
-  const isMathMethod = method ? method.toLowerCase() === reqMethod : true;
-  const { url: resUrl } = response.request;
+  const { method: reqMethod, url: resUrl } = response?.config || {};
+  const isMathMethod = method
+    ? method.toLowerCase() === reqMethod?.toLowerCase()
+    : true;
   const regex = pathToRegex(url);
-  const match = isMathMethod && resUrl.match(regex);
+  const match = isMathMethod && resUrl?.match(regex);
   if (match) {
     const params = url.includes(':') ? extractParams(resUrl, url) : {};
 
@@ -70,17 +100,23 @@ const matchUrl = (params, response) => {
   return {
     matched: false,
     params: {},
-    resUrl,
+    resUrl: resUrl || '',
   };
 };
 
 const start = {
   name: 'apiConfirmStart',
   description: '确认接口返回成功',
-  execute: async (params, context) => {
+  execute: async (
+    params: Params,
+    context: Context
+  ): Promise<{ status: string }> => {
+    const { axios, timeout: globalTimeout } = $axiosConfig || {};
+    if (!axios) {
+      return;
+    }
     const { url, timeout: actionTime } = params;
     const { $axiosConfig } = context;
-    const { axios, timeout: globalTimeout } = $axiosConfig || {};
     const timeout = actionTime || globalTimeout || 20000;
 
     if (!resultMap[url]) {
@@ -99,6 +135,7 @@ const start = {
       console.log('axios _clearEffect');
       setTimeout(remove, timeout);
     });
+
     const responseInterceptor = axios.interceptors.response.use(
       (response) => {
         try {
@@ -141,20 +178,19 @@ const start = {
 const end = {
   name: 'apiConfirmEnd',
   description: '确认接口返回成功',
-  execute: async (params, context) => {
+  execute: async (
+    params: Params,
+    context: Context
+  ): Promise<{ status: string; result?: any; error?: any }> => {
     const { url, timeout: actionTime } = params;
     const { $axiosConfig } = context;
-    const {
-      axios,
-      valid = defaultValid,
-      timeout: globalTimeout,
-    } = $axiosConfig || {};
+    const { valid = defaultValid, timeout: globalTimeout } = $axiosConfig || {};
     const timeout = actionTime || globalTimeout || 20000;
-    // eslint-disable-next-line no-async-promise-executor
+
     return new Promise(async (resolve, reject) => {
       const startTIme = Date.now();
       while (Date.now() - startTIme < timeout) {
-        const result = resultMap[url].shift();
+        const result = resultMap[url]?.shift();
         if (result) {
           const { response } = result;
           if (valid(result)) {
@@ -174,7 +210,6 @@ const end = {
         // eslint-disable-next-line no-await-in-loop
         await new Promise((waitFinish) => setTimeout(waitFinish, 100)); // 轮询间隔
       }
-      // eslint-disable-next-line prefer-promise-reject-errors
       reject({
         status: 'error',
         error: { message: '接口请求超时' },

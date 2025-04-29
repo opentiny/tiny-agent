@@ -147,8 +147,8 @@ class ActionScheduler {
       });
     }
     this.emit('finish');
-    this.context?._clearEffect.forEach((fn) => fn());
-    this.context?._clearEffect?.length = 0;
+    this.context._clearEffect.forEach((fn) => fn());
+    this.context._clearEffect = [];
     this.instructions = null;
     this.currentIndex = null;
     this.status = ExecutorStatus.Idle;
