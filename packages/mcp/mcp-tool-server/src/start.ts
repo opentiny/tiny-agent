@@ -22,6 +22,7 @@ const init = async () => {
     const filePath = file.startsWith('.')
       ? path.resolve(__dirname, '..', file)
       : path.resolve(file)
+    console.log('mcp-tool文件目录：', filePath)
 
     socketServer.start()
     mcpServer.start(filePath)
