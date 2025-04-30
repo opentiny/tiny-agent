@@ -48,6 +48,8 @@ const click: Action = {
 
 ```
 
+### 新增员工
+
 ```js
 // 新增员工场景测试instructions
 window.sendMessage({
@@ -138,6 +140,159 @@ window.sendMessage({
   ],
 });
 ```
+
+### 删除员工
+
+```js
+// 删除员工
+window.sendMessage({
+  id: '123',
+  instructions: [
+    { action: 'vue_push', params: { to: '/vue-pro/userManager/allInfo' } },
+    {
+      action: 'input',
+      params: { selector: '.ta-mark__search-input input', value: '岑子轩' },
+    },
+    {
+      action: 'click',
+      params: { selector: '.ta-mark__search-btn' },
+    },
+    {
+      action: 'click',
+      params: { selector: '.tiny-grid-body__row .operation-delete' },
+    },
+    {
+      action: 'apiConfirmStart',
+      params: {
+        url: '/api/user/:id',
+        method: 'DElETE',
+      },
+    },
+    {
+      action: 'userGuide',
+      params: {
+        selector: '.ta-mark__del-modal .tiny-button--primary',
+        type: 'click',
+        title: '高危操作',
+        text: '请您确认是否删除该员工！',
+      },
+    },
+    {
+      action: 'apiConfirmEnd',
+      params: {
+        url: '/api/user/:id',
+        method: 'DElETE',
+      },
+    },
+  ],
+});
+```
+
+### 查找员工
+
+```js
+window.sendMessage({
+  id: '123',
+  instructions: [
+    { action: 'vue_push', params: { to: '/vue-pro/userManager/allInfo' } },
+    // 条件为空，清空筛选
+    {
+      action: 'click',
+      params: { selector: '.ta-mark__employee-id .tiny-grid-filter__btn' },
+    },
+    {
+      action: 'click',
+      params: {
+        selector: '.filter__active .tiny-button--default',
+      },
+    },
+    {
+      action: 'click',
+      params: {
+        selector: '.filter__active .tiny-button--primary',
+      },
+    },
+    // 条件不为空，输入对应筛选条件
+    {
+      action: 'click',
+      params: { selector: '.ta-mark__employee-name .tiny-grid-filter__btn' },
+    },
+    {
+      action: 'input',
+      params: {
+        selector: '.filter__active .filter-option__input input',
+        value: '岑子轩',
+      },
+    },
+    {
+      action: 'click',
+      params: {
+        selector: '.filter__active .tiny-button--primary',
+      },
+    },
+    {
+      action: 'click',
+      params: {
+        selector: '.ta-mark__employee-department .tiny-grid-filter__btn',
+      },
+    },
+    {
+      action: 'input',
+      params: {
+        selector: '.filter__active .filter-option__input input',
+        value: '用户体验部',
+      },
+    },
+    {
+      action: 'click',
+      params: {
+        selector: '.filter__active .tiny-button--primary',
+      },
+    },
+    // 最后一步筛选添加接口监听
+    {
+      action: 'click',
+      params: {
+        selector: '.ta-mark__employee-email .tiny-grid-filter__btn',
+      },
+    },
+    {
+      action: 'click',
+      params: {
+        selector: '.filter__active .tiny-button--default',
+      },
+    },
+    {
+      action: 'apiConfirmStart',
+      params: {
+        url: '/api/user',
+        method: 'GET',
+        query: {
+          page: '1',
+        },
+      },
+    },
+    {
+      action: 'click',
+      params: {
+        selector: '.filter__active .tiny-button--primary',
+      },
+    },
+    {
+      action: 'apiConfirmEnd',
+      params: {
+        url: '/api/user',
+        method: 'GET',
+        query: {
+          page: '1',
+        },
+      },
+    },
+  ],
+});
+```
+
+### 更新员工
 
 ```js
 // 删除员工
