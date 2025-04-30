@@ -178,5 +178,104 @@
         }
       ]
     }
+  },
+  {
+    "name": "selectUser",
+    "description": "查询员工；",
+    "inputSchema": {
+      "name": {
+        "type": "string",
+        "description": "员工姓名"
+      },
+      "department": {
+        "type": "string",
+        "description": "员工部门"
+      }
+    },
+    "task": {
+      "id": "123",
+      "instructions": [
+        {
+          "action": "vue_push",
+          "params": { "to": "/vue-pro/userManager/allInfo" }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__employee-name .tiny-grid-filter__btn"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".filter__active .filter-option__input input",
+            "value": "{{name}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--primary"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__employee-department .tiny-grid-filter__btn"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".filter__active .filter-option__input input",
+            "value": "{{department}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--primary"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__employee-email .tiny-grid-filter__btn"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--default"
+          }
+        },
+        {
+          "action": "apiConfirmStart",
+          "params": {
+            "url": "/api/user",
+            "method": "GET",
+            "query": {
+              "page": "1"
+            }
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--primary"
+          }
+        },
+        {
+          "action": "apiConfirmEnd",
+          "params": {
+            "url": "/api/user",
+            "method": "GET",
+            "query": {
+              "page": "1"
+            }
+          }
+        }
+      ]
+    }
   }
 ]

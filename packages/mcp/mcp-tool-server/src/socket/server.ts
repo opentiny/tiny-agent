@@ -17,7 +17,7 @@ export default class SocketServer {
   private clientMap: Map<string, WebSocket>
 
   constructor(port: number) {
-    this.wss = new WebSocketServer({ port: port || 8082 })
+    this.wss = new WebSocketServer({ host: '0.0.0.0', port: port || 8082 })
     this.clientMap = new Map()
   }
 
