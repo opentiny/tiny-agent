@@ -20,16 +20,16 @@ const UserGuide: Action = {
     const { tipToResume } = context?.$ui || {};
     pause && pause();
 
-    if (type === 'click') {
-      element.addEventListener(
-        'click',
-        () => {
-          guideModal.hide();
-          resume && resume();
-        },
-        { once: true }
-      );
-    }
+    // if (type === 'click') {
+    //   element.addEventListener(
+    //     'click',
+    //     () => {
+    //       guideModal.hide();
+    //       resume && resume();
+    //     },
+    //     { once: true }
+    //   );
+    // }
 
     guideModal.onHide(() => {
       tipToResume && tipToResume('完成操作后点击继续');

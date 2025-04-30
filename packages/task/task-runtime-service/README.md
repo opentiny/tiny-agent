@@ -444,7 +444,7 @@ window.sendMessage({
         selector: '.ta-mark__user-update-modal .general-btn > button',
         type: 'click',
         title: '高危操作',
-        text: '请自行提交新增员工操作！',
+        text: '请自行提交更新员工操作！',
       },
     },
     {
