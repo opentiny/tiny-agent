@@ -18,6 +18,7 @@ const init = async () => {
     const socketServer = new SocketServer(port)
     const mcpServer = new TinyAgentMcpServer(socketServer)
 
+    console.log('mcp-tool文件目录：', __filename)
     const __dirname = path.dirname(new URL(__filename).pathname)
     const filePath = file.startsWith('.')
       ? path.resolve(__dirname, '..', file)
