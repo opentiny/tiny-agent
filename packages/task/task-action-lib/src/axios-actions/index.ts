@@ -94,18 +94,38 @@ function pathToRegex(path: string): RegExp {
   return new RegExp(regex);
 }
 
+const isMatchQuery = (query, resQuery) => {
+  if (!query) {
+    return true;
+  }
+  if (!Object.keys(query).length) {
+    return true;
+  }
+
+  let isMatch = true;
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (value !== resQuery[key]) {
+      isMatch = false;
+    }
+  });
+
+  return isMatch;
+};
+
 const matchUrl = (params: Params, response: AxiosResponse): MatchInfo => {
-  const { url, method } = params;
+  const { url, method, query } = params;
   const { method: reqMethod, url: resUrl } = response?.config || {};
   const trimQueryUrl = resUrl.split('?')[0];
+  const resQuery = getQueryParams(resUrl);
   const isMathMethod = method
     ? method.toLowerCase() === reqMethod?.toLowerCase()
     : true;
   const regex = pathToRegex(url);
-  const match = isMathMethod && trimQueryUrl?.match(regex);
+  const match =
+    isMathMethod && trimQueryUrl?.match(regex) && isMatchQuery(query, resQuery);
   if (match) {
     const params = url.includes(':') ? extractParams(resUrl, url) : {};
-    const query = getQueryParams(resUrl);
 
     return {
       matched: true,
@@ -158,6 +178,7 @@ const start = {
       (response) => {
         try {
           const matchInfo = matchUrl(params, response);
+          // console.log('success matchInfo', matchInfo);
           if (!matchInfo.matched) {
             return response;
           }
@@ -176,6 +197,7 @@ const start = {
       (error) => {
         try {
           const matchInfo = matchUrl(params, error);
+          // console.log('error matchInfo', matchInfo);
           if (!matchInfo.matched) {
             return Promise.reject(error);
           }
