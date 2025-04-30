@@ -79,8 +79,9 @@ class WebSocketClient {
 
 let client: WebSocketClient
 
-export function startClient(onTask, mcpService: McpService, port: string) {
-  client = new WebSocketClient(`ws://localhost:${port}`)
+export function startClient(onTask, mcpService: McpService, url: string) {
+  const wsUrl = url || 'ws://localhost:8082'
+  client = new WebSocketClient(wsUrl)
 
   client.connect().then(() => {
     // 发送消息

@@ -17,12 +17,10 @@ const init = async () => {
   try {
     const socketServer = new SocketServer(port)
     const mcpServer = new TinyAgentMcpServer(socketServer)
-
-    const __dirname = path.dirname(new URL(__filename).pathname)
+    const __dirname = __filename.replace('start.ts', '')
     const filePath = file.startsWith('.')
       ? path.resolve(__dirname, '..', file)
       : path.resolve(file)
-    console.log('mcp-tool文件目录：', filePath)
 
     socketServer.start()
     mcpServer.start(filePath)
