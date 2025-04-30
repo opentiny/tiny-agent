@@ -80,9 +80,9 @@ class WebSocketClient {
 let client: WebSocketClient
 
 export function startClient(onTask, mcpService: McpService, port: string) {
-  const wsUrl = process.env.WS_URL || 'localhost'
+  const wsUrl = process.env.VUE_APP_WS_URL || 'localhost'
   console.log('env: ', process.env)
-  console.log('WS_URL: ', process.env.WS_URL)
+  console.log('WS_URL: ', process.env.VUE_APP_WS_URL)
   client = new WebSocketClient(`ws://${wsUrl}:${port}`)
 
   client.connect().then(() => {
