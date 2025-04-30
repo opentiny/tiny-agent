@@ -1,6 +1,5 @@
 import express, { Express, Request, Response } from 'express'
 import fs from 'fs/promises'
-import { z, ZodRawShape } from 'zod'
 import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import {
   ListToolsRequestSchema,
@@ -9,7 +8,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import SocketServer, { MessageType } from '../socket/server'
-import { McpTool, McpToolParam, McpToolTaskSchema } from '.'
+import { McpTool, McpToolTaskSchema } from './type'
 
 export default class TinyAgentMcpServer {
   private socketServer: SocketServer

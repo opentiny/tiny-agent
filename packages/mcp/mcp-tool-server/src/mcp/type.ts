@@ -9,11 +9,6 @@ type Instruction = {
   }
 }
 
-export type McpToolParam = {
-  type: string
-  name: string
-}
-
 export type McpToolTaskSchema = {
   id: string
   instruction: Array<Instruction>
