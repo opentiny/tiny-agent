@@ -21,6 +21,7 @@ interface Context {
 interface MatchInfo {
   matched: boolean;
   params: Record<string, string>;
+  query: Record<string, string>;
   resUrl: string;
 }
 
@@ -40,7 +41,20 @@ const parsePath = (path: string): string[] => {
   return path.split('/').filter((segment) => segment !== '');
 };
 
-// 提取动态参数
+// 提取查询参数
+const getQueryParams = (url: string) => {
+  const params = {};
+  const regex = /[?&]([^&=]+)=([^&]*)/g;
+  let match;
+
+  while ((match = regex.exec(url))) {
+    params[decodeURIComponent(match[1])] = decodeURIComponent(match[2]);
+  }
+
+  return params;
+};
+
+// 提取动态路由参数
 function extractParams(
   resUrl: string,
   actionUrl: string
@@ -83,23 +97,27 @@ function pathToRegex(path: string): RegExp {
 const matchUrl = (params: Params, response: AxiosResponse): MatchInfo => {
   const { url, method } = params;
   const { method: reqMethod, url: resUrl } = response?.config || {};
+  const trimQueryUrl = resUrl.split('?')[0];
   const isMathMethod = method
     ? method.toLowerCase() === reqMethod?.toLowerCase()
     : true;
   const regex = pathToRegex(url);
-  const match = isMathMethod && resUrl?.match(regex);
+  const match = isMathMethod && trimQueryUrl?.match(regex);
   if (match) {
     const params = url.includes(':') ? extractParams(resUrl, url) : {};
+    const query = getQueryParams(resUrl);
 
     return {
       matched: true,
       params,
       resUrl,
+      query,
     };
   }
   return {
     matched: false,
     params: {},
+    query: {},
     resUrl: resUrl || '',
   };
 };
