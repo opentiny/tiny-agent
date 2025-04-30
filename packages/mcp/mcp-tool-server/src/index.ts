@@ -17,7 +17,7 @@ const init = async () => {
   try {
     const socketServer = new SocketServer(port)
     const mcpServer = new TinyAgentMcpServer(socketServer)
-    const __dirname = __filename.replace('start.ts', '')
+    const __dirname = __filename.replace('index.ts', '')
     const filePath = file.startsWith('.')
       ? path.resolve(__dirname, '..', file)
       : path.resolve(file)
