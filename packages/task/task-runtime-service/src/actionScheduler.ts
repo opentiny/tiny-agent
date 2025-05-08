@@ -9,7 +9,7 @@ export enum ExecutorStatus {
   Paused = 'paused',
 }
 
-class ActionScheduler {
+class ActionScheduler extends EventEmitter {
   private actionManager: ActionManager;
   private context: any;
   private instructions: Instruction[]; // 执行中的指令集
@@ -20,24 +20,11 @@ class ActionScheduler {
   private resultStatus: ActionsResult['status'];
   private finalResult: ActionsResult['result'];
   private pauseResolve: () => void;
-  private emitter: EventEmitter;
 
   constructor() {
-    this.context = {};
+    super();
+    this.context = { _clearEffect: [] };
     this.actionManager = new ActionManager();
-    this.emitter = new EventEmitter();
-  }
-
-  on(event: string, callback: (...args: any) => void): void {
-    this.emitter.on(event, callback);
-  }
-
-  off(event: string, callback: (...args: any) => void): void {
-    this.emitter.off(event, callback);
-  }
-
-  emit(event: string, ...args: any): void {
-    this.emitter.emit(event, ...args);
   }
 
   provideContext(context: any) {
@@ -97,7 +84,7 @@ class ActionScheduler {
 
         // 延迟等待1s，模拟异步操作，api-confirm指令不能延迟，否则接口返回会比执行早
         if (this.instructions[this.currentIndex + 1]?.name !== 'api-confirm') {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 200));
         }
         if (status === 'success') {
           this.finalResult = result;
@@ -106,6 +93,7 @@ class ActionScheduler {
           // 暂停执行，并使暂停方法返回
           if (this.status === ExecutorStatus.Paused) {
             this.pauseResolve?.();
+            this.pauseResolve = null;
           }
 
           if (this.currentIndex === this.instructions.length - 1) {
@@ -147,6 +135,11 @@ class ActionScheduler {
       });
     }
     this.emit('finish');
+    this.context?._clearEffect.forEach((fn) => fn());
+
+    if (this.context?._clearEffect) {
+      this.context._clearEffect.length = 0;
+    }
     this.instructions = null;
     this.currentIndex = null;
     this.status = ExecutorStatus.Idle;
@@ -165,10 +158,14 @@ class ActionScheduler {
   }
 
   waitPause(): Promise<void> {
+    if (this.pauseResolve) {
+      return this.waitPromise;
+    }
     this.pause();
-    return new Promise((resolve) => {
+    this.waitPromise = new Promise<void>((resolve) => {
       this.pauseResolve = resolve;
     });
+    return this.waitPromise;
   }
 
   // 恢复执行
@@ -198,7 +195,10 @@ class ActionScheduler {
   }
 
   // 停止执行并返回结果
-  stop(): void {
+  async stop(): void {
+    if (this.status === ExecutorStatus.running) {
+      await this.waitPause();
+    }
     this.finish();
   }
 }

@@ -2,33 +2,46 @@ import EventEmitter from './eventEmitter';
 import {
   addTwinkle,
   removeTwinkle,
+  addTooltip,
 } from '@opentiny/tiny-agent-task-action-lib';
 
-import { addTooltip, removeTooltip } from './addTooltip';
+import skip from './assets/images/skip.svg?url';
+import skipDisabled from './assets/images/skip-disabled.svg?url';
+import pause from './assets/images/pause.svg?url';
+import resume from './assets/images/resume.svg?url';
+import stop from './assets/images/stop.svg?url';
+import stopDisabled from './assets/images/stop-disabled.svg?url';
 
-// TODO: 使用时不应该每次都要new一个实例，全局new一次即可
+// UI运行状态 TODO: 需要扩展loading状态
+export enum Status {
+  Stop = 'stop',
+  Running = 'running',
+  Paused = 'paused',
+}
 
-const skipBtnStyles = {
-  margin: '5px 10px 0 0',
-  padding: '8px 15px',
-  backgroundColor: '#f0f0f0',
-  border: '1px solid #ddd',
-  borderRadius: '4px',
-  cursor: 'pointer',
+const titleStyles = {
+  fontSize: '14px',
+  color: '#191919',
+  width: '180px',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 };
-const rightBtnStyles = {
-  padding: '8px 15px',
-  backgroundColor: '#007bff',
-  color: 'white',
-  border: 'none',
-  borderRadius: '4px',
-  cursor: 'pointer',
+
+const createImg = (src: string) => {
+  const img = document.createElement('img');
+  img.src = src;
+  Object.assign(img.style, {
+    width: '24px',
+    height: '24px',
+    marginLeft: '12px',
+    cursor: 'pointer',
+    borderRadius: '50%',
+  });
+  return img;
 };
 
-type fn = () => void;
-
-export class BreathAni {
-  private emitter: EventEmitter;
+export class SchedulerUI extends EventEmitter {
   messageBox: HTMLDivElement;
   title: HTMLDivElement | null = null;
   pauseBtn!: HTMLButtonElement;
@@ -36,32 +49,12 @@ export class BreathAni {
   light: HTMLDivElement;
 
   constructor({ title }: { title: string }) {
+    super();
     this.light = this.createBreathingLight();
     this.messageBox = this.createMessageBox();
-    this.emitter = new EventEmitter();
     this.init({
       title,
-      skipBtnData: {
-        text: '跳过',
-        onClick: () => this.skip(),
-      },
-      pauseBtnData: {
-        text: '暂停',
-        onClick: () => this.doPause(),
-      },
     });
-  }
-
-  on(event: string, callback: (...args: any) => void): void {
-    this.emitter.on(event, callback);
-  }
-
-  off(event: string, callback: (...args: any) => void): void {
-    this.emitter.off(event, callback);
-  }
-
-  emit(event: string, ...args: any): void {
-    this.emitter.emit(event, ...args);
   }
 
   private createMessageBox() {
@@ -70,11 +63,13 @@ export class BreathAni {
       position: 'fixed',
       bottom: '20px',
       left: '20px',
-      padding: '15px 20px',
+      padding: '0 24px',
       backgroundColor: 'white',
-      border: '1px solid #e0e0e0',
-      borderRadius: '8px',
-      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+      borderRadius: '27px',
+      boxShadow: '0 2px 40px rgba(0, 0, 0, 0.16)',
+      height: '54px',
+      display: 'flex',
+      alignItems: 'center',
       zIndex: '10000',
     };
     Object.assign(box.style, boxStyles);
@@ -82,115 +77,143 @@ export class BreathAni {
     return box;
   }
 
-  private createBtn({
-    text,
-    styles,
-    onClick,
-  }: {
-    text: string;
-    styles: Record<string, string>;
-    onClick: fn;
-  }) {
-    const btn = document.createElement('button');
-    btn.textContent = text;
-    Object.assign(btn.style, styles);
-    return btn;
-  }
+  private init({ title, skipBtnData, pauseBtnData }: { title: string }) {
+    this.titleElm = document.createElement('div');
+    Object.assign(this.titleElm.style, titleStyles);
+    this.setTitle(title);
 
-  private init({
-    title,
-    skipBtnData,
-    pauseBtnData,
-  }: {
-    title: string;
-    skipBtnData: { text: string; onClick: fn };
-    pauseBtnData: { text: string; onClick: fn };
-  }) {
-    this.title = document.createElement('div');
-    this.title.textContent = title;
-    this.skipBtn = this.createBtn({
-      text: '跳过',
-      styles: skipBtnStyles,
-    });
+    this.skipBtn = createImg(skip);
+    this.skipBtn.onclick = () => this.skip(true);
+    this.skipBtn.title = '跳过';
 
-    this.skipBtn.onclick = () => this.skip();
+    this.skipDisabledBtn = createImg(skipDisabled);
+    this.skipDisabledBtn.style.cursor = 'not-allowed';
 
-    this.stopBtn = this.createBtn({
-      text: '终止',
-      styles: skipBtnStyles,
-    });
+    this.stopBtn = createImg(stop);
+    this.stopBtn.onclick = () => this.stop(true);
+    this.stopBtn.title = '停止';
 
-    this.stopBtn.onclick = () => this.doStop();
+    this.stopDisabledBtn = createImg(stopDisabled);
+    this.stopDisabledBtn.style.cursor = 'not-allowed';
 
-    this.pauseBtn = this.createBtn({
-      text: pauseBtnData.text,
-      styles: rightBtnStyles,
-    });
+    this.pauseBtn = createImg(pause);
+    this.pauseBtn.onclick = () => this.pause(true);
+    this.pauseBtn.title = '暂停';
 
-    this.skipBtn.disabled = true;
-    this.stopBtn.disabled = true;
+    this.resumeBtn = createImg(resume);
+    this.resumeBtn.onclick = () => this.resume(true);
+    this.resumeBtn.title = '恢复';
 
     this.messageBox.append(
-      this.title,
-      this.skipBtn,
-      this.stopBtn,
-      this.pauseBtn
+      this.titleElm,
+      this.skipDisabledBtn,
+      this.pauseBtn,
+      this.stopBtn
     );
+
+    //this.hide(); // 初始化时隐藏
+  }
+
+  setTitle(title: string) {
+    if (this.titleElm) {
+      this.titleElm.textContent = title;
+      Promise.resolve().then(() => {
+        if (this.titleElm.scrollWidth > this.titleElm.offsetWidth) {
+          this.titleTooltip = addTooltip(this.titleElm, title); // 添加提示
+        } else {
+          this.titleTooltip.destroy(); // 移除提示
+        }
+      });
+    } else {
+      console.warn('Title element not found!');
+    }
+  }
+
+  setStatus(status: Status) {
+    if (status === Status.Running) {
+      this.messageBox.replaceChildren(
+        this.titleElm,
+        this.skipDisabledBtn,
+        this.pauseBtn,
+        this.stopBtn
+      );
+    } else if (status === Status.Paused) {
+      this.messageBox.replaceChildren(
+        this.titleElm,
+        this.skipBtn,
+        this.resumeBtn,
+        this.stopBtn
+      );
+    } else if (status === Status.Stop) {
+      this.messageBox.replaceChildren(
+        this.titleElm,
+        this.skipDisabledBtn,
+        this.pauseBtn,
+        this.stopBtn
+      );
+    }
+  }
+
+  hide() {
+    this.messageBox.style.display = 'none';
+    this.light.style.display = 'none';
+  }
+
+  show() {
+    this.messageBox.style.display = 'flex';
+    this.light.style.display = 'block';
   }
 
   changeState({ title, isPaused }: { title: string; isPaused: boolean }) {
     if (title) {
-      this.title!.textContent = title; // 更新标题文本
+      this.titleElm!.textContent = title; // 更新标题文本
     }
     if (isPaused === null || isPaused === undefined) {
       return; // 如果没有传入 isPaused，则不进行任何操作
     }
     if (isPaused) {
       this.pauseBtn.textContent = '继续';
-      this.pauseBtn.onclick = () => this.doResume();
+      this.pauseBtn.onclick = () => this.resume(true);
       this.skipBtn.disabled = false;
       this.stopBtn.disabled = false;
       this.pauseLight(); // 暂停呼吸灯动画
     } else {
       this.pauseBtn.textContent = '暂停';
-      this.pauseBtn.onclick = () => this.doPause();
+      this.pauseBtn.onclick = () => this.pause(true);
       this.skipBtn.disabled = true;
       this.stopBtn.disabled = true;
       this.continueLight();
     }
   }
 
-  doPause() {
-    this.pause();
-    this.emit('pause');
+  pause(isEmit: boolean = false) {
+    if (isEmit) {
+      this.emit('pause');
+    }
+    this.setStatus(Status.Paused);
   }
 
-  pause() {
-    this.changeState({ title: '操作暂停中...', isPaused: true });
+  skip(isEmit: boolean = false) {
+    if (isEmit) {
+      this.emit('skip');
+    }
   }
 
-  skip() {
-    this.emit('skip');
-  }
-
-  doResume() {
-    this.resume();
-    this.emit('resume');
-  }
-
-  resume() {
-    this.changeState({ isPaused: false });
+  resume(isEmit: boolean = false) {
+    if (isEmit) {
+      this.emit('resume');
+    }
+    this.setStatus(Status.Running);
     removeTwinkle(this.pauseBtn);
-    removeTooltip(this.pauseBtn);
+    this.pauseTooltip.destroy();
   }
 
-  doStop() {
-    this.stop();
-    this.emit('stop');
-  }
-
-  stop() {
-    this.remove();
+  stop(isEmit: boolean = false) {
+    if (isEmit) {
+      this.emit('stop');
+    }
+    this.setStatus(Status.Stop);
+    this.hide();
   }
 
   private createBreathingLight() {
@@ -203,10 +226,10 @@ export class BreathAni {
     style.textContent = `
       @keyframes shadow_fade {
           0%, to {
-              box-shadow: inset 10px 10px 30px 0 #316fff4d, inset -10px -10px 30px 0 #159bde4d;
+              box-shadow: inset 10px 10px 30px 0 rgba(20,118,255, 0.3), inset -10px -10px 30px 0 rgba(20,118,255, 0.3);
           }
           50% {
-              box-shadow: inset 20px 20px 60px 0 #316fff99, inset -20px -20px 60px 0 #159bde99;
+              box-shadow: inset 20px 20px 60px 0 rgba(20,118,255, 0.6), inset -20px -20px 60px 0 rgba(20,118,255, 0.6);
           }
       }
       .task-run-shadow {
@@ -228,7 +251,7 @@ export class BreathAni {
     return light;
   }
 
-  remove() {
+  destroy() {
     if (document.body.contains(this.light)) {
       document.body.removeChild(this.light);
     }
@@ -245,10 +268,11 @@ export class BreathAni {
     this.light.style.animationPlayState = 'running';
   }
 
+  // 给恢复按钮加上提示
   tipToResume(tip) {
-    addTwinkle(this.pauseBtn);
-    addTooltip(this.pauseBtn, '完成操作后点击继续');
+    addTwinkle(this.resumeBtn);
+    this.pauseTooltip = addTooltip(this.resumeBtn, tip);
   }
 }
 
-export default BreathAni;
+export default SchedulerUI;
