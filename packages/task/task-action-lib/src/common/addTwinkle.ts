@@ -1,3 +1,4 @@
+import '../assets/styles/breathe.css';
 let isAddStyle = false;
 
 const className = 'ta-twinkle';
@@ -55,9 +56,6 @@ const addStyle = () => {
   animation: glow-hover 1.5s ease-in-out infinite;
 }
 
-.${className}:hover {
-  background-color: #0056b3;
-}
 
 @keyframes glow-hover {
   0% {
@@ -108,11 +106,11 @@ const addTwinkle = (element: HTMLElement) => {
     addStyle();
     isAddStyle = true;
   }
-  element.classList.add(className);
+  element.classList.add('ta-breathe');
 };
 
 const removeTwinkle = (element: HTMLElement) => {
-  element.classList.remove(className);
+  element.classList.remove('ta-breathe');
 };
 
 export { addTwinkle, removeTwinkle };

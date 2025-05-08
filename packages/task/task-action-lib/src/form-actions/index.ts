@@ -1,5 +1,5 @@
 import { Action } from '../common/action.d';
-import { findElement } from '../common';
+import { findElement } from '../common/dom';
 import {
   simulateCheckboxSelection,
   simulateRadioSelection,

@@ -1,6 +1,6 @@
 // dom_operation_lib.ts
 import { Action } from '../common/action.d';
-import { findElement, getElementByText } from '../common';
+import { findElement, getElementByText } from '../common/dom';
 import { simulateClick } from './dom-simulate';
 
 // 历史堆栈操作

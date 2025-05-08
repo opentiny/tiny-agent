@@ -1,4 +1,4 @@
-import { commonEvents, rawEvents } from '../common';
+import { commonEvents, rawEvents } from '../common/dom';
 
 // 定义输入事件对象，引用归类好的事件
 export const inputEvents = {

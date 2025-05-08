@@ -1,4 +1,4 @@
-import { dispatchEvent } from '../common';
+import { dispatchEvent } from '../common/dom';
 import { inputEvents, selectEvents } from './form_events';
 
 /**
