@@ -1,7 +1,7 @@
 import EventEmitter from './eventEmitter';
 import {
-  addTwinkle,
-  removeTwinkle,
+  addBreathe,
+  removeBreathe,
   addTooltip,
 } from '@opentiny/tiny-agent-task-action-lib';
 
@@ -43,18 +43,22 @@ const createImg = (src: string) => {
 
 export class SchedulerUI extends EventEmitter {
   messageBox: HTMLDivElement;
-  title: HTMLDivElement | null = null;
-  pauseBtn!: HTMLButtonElement;
-  skipBtn!: HTMLButtonElement;
+  titleElm!: HTMLDivElement;
+  pauseBtn!: HTMLImageElement;
+  skipBtn!: HTMLImageElement;
+  skipDisabledBtn!: HTMLImageElement;
+  stopBtn!: HTMLImageElement;
+  stopDisabledBtn!: HTMLImageElement;
+  resumeBtn!: HTMLImageElement;
   light: HTMLDivElement;
+  titleTooltip: { destroy: () => void } | null = null;
+  pauseTooltip: { destroy: () => void } | null = null;
 
   constructor({ title }: { title: string }) {
     super();
     this.light = this.createBreathingLight();
     this.messageBox = this.createMessageBox();
-    this.init({
-      title,
-    });
+    this.init({ title });
   }
 
   private createMessageBox() {
@@ -77,7 +81,7 @@ export class SchedulerUI extends EventEmitter {
     return box;
   }
 
-  private init({ title, skipBtnData, pauseBtnData }: { title: string }) {
+  private init({ title }: { title: string }) {
     this.titleElm = document.createElement('div');
     Object.assign(this.titleElm.style, titleStyles);
     this.setTitle(title);
@@ -121,7 +125,7 @@ export class SchedulerUI extends EventEmitter {
         if (this.titleElm.scrollWidth > this.titleElm.offsetWidth) {
           this.titleTooltip = addTooltip(this.titleElm, title); // 添加提示
         } else {
-          this.titleTooltip.destroy(); // 移除提示
+          this.titleTooltip?.destroy(); // 移除提示
         }
       });
     } else {
@@ -174,14 +178,14 @@ export class SchedulerUI extends EventEmitter {
     if (isPaused) {
       this.pauseBtn.textContent = '继续';
       this.pauseBtn.onclick = () => this.resume(true);
-      this.skipBtn.disabled = false;
-      this.stopBtn.disabled = false;
+      this.skipBtn.style.cursor = 'pointer';
+      this.stopBtn.style.cursor = 'pointer';
       this.pauseLight(); // 暂停呼吸灯动画
     } else {
       this.pauseBtn.textContent = '暂停';
       this.pauseBtn.onclick = () => this.pause(true);
-      this.skipBtn.disabled = true;
-      this.stopBtn.disabled = true;
+      this.skipBtn.style.cursor = 'not-allowed';
+      this.stopBtn.style.cursor = 'not-allowed';
       this.continueLight();
     }
   }
@@ -204,8 +208,8 @@ export class SchedulerUI extends EventEmitter {
       this.emit('resume');
     }
     this.setStatus(Status.Running);
-    removeTwinkle(this.pauseBtn);
-    this.pauseTooltip.destroy();
+    removeBreathe(this.pauseBtn);
+    this.pauseTooltip?.destroy();
   }
 
   stop(isEmit: boolean = false) {
@@ -252,10 +256,10 @@ export class SchedulerUI extends EventEmitter {
   }
 
   destroy() {
-    if (document.body.contains(this.light)) {
+    if (this.light && document.body.contains(this.light)) {
       document.body.removeChild(this.light);
     }
-    if (document.body.contains(this.messageBox)) {
+    if (this.messageBox && document.body.contains(this.messageBox)) {
       document.body.removeChild(this.messageBox);
     }
   }
@@ -269,8 +273,8 @@ export class SchedulerUI extends EventEmitter {
   }
 
   // 给恢复按钮加上提示
-  tipToResume(tip) {
-    addTwinkle(this.resumeBtn);
+  tipToResume(tip: string) {
+    addBreathe(this.resumeBtn);
     this.pauseTooltip = addTooltip(this.resumeBtn, tip);
   }
 }

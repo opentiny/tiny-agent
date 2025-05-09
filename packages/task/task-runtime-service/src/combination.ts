@@ -1,7 +1,9 @@
-import TaskScheduler from './TaskScheduler';
-import SchedulerUI from './SchedulerUI';
+import TaskScheduler from './taskScheduler';
+import SchedulerUI from './schedulerUI';
+import type { Action, SchedulerContext, Task, Scheduler } from './types';
+import ActionScheduler from './actionScheduler';
 
-const initUI = (actionScheduler) => {
+const initUI = (actionScheduler: ActionScheduler) => {
   let ui = new SchedulerUI({
     title: 'AI操作中，您可以暂停或终止',
   });
@@ -40,43 +42,53 @@ const initUI = (actionScheduler) => {
     ui.stop();
   });
 
-  actionScheduler.on('beforeStep', ({ index, instruction }) => {
-    ui.setTitle(`执行指令${index}`);
-  });
+  actionScheduler.on(
+    'beforeStep',
+    ({ index, instruction }: { index: number; instruction: any }) => {
+      ui.setTitle(`执行指令${index}`);
+    }
+  );
 };
 
-const initConnect = (taskScheduler) => {
+const initConnect = (taskScheduler: TaskScheduler) => {
   // mock 通信层
-  const onMessage = (task: any) => {
+  const onMessage = (task: Task) => {
     // 可以在这里调用 taskScheduler.doTask() 来处理消息
     return taskScheduler.doTask(task);
   };
 
-  window.sendMessage = async (task: any) => {
+  window.sendMessage = async (task: Task) => {
     try {
       const result = await onMessage(task);
       console.log('Result:', result);
     } catch (err) {
       console.error('Error:', err);
-      throw new Error(err);
+      return Promise.reject(err);
     }
   };
 };
 
-const createScheduler = (actions, context) => {
+const createScheduler = (
+  actions: Action[],
+  context: SchedulerContext
+): Scheduler => {
   const taskScheduler = new TaskScheduler(actions, context);
   const actionScheduler = taskScheduler.actionScheduler;
-  const api = ['registerActions', 'registerAction', 'provideContext'];
-  const scheduler = {};
+  const api = ['registerActions', 'registerAction', 'provideContext'] as const;
+  const scheduler: Partial<Scheduler> = {};
+
   api.forEach((method) => {
-    scheduler[method] = actionScheduler[method].bind(taskScheduler);
+    if (method in actionScheduler) {
+      scheduler[method] = (actionScheduler as any)[method].bind(taskScheduler);
+    }
   });
 
   scheduler.install = () => {
     initUI(actionScheduler);
     initConnect(taskScheduler);
   };
-  return scheduler;
+
+  return scheduler as Scheduler;
 };
 
 export { createScheduler };

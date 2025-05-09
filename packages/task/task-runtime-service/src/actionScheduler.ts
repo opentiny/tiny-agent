@@ -1,4 +1,9 @@
-import type { ActionsResult, Instruction } from './types';
+import type {
+  Action,
+  ActionsResult,
+  Instruction,
+  SchedulerContext,
+} from './types';
 import ActionManager from './actionManager';
 import EventEmitter from './eventEmitter';
 
@@ -11,15 +16,16 @@ export enum ExecutorStatus {
 
 class ActionScheduler extends EventEmitter {
   private actionManager: ActionManager;
-  private context: any;
-  private instructions: Instruction[]; // 执行中的指令集
-  private currentIndex: number;
-  private status: ExecutorStatus;
-  private resolve: (value: ActionsResult) => void;
-  private reject: (value: ActionsResult) => void;
-  private resultStatus: ActionsResult['status'];
-  private finalResult: ActionsResult['result'];
-  private pauseResolve: () => void;
+  private context: SchedulerContext;
+  private instructions: Instruction[] = []; // 执行中的指令集
+  private currentIndex: number = 0;
+  private status: ExecutorStatus = ExecutorStatus.Idle; // 执行器状态
+  private resolve: ((value: ActionsResult) => void) | null = null; // 成功回调
+  private reject: ((value: ActionsResult) => void) | null = null; // 失败回调
+  private resultStatus: ActionsResult['status'] = 'error'; // 结果状态
+  private finalResult: ActionsResult['result']; // 最后结果
+  private pauseResolve: (() => void) | null = null;
+  private waitPromise: Promise<void> | null = null;
 
   constructor() {
     super();
@@ -27,23 +33,23 @@ class ActionScheduler extends EventEmitter {
     this.actionManager = new ActionManager();
   }
 
-  provideContext(context: any) {
+  provideContext(context: Partial<SchedulerContext>) {
     this.context = {
       ...this.context,
       ...context,
       $scheduler: {
-        pause: (...args) => this.pause(...args),
+        pause: (...args: unknown[]) => this.pause(...args),
         resume: () => this.resume(),
       },
     };
   }
 
-  registerAction(...args: any): void {
-    this.actionManager.registerAction(...args);
+  registerAction(action: Action): void {
+    this.actionManager.registerAction(action);
   }
 
-  registerActions(...args: any): void {
-    this.actionManager.registerActions(...args);
+  registerActions(actions: Action[]): void {
+    this.actionManager.registerActions(actions);
   }
 
   execute(instructions: Instruction[]): Promise<ActionsResult> {
@@ -62,11 +68,11 @@ class ActionScheduler extends EventEmitter {
       this.resolve = resolve;
       this.reject = reject;
       this.emit('start');
-      this.start();
+      await this.start();
     });
   }
 
-  async start(): Promise<ActionsResult> {
+  async start(): Promise<void> {
     while (
       this.currentIndex < this.instructions.length &&
       this.status === ExecutorStatus.Running
@@ -81,24 +87,23 @@ class ActionScheduler extends EventEmitter {
         const { status, result, error } =
           await this.actionManager.executeAction(action, params, this.context);
 
-        // 延迟等待1s，模拟异步操作，api-confirm指令不能延迟，否则接口返回会比执行早
-        if (this.instructions[this.currentIndex + 1]?.name !== 'api-confirm') {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-        }
+        // 延迟等待200ms，使每个action之间有停顿
+        await new Promise((resolve) => setTimeout(resolve, 200));
         if (status === 'success') {
           this.finalResult = result;
           this.resultStatus = 'partial completed';
 
           // 暂停执行，并使暂停方法返回
-          if (this.status === ExecutorStatus.Paused) {
+          if (this.status === (ExecutorStatus.Paused as ExecutorStatus)) {
             this.pauseResolve?.();
             this.pauseResolve = null;
+            this.waitPromise = null;
           }
 
           if (this.currentIndex === this.instructions.length - 1) {
             this.resultStatus = status;
             // 最后一步点了暂停，等待恢复
-            if (this.status !== ExecutorStatus.Paused) {
+            if (this.status !== (ExecutorStatus.Paused as ExecutorStatus)) {
               return this.finish();
             }
           }
@@ -110,50 +115,50 @@ class ActionScheduler extends EventEmitter {
           return this.finish();
         }
       } catch (error) {
-        this.finalResult = error;
+        this.finalResult = error as { message: string; stack?: string };
         this.resultStatus = 'error';
         return this.finish();
       }
     }
   }
 
-  finish() {
+  finish(): void {
+    const result: ActionsResult = {
+      status: this.resultStatus,
+      index: this.currentIndex,
+      instruction: this.instructions[this.currentIndex],
+      ...(this.resultStatus === 'error'
+        ? { error: this.finalResult as { message: string; stack?: string } }
+        : { result: this.finalResult }),
+    };
+
     if (this.resultStatus === 'error') {
-      this.reject({
-        status: this.resultStatus,
-        index: this.currentIndex,
-        instruction: this.instructions[this.currentIndex],
-        error: this.finalResult,
-      });
+      this.reject?.(result);
     } else {
-      this.resolve({
-        status: this.resultStatus,
-        index: this.currentIndex,
-        instruction: this.instructions[this.currentIndex],
-        result: this.finalResult,
-      });
+      this.resolve?.(result);
     }
+
     this.emit('finish');
-    this.context?._clearEffect.forEach((fn) => fn());
+    this.context?._clearEffect.forEach((fn: () => void) => fn());
 
     if (this.context?._clearEffect) {
       this.context._clearEffect.length = 0;
     }
-    this.instructions = null;
-    this.currentIndex = null;
+    this.instructions = [];
+    this.currentIndex = 0;
     this.status = ExecutorStatus.Idle;
     this.resolve = null;
     this.reject = null;
   }
 
-  // 暂停执行
-  pause(): void {
+  pause(...args: unknown[]): void {
     this.emit('pause');
     this.status = ExecutorStatus.Paused;
   }
 
+  // 单个action执行无法中断，需要一个promise来等待
   waitPause(): Promise<void> {
-    if (this.pauseResolve) {
+    if (this.waitPromise) {
       return this.waitPromise;
     }
     this.pause();
@@ -163,31 +168,29 @@ class ActionScheduler extends EventEmitter {
     return this.waitPromise;
   }
 
-  // 恢复执行
-  async resume(): Promise<ActionsResult> {
+  async resume(): Promise<void> {
     this.emit('resume');
     if (this.currentIndex > this.instructions.length - 1) {
-      return this.finish();
+      this.finish();
     }
     this.status = ExecutorStatus.Running;
-    return this.start();
+    this.start();
   }
 
-  // 单步跳过
-  skip(): Promise<ActionsResult> {
-    this.startStep(this.currentIndex + 1);
+  skip(): void {
+    return this.startStep(this.currentIndex + 1);
   }
 
-  startStep(index: number): Promise<ActionsResult> {
+  startStep(index: number): void {
     if (this.status !== ExecutorStatus.Paused) {
-      return Promise.reject(new Error('当前不处于暂停状态'));
+      return;
     }
     this.currentIndex = Math.min(index, this.instructions.length - 1);
   }
 
   // 停止执行并返回结果
-  async stop(): void {
-    if (this.status === ExecutorStatus.running) {
+  async stop(): Promise<void> {
+    if (this.status === ExecutorStatus.Running) {
       await this.waitPause();
     }
     this.finish();

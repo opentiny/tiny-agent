@@ -1,4 +1,4 @@
-import { addTwinkle, removeTwinkle } from '../common/addTwinkle';
+import { addBreathe, removeBreathe } from '../common/addBreathe';
 import { addPopup } from '../index';
 import '../assets/styles/guide.css';
 import closeSvg from '../assets/images/close.svg?raw';
@@ -53,7 +53,7 @@ export default class GuideModal {
   }
 
   show({ title, text }: { title: string; text: string }) {
-    this.targetDom && addTwinkle(this.targetDom);
+    this.targetDom && addBreathe(this.targetDom);
 
     this.titleEl.textContent = title;
     this.content.textContent = text;
@@ -70,7 +70,7 @@ export default class GuideModal {
   hide() {
     // this.targetDom.style.outline = this.originOutlines;
     console.log('hide');
-    removeTwinkle(this.targetDom);
+    removeBreathe(this.targetDom);
     this.popup.destroy();
     if (this.onHideCallback) {
       this.onHideCallback();
