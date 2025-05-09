@@ -78,7 +78,6 @@ class ActionScheduler extends EventEmitter {
         instruction,
       });
       try {
-        console.log(`执行指令${this.currentIndex}:`, instruction);
         const { status, result, error } =
           await this.actionManager.executeAction(action, params, this.context);
 
@@ -151,10 +150,6 @@ class ActionScheduler extends EventEmitter {
   pause(): void {
     this.emit('pause');
     this.status = ExecutorStatus.Paused;
-    console.log(
-      `执行器已暂停${this.currentIndex}`,
-      this.instructions[this.currentIndex]
-    );
   }
 
   waitPause(): Promise<void> {
@@ -188,10 +183,6 @@ class ActionScheduler extends EventEmitter {
       return Promise.reject(new Error('当前不处于暂停状态'));
     }
     this.currentIndex = Math.min(index, this.instructions.length - 1);
-    console.log(
-      `跳过到指令${this.currentIndex}:`,
-      this.instructions[this.currentIndex]
-    );
   }
 
   // 停止执行并返回结果
