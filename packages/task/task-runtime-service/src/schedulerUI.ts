@@ -168,28 +168,6 @@ export class SchedulerUI extends EventEmitter {
     this.light.style.display = 'block';
   }
 
-  changeState({ title, isPaused }: { title: string; isPaused: boolean }) {
-    if (title) {
-      this.titleElm!.textContent = title; // 更新标题文本
-    }
-    if (isPaused === null || isPaused === undefined) {
-      return; // 如果没有传入 isPaused，则不进行任何操作
-    }
-    if (isPaused) {
-      this.pauseBtn.textContent = '继续';
-      this.pauseBtn.onclick = () => this.resume(true);
-      this.skipBtn.style.cursor = 'pointer';
-      this.stopBtn.style.cursor = 'pointer';
-      this.pauseLight(); // 暂停呼吸灯动画
-    } else {
-      this.pauseBtn.textContent = '暂停';
-      this.pauseBtn.onclick = () => this.pause(true);
-      this.skipBtn.style.cursor = 'not-allowed';
-      this.stopBtn.style.cursor = 'not-allowed';
-      this.continueLight();
-    }
-  }
-
   pause(isEmit: boolean = false) {
     if (isEmit) {
       this.emit('pause');
@@ -208,7 +186,7 @@ export class SchedulerUI extends EventEmitter {
       this.emit('resume');
     }
     this.setStatus(Status.Running);
-    removeBreathe(this.pauseBtn);
+    removeBreathe(this.resumeBtn);
     this.pauseTooltip?.destroy();
   }
 
