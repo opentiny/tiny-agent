@@ -111,7 +111,7 @@ export class SchedulerUI extends EventEmitter {
       this.stopBtn
     );
 
-    //this.hide(); // 初始化时隐藏
+    this.hide(); // 初始化时隐藏
   }
 
   setTitle(title: string) {

@@ -3,8 +3,7 @@ import SchedulerUI from './SchedulerUI';
 
 const initUI = (actionScheduler) => {
   let ui = new SchedulerUI({
-    title:
-      'AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中AI操作中',
+    title: 'AI操作中，您可以暂停或终止',
   });
 
   ui.on('pause', () => {
@@ -49,8 +48,6 @@ const initUI = (actionScheduler) => {
 const initConnect = (taskScheduler) => {
   // mock 通信层
   const onMessage = (task: any) => {
-    // 处理消息
-    console.log('Received task:', task);
     // 可以在这里调用 taskScheduler.doTask() 来处理消息
     return taskScheduler.doTask(task);
   };
