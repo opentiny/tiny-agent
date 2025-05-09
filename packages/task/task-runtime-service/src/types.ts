@@ -28,3 +28,19 @@ export type ActionsResult = ActionResult & {
 };
 
 export type TaskResult = ActionsResult & { id: string };
+
+export interface SchedulerContext {
+  _clearEffect: Array<() => void>;
+  $scheduler?: {
+    pause: (...args: unknown[]) => void;
+    resume: () => Promise<void>;
+  };
+  [key: string]: any;
+}
+
+export interface Scheduler {
+  registerActions: (actions: Action[]) => void;
+  registerAction: (action: Action) => void;
+  provideContext: (context: SchedulerContext) => void;
+  install: () => void;
+}

@@ -1,4 +1,4 @@
-import type { Task, TaskResult } from './types';
+import type { Action, Task, TaskResult, SchedulerContext } from './types';
 import ActionScheduler from './actionScheduler';
 
 class TaskScheduler {
@@ -6,7 +6,7 @@ class TaskScheduler {
   private isExecuting = false;
   public actionScheduler: ActionScheduler;
 
-  constructor(actions, context) {
+  constructor(actions: Action[], context: SchedulerContext) {
     const actionScheduler = new ActionScheduler();
     this.actionScheduler = actionScheduler;
     // 注册所有的ACTION并且提供上下文
@@ -34,7 +34,7 @@ class TaskScheduler {
       const result = await taskFn();
       result.id = id;
       resolve(result); // 返回成功结果
-    } catch (error: TaskResult) {
+    } catch (error: any) {
       error.id = id;
       reject(error); // 返回失败结果
     } finally {
