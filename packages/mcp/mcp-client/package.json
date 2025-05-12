@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && chmod 755 dist/src/index.js",
-    "test": "node test.js scripts/weather.tool.js"
+    "build": "tsc && chmod 755 dist/index.js",
+    "test": "node test.js scripts/server.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.41.0",

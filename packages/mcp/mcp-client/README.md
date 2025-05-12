@@ -65,7 +65,7 @@ npm run build
 
 ```bash
 # 运行测试
-node test.js
+npm run test
 ```
 
 ## 注意事项

@@ -1,4 +1,4 @@
-import { createMCPClient } from "./dist/src/index.js";
+import { createMCPClient } from "./dist/index.js";
 import readline from "readline/promises";
 
 if (process.argv.length < 3) {
