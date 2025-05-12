@@ -44,22 +44,31 @@ export class MCPClient {
   }
 
   async initialize(serverScriptPath: string) {
-    const isPython = serverScriptPath.endsWith(".py");
-    const isJs = serverScriptPath.endsWith(".js");
+    try {
+      const isPython = serverScriptPath.endsWith(".py");
+      const isJs = serverScriptPath.endsWith(".js");
 
-    if (!isPython && !isJs) {
-      throw new Error("Server script must be a .py or .js file");
+      if (!isPython && !isJs) {
+        throw new Error("Server script must be a .py or .js file");
+      }
+
+      const command = isPython ? "python" : "node";
+      const transport = new StdioClientTransport({
+        command,
+        args: [serverScriptPath],
+      });
+
+      await this.client.connect(transport);
+      this.tools = (await this.client.listTools()).tools as unknown as Tool[];
+      console.log(
+        `Connected to server with tools: ${this.tools
+          .map((tool) => tool.name)
+          .join(", ")}`
+      );
+    } catch (e) {
+      console.log("Failed to connect to MCP server: ", e);
+      throw e;
     }
-
-    const command = isPython ? "python" : "node";
-    const transport = new StdioClientTransport({
-      command,
-      args: [serverScriptPath],
-    });
-
-    await this.client.connect(transport);
-    this.tools = (await this.client.listTools()).tools as unknown as Tool[];
-    return this.tools.map((tool) => tool.name);
   }
 
   async chat(body: ChatBody) {
@@ -77,6 +86,7 @@ export class MCPClient {
       return res.json();
     } catch (error) {
       console.log(error);
+      throw error;
     }
   }
 
