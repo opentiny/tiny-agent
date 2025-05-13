@@ -3,7 +3,7 @@ import {
   addBreathe,
   removeBreathe,
   addTooltip,
-} from '@opentiny/tiny-agent-task-action-lib';
+} from '@opentiny/tiny-agent-ui-components';
 
 import skip from './assets/images/skip.svg?url';
 import skipDisabled from './assets/images/skip-disabled.svg?url';

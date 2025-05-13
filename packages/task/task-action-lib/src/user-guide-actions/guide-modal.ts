@@ -1,5 +1,8 @@
-import { addBreathe, removeBreathe } from '../common/addBreathe';
-import { addPopup } from '../index';
+import {
+  addBreathe,
+  removeBreathe,
+  addPopup,
+} from '@opentiny/tiny-agent-ui-components';
 import '../assets/styles/guide.css';
 import closeSvg from '../assets/images/close.svg?raw';
 

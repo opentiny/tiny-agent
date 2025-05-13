@@ -1,7 +1,7 @@
 import { Action } from '../common/action.d';
 import { findElement } from '../common/dom';
 import { simulateClick } from '../dom-actions/dom-simulate';
-import GuideModal from './GuideModal';
+import GuideModal from './guide-modal';
 
 // 定义危险操作类型的枚举
 enum UserGuideActionType {

@@ -1,7 +1,5 @@
 export { default as DomActions } from './dom-actions';
 export { default as FormActions } from './form-actions';
 export { default as VueRouterActions } from './vue-router-actions';
-export { default as GuideActions } from './userGuide-actions';
-export { default as AxiosActions } from './axios-actions';
-export { addBreathe, removeBreathe } from './common/addBreathe';
-export { addTooltip, addPopup } from './common/floatElement';
+export { default as GuideActions } from './user-guide-actions';
+export { default as AxiosActions } from './axios-actions/api-confirm';

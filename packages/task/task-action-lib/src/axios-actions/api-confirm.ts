@@ -1,19 +1,19 @@
-interface Params {
+interface IParams {
   url: string;
   timeout?: number;
   method?: string;
 }
 
-interface Result {
+interface IResult {
   response: AxiosResponse;
   matchInfo?: MatchInfo;
 }
 
-interface Context {
+interface IContext {
   $axiosConfig?: {
     axios: AxiosInstance;
     timeout?: number;
-    valid?: (result: Result) => boolean;
+    valid?: (result: IResult) => boolean;
   };
   _clearEffect: (() => void)[];
 }
@@ -25,9 +25,9 @@ interface MatchInfo {
   resUrl: string;
 }
 
-const resultMap: Record<string, Result[]> = {};
+const resultMap: Record<string, IResult[]> = {};
 
-const defaultValid = (result: Result): boolean => {
+const defaultValid = (result: IResult): boolean => {
   const { response } = result || {};
   const { status } = response || {};
   if (status >= 200 && status < 300) {
@@ -113,7 +113,7 @@ const isMatchQuery = (query, resQuery) => {
   return isMatch;
 };
 
-const matchUrl = (params: Params, response: AxiosResponse): MatchInfo => {
+const matchUrl = (params: IParams, response: AxiosResponse): MatchInfo => {
   const { url, method, query } = params;
   const { method: reqMethod, url: resUrl } = response?.config || {};
   const trimQueryUrl = resUrl.split('?')[0];
@@ -146,8 +146,8 @@ const start = {
   name: 'apiConfirmStart',
   description: '确认接口返回成功',
   execute: async (
-    params: Params,
-    context: Context
+    params: IParams,
+    context: IContext
   ): Promise<{ status: string }> => {
     const { $axiosConfig } = context;
     const { axios, timeout: globalTimeout } = $axiosConfig || {};
@@ -218,8 +218,8 @@ const end = {
   name: 'apiConfirmEnd',
   description: '确认接口返回成功',
   execute: async (
-    params: Params,
-    context: Context
+    params: IParams,
+    context: IContext
   ): Promise<{ status: string; result?: any; error?: any }> => {
     const { url, timeout: actionTime } = params;
     const { $axiosConfig } = context;

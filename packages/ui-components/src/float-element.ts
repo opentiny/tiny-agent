@@ -6,7 +6,6 @@ import {
   flip,
   arrow,
   Placement,
-  MiddlewareState,
   ComputePositionReturn,
 } from '@floating-ui/dom';
 

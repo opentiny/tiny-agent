@@ -5,12 +5,12 @@ export default defineConfig({
     lib: {
       entry: './src/index.ts',
       formats: ['es'],
-      name: 'task-runtime-service',
+      name: 'ui-components',
       fileName: 'index',
     },
     sourcemap: true,
     rollupOptions: {
-      external: ['@opentiny/tiny-agent-ui-components'],
+      external: ['@floating-ui/dom'],
     },
   },
   plugins: [

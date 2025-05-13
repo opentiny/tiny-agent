@@ -16,7 +16,7 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@floating-ui/dom": "^1.6.0"
+    "@opentiny/tiny-agent-ui-components": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3",
