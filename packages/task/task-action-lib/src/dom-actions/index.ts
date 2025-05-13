@@ -1,6 +1,6 @@
 // dom_operation_lib.ts
-import { Action } from '../common/action.d';
-import { findElement } from '../common';
+import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import { findElement, getElementByText } from './dom';
 import { simulateClick } from './dom-simulate';
 
 // 历史堆栈操作
@@ -17,6 +17,7 @@ enum DomActionType {
   CLICK = 'click',
   DOUBLE_CLICK = 'doubleClick',
   RIGHT_CLICK = 'rightClick',
+  CLICK_BY_TEXT = 'clickByText',
 }
 
 // dom 扫描
@@ -29,6 +30,24 @@ const ActionType = {
   ...StackActionType,
   ...DomActionType,
   ...ScanDomActionType,
+};
+
+const clickByText: Action = {
+  name: ActionType.CLICK_BY_TEXT,
+  execute: async (params, context) => {
+    const { selector, timeout, text } = params;
+    const element = await getElementByText(selector, text);
+    if (!element) {
+      return {
+        status: 'error',
+        error: { message: '没有找到匹配的元素' },
+      };
+    }
+    await simulateClick(element);
+    return {
+      status: 'success',
+    };
+  },
 };
 
 // 高亮插件
@@ -155,6 +174,67 @@ const findDom: Action = {
   },
 };
 
+// TODO: 日期选择需要单独出来
+const selectDate: Action = {
+  name: 'selectDate',
+  execute: async (params, context) => {
+    const { selector, date } = params;
+    const element = await findElement(selector, 10000);
+
+    const dateArr = date.split('-');
+    const year = Number(dateArr[0]);
+    const month = Number(dateArr[1]);
+    const day = Number(dateArr[2]);
+
+    // 选择年份
+    const yearSelect = element.querySelector('.tiny-date-picker__header-label');
+    await simulateClick(yearSelect);
+    const firstYear = Number(
+      element.querySelector('.tiny-year-table td:first-child').innerText
+    );
+    const lastYear = Number(
+      element.querySelector('.tiny-year-table tr:last-child td:last-child')
+        .innerText
+    );
+    if (year <= lastYear && year >= firstYear) {
+      const targetYear = await getElementByText(element, year.toString());
+
+      await simulateClick(targetYear);
+    } else if (year > lastYear) {
+      const clickCount = Math.ceil((year - lastYear) / 12);
+      const nextYear = element.querySelector('.tiny-date-picker__next-btn');
+      for (let i = 0; i < clickCount; i++) {
+        await simulateClick(nextYear);
+      }
+      const targetYear = await getElementByText(element, year.toString());
+      await simulateClick(targetYear);
+    } else if (year < firstYear) {
+      const clickCount = Math.ceil((firstYear - year) / 12);
+      const prevYear = element.querySelector('.tiny-date-picker__prev-btn');
+      for (let i = 0; i < clickCount; i++) {
+        await simulateClick(prevYear);
+      }
+      const targetYear = await getElementByText(element, year.toString());
+      await simulateClick(targetYear);
+    }
+
+    // 选择月份
+    const monthSelect = element.querySelectorAll('.tiny-month-table td')[
+      month - 1
+    ];
+    await simulateClick(monthSelect);
+    // 选择日期
+    const daySelect = element.querySelectorAll('.tiny-date-table td.available')[
+      day - 1
+    ];
+    await simulateClick(daySelect);
+
+    return {
+      status: 'success',
+    };
+  },
+};
+
 export default [
   highlight,
   insertBefore,
@@ -165,4 +245,6 @@ export default [
   goBack,
   goForward,
   findDom,
+  clickByText,
+  selectDate,
 ];

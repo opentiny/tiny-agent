@@ -1,4 +1,4 @@
-import { dispatchEvent } from '../common';
+import { dispatchEvent } from '../dom-actions/dom';
 import { inputEvents, selectEvents } from './form_events';
 
 /**
@@ -20,6 +20,7 @@ export async function simulateUserInput(
     await dispatchEvent(target, event);
   }
 
+  target.value = '';
   // 3. 输入字符
   for (const char of inputText) {
     const charEvents = inputEvents.inputChar(char);
@@ -36,9 +37,9 @@ export async function simulateUserInput(
   }
 
   // 4. 鼠标移出输入框外并点击一下
-  for (const event of inputEvents.mouseLeave) {
-    await dispatchEvent(target, event);
-  }
+  // for (const event of inputEvents.mouseLeave) {
+  //   await dispatchEvent(target, event);
+  // }
 }
 
 /**
