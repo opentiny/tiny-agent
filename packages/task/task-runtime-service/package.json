@@ -11,7 +11,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@opentiny/tiny-agent-task-action-lib": "workspace:*"
+    "@opentiny/tiny-agent-ui-components": "workspace:*"
   },
   "devDependencies": {
     "vite": "^6.0.0",

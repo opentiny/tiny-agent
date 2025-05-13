@@ -10,7 +10,7 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: ['@opentiny/tiny-agent-task-action-lib'],
+      external: ['@opentiny/tiny-agent-ui-components'],
     },
   },
   plugins: [
