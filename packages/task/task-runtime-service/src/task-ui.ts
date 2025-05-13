@@ -1,4 +1,4 @@
-import EventEmitter from './eventEmitter';
+import EventEmitter from './event-emitter';
 import {
   addBreathe,
   removeBreathe,
@@ -41,7 +41,7 @@ const createImg = (src: string) => {
   return img;
 };
 
-export class SchedulerUI extends EventEmitter {
+export class TaskUI extends EventEmitter {
   messageBox: HTMLDivElement;
   titleElm!: HTMLDivElement;
   pauseBtn!: HTMLImageElement;
@@ -141,6 +141,7 @@ export class SchedulerUI extends EventEmitter {
         this.pauseBtn,
         this.stopBtn
       );
+      this.continueLight();
     } else if (status === Status.Paused) {
       this.messageBox.replaceChildren(
         this.titleElm,
@@ -148,6 +149,7 @@ export class SchedulerUI extends EventEmitter {
         this.resumeBtn,
         this.stopBtn
       );
+      this.pauseLight();
     } else if (status === Status.Stop) {
       this.messageBox.replaceChildren(
         this.titleElm,
@@ -155,6 +157,7 @@ export class SchedulerUI extends EventEmitter {
         this.pauseBtn,
         this.stopBtn
       );
+      this.pauseLight();
     }
   }
 
@@ -211,7 +214,7 @@ export class SchedulerUI extends EventEmitter {
               box-shadow: inset 10px 10px 30px 0 rgba(20,118,255, 0.3), inset -10px -10px 30px 0 rgba(20,118,255, 0.3);
           }
           50% {
-              box-shadow: inset 20px 20px 60px 0 rgba(20,118,255, 0.6), inset -20px -20px 60px 0 rgba(20,118,255, 0.6);
+              box-shadow: inset 20px 20px 60px 0 rgba(20,118,255, 0.5), inset -20px -20px 60px 0 rgba(20,118,255, 0.5);
           }
       }
       .task-run-shadow {
@@ -256,5 +259,3 @@ export class SchedulerUI extends EventEmitter {
     this.pauseTooltip = addTooltip(this.resumeBtn, tip);
   }
 }
-
-export default SchedulerUI;
