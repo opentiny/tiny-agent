@@ -1,11 +1,11 @@
-export interface Instruction {
+export interface IInstruction {
   action: string;
   params: { [key: string]: any };
 }
 
-export interface Task {
+export interface ITask {
   id: string;
-  instructions: Instruction[];
+  instructions: IInstruction[];
 }
 
 export type Action = {
@@ -13,23 +13,23 @@ export type Action = {
   execute: (
     params: { [key: string]: any },
     context?: any
-  ) => ActionResult | Promise<ActionResult>;
+  ) => IActionResult | Promise<IActionResult>;
 };
 
-export interface ActionResult {
+export interface IActionResult {
   status: 'success' | 'error' | 'partial completed';
   result?: { [key: string]: any };
   error?: { message: string; stack?: string };
 }
 
-export type ActionsResult = ActionResult & {
+export type ActionsResult = IActionResult & {
   index: number;
-  instruction: Instruction;
+  instruction: IInstruction;
 };
 
 export type TaskResult = ActionsResult & { id: string };
 
-export interface SchedulerContext {
+export interface ISchedulerContext {
   _clearEffect: Array<() => void>;
   $scheduler?: {
     pause: (...args: unknown[]) => void;
@@ -38,9 +38,9 @@ export interface SchedulerContext {
   [key: string]: any;
 }
 
-export interface Scheduler {
+export interface IScheduler {
   registerActions: (actions: Action[]) => void;
   registerAction: (action: Action) => void;
-  provideContext: (context: SchedulerContext) => void;
+  provideContext: (context: ISchedulerContext) => void;
   install: () => void;
 }

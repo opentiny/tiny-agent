@@ -1,48 +1,48 @@
-import TaskScheduler from './taskScheduler';
-import SchedulerUI from './schedulerUI';
-import type { Action, SchedulerContext, Task, Scheduler } from './types';
-import ActionScheduler from './actionScheduler';
+import TaskScheduler from './task-scheduler';
+import { TaskUI } from './task-ui';
+import type { Action, ISchedulerContext, ITask, IScheduler } from './types';
+import { Task } from './task';
 
-const initUI = (actionScheduler: ActionScheduler) => {
-  let ui = new SchedulerUI({
+const initUI = (task: Task) => {
+  let ui = new TaskUI({
     title: 'AI操作中，您可以暂停或终止',
   });
 
   ui.on('pause', () => {
-    actionScheduler.waitPause();
+    task.waitPause();
   });
   ui.on('skip', () => {
-    actionScheduler.skip();
+    task.skip();
   });
   ui.on('resume', () => {
-    actionScheduler.resume();
+    task.resume();
   });
   ui.on('stop', () => {
-    actionScheduler.stop();
+    task.stop();
   });
 
-  actionScheduler.on('start', () => {
+  task.on('start', () => {
     ui.show();
   });
 
-  actionScheduler.provideContext({
+  task.provideContext({
     $ui: {
       tipToResume: ui.tipToResume.bind(ui),
     },
   });
-  actionScheduler.on('pause', () => {
+  task.on('pause', () => {
     ui.pause();
   });
 
-  actionScheduler.on('resume', () => {
+  task.on('resume', () => {
     ui.resume();
   });
 
-  actionScheduler.on('finish', () => {
+  task.on('finish', () => {
     ui.stop();
   });
 
-  actionScheduler.on(
+  task.on(
     'beforeStep',
     ({ index, instruction }: { index: number; instruction: any }) => {
       ui.setTitle(`执行指令${index}`);
@@ -52,12 +52,12 @@ const initUI = (actionScheduler: ActionScheduler) => {
 
 const initConnect = (taskScheduler: TaskScheduler) => {
   // mock 通信层
-  const onMessage = (task: Task) => {
+  const onMessage = (task: ITask) => {
     // 可以在这里调用 taskScheduler.doTask() 来处理消息
     return taskScheduler.doTask(task);
   };
 
-  window.sendMessage = async (task: Task) => {
+  window.sendMessage = async (task: ITask) => {
     try {
       const result = await onMessage(task);
       console.log('Result:', result);
@@ -70,25 +70,25 @@ const initConnect = (taskScheduler: TaskScheduler) => {
 
 const createScheduler = (
   actions: Action[],
-  context: SchedulerContext
-): Scheduler => {
+  context: ISchedulerContext
+): IScheduler => {
   const taskScheduler = new TaskScheduler(actions, context);
-  const actionScheduler = taskScheduler.actionScheduler;
+  const task = taskScheduler.task;
   const api = ['registerActions', 'registerAction', 'provideContext'] as const;
-  const scheduler: Partial<Scheduler> = {};
+  const scheduler: Partial<IScheduler> = {};
 
   api.forEach((method) => {
-    if (method in actionScheduler) {
-      scheduler[method] = (actionScheduler as any)[method].bind(taskScheduler);
+    if (method in task) {
+      scheduler[method] = (task as any)[method].bind(taskScheduler);
     }
   });
 
   scheduler.install = () => {
-    initUI(actionScheduler);
+    initUI(task);
     initConnect(taskScheduler);
   };
 
-  return scheduler as Scheduler;
+  return scheduler as IScheduler;
 };
 
 export { createScheduler };

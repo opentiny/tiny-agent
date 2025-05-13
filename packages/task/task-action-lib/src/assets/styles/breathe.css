@@ -12,12 +12,11 @@
     outline-offset: 2px;
   }
   50% {
-    outline-width: 6px;
+    outline-width: 5px;
     outline-offset: 4px;
   }
   100% {
     outline-width: 2px;
-
     outline-offset: 2px;
   }
 }

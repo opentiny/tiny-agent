@@ -1,11 +1,11 @@
 import type {
   Action,
   ActionsResult,
-  Instruction,
-  SchedulerContext,
+  IInstruction,
+  ISchedulerContext,
 } from './types';
-import ActionManager from './actionManager';
-import EventEmitter from './eventEmitter';
+import ActionManager from './action-manager';
+import EventEmitter from './event-emitter';
 
 // 执行器状态枚举
 export enum ExecutorStatus {
@@ -14,10 +14,10 @@ export enum ExecutorStatus {
   Paused = 'paused',
 }
 
-class ActionScheduler extends EventEmitter {
+export class Task extends EventEmitter {
   private actionManager: ActionManager;
-  private context: SchedulerContext;
-  private instructions: Instruction[] = []; // 执行中的指令集
+  private context: ISchedulerContext;
+  private instructions: IInstruction[] = []; // 执行中的指令集
   private currentIndex: number = 0;
   private status: ExecutorStatus = ExecutorStatus.Idle; // 执行器状态
   private resolve: ((value: ActionsResult) => void) | null = null; // 成功回调
@@ -33,7 +33,7 @@ class ActionScheduler extends EventEmitter {
     this.actionManager = new ActionManager();
   }
 
-  provideContext(context: Partial<SchedulerContext>) {
+  provideContext(context: Partial<ISchedulerContext>) {
     this.context = {
       ...this.context,
       ...context,
@@ -52,7 +52,7 @@ class ActionScheduler extends EventEmitter {
     this.actionManager.registerActions(actions);
   }
 
-  execute(instructions: Instruction[]): Promise<ActionsResult> {
+  execute(instructions: IInstruction[]): Promise<ActionsResult> {
     if (!instructions.length) {
       return Promise.reject({
         status: 'error',
@@ -196,5 +196,3 @@ class ActionScheduler extends EventEmitter {
     this.finish();
   }
 }
-
-export default ActionScheduler;

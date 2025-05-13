@@ -1,19 +1,25 @@
 {
-    "name": "@opentiny/tiny-agent-task-action-lib",
-    "version": "1.0.0",
-    "description": "本库是一个用于模拟前端用户操作的工具库",
-    "main": "src/index.ts",
-    "type": "module",
-    "scripts": {
-      "dev": "vite dev",
-      "build": "vite build",
-      "test": "tsc && node dist/index.js"
-    },
-
-    "keywords": ["action", "dom", "simulate"],
-    "license": "ISC",
-    "devDependencies": {
-      "typescript": "^5.8.3",
-      "vite": "^6.2.5"
-    }
+  "name": "@opentiny/tiny-agent-task-action-lib",
+  "version": "1.0.0",
+  "description": "本库是一个用于模拟前端用户操作的工具库",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "test": "tsc && node dist/index.js"
+  },
+  "keywords": [
+    "action",
+    "dom",
+    "simulate"
+  ],
+  "license": "ISC",
+  "dependencies": {
+    "@floating-ui/dom": "^1.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^6.2.5"
+  }
 }

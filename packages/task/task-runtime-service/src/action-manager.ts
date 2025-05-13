@@ -1,4 +1,4 @@
-import { Action, ActionResult } from './types';
+import { Action, IActionResult } from './types';
 
 // ACTION管理类
 class ActionManager {
@@ -44,7 +44,7 @@ class ActionManager {
     name: string,
     params: { [key: string]: any },
     context?: any
-  ): ActionResult | Promise<ActionResult> {
+  ): IActionResult | Promise<IActionResult> {
     const plugin = this.actions[name];
     if (plugin) {
       return plugin.execute(params, context);

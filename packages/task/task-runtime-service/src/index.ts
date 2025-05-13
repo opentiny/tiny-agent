@@ -1,1 +1,1 @@
-export * from './combination';
+export * from './init';

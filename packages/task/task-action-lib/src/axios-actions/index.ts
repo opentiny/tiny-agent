@@ -197,7 +197,6 @@ const start = {
       (error) => {
         try {
           const matchInfo = matchUrl(params, error);
-          // console.log('error matchInfo', matchInfo);
           if (!matchInfo.matched) {
             return Promise.reject(error);
           }
@@ -232,7 +231,7 @@ const end = {
       while (Date.now() - startTIme < timeout) {
         const result = resultMap[url]?.shift();
         if (result) {
-          const { response } = result;
+          const { response } = result?.response;
           if (valid(result)) {
             resolve({
               status: 'success',

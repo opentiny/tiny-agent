@@ -1,11 +1,32 @@
 {
   "name": "@opentiny/tiny-agent-task-runtime-service",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "main": "src/index.ts",
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    }
+  },
+  "publishConfig": {
+    "exports": {
+      ".": "dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build"
+  },
   "dependencies": {
     "@opentiny/tiny-agent-task-action-lib": "workspace:*",
     "@floating-ui/dom": "^1.6.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.0.0"
   }
 }

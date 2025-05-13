@@ -1,23 +1,23 @@
-import type { Action, Task, TaskResult, SchedulerContext } from './types';
-import ActionScheduler from './actionScheduler';
+import type { Action, ITask, TaskResult, ISchedulerContext } from './types';
+import { Task } from './task';
 
 class TaskScheduler {
   private tasksQueue: any = [];
   private isExecuting = false;
-  public actionScheduler: ActionScheduler;
+  public task: Task;
 
-  constructor(actions: Action[], context: SchedulerContext) {
-    const actionScheduler = new ActionScheduler();
-    this.actionScheduler = actionScheduler;
+  constructor(actions: Action[], context: ISchedulerContext) {
+    const task = new Task();
+    this.task = task;
     // 注册所有的ACTION并且提供上下文
-    this.actionScheduler.registerActions(actions);
-    this.actionScheduler.provideContext(context);
+    this.task.registerActions(actions);
+    this.task.provideContext(context);
   }
 
-  doTask(task: Task): Promise<TaskResult> {
+  doTask(task: ITask): Promise<TaskResult> {
     return new Promise((resolve, reject) => {
       const { instructions, id } = task;
-      const taskFn = () => this.actionScheduler.execute(instructions); // 执行任务
+      const taskFn = () => this.task.execute(instructions); // 执行任务
       this.tasksQueue.push({ taskFn, id, resolve, reject }); // 将任务及回调存入队列
       this.execute(); // 尝试执行下一个任务
     });
