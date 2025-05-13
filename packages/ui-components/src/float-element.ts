@@ -97,7 +97,6 @@ class FloatingElement {
       this.element.className = this.options.className;
     }
 
-    console.log('this.element', this.options.showArrow, this.element);
     // 创建箭头元素
     if (this.options.showArrow) {
       this.arrowElement = document.createElement('div');
@@ -108,7 +107,6 @@ class FloatingElement {
     // 设置内容
     if (typeof this.content === 'string') {
       const textNode = document.createTextNode(this.content);
-      // this.element.textContent = this.content;
       this.element.appendChild(textNode);
     } else {
       this.element.appendChild(this.content);
@@ -149,9 +147,6 @@ class FloatingElement {
     }, 10);
   }
 
-  /**
-   * 隐藏浮动元素
-   */
   public hide(): void {
     if (!this.element) return;
 
@@ -169,9 +164,6 @@ class FloatingElement {
     }, this.options.duration);
   }
 
-  /**
-   * 更新浮动元素位置
-   */
   public async update(): Promise<void> {
     if (!this.element) return;
 
@@ -229,9 +221,6 @@ class FloatingElement {
     }
   }
 
-  /**
-   * 销毁浮动元素，清理资源
-   */
   public destroy(): void {
     if (this.cleanupAutoUpdate) {
       this.cleanupAutoUpdate();
@@ -306,9 +295,6 @@ export class Tooltip extends FloatingElement {
     this.reference.removeEventListener('blur', this.handleMouseLeave);
   }
 
-  /**
-   * 处理鼠标进入事件
-   */
   private handleMouseEnter(): void {
     if (this.showTimeout) {
       clearTimeout(this.showTimeout);
@@ -318,9 +304,6 @@ export class Tooltip extends FloatingElement {
     }, (this.options as TooltipOptions).delay);
   }
 
-  /**
-   * 处理鼠标离开事件
-   */
   private handleMouseLeave(): void {
     if (this.showTimeout) {
       clearTimeout(this.showTimeout);
@@ -329,9 +312,6 @@ export class Tooltip extends FloatingElement {
     this.hide();
   }
 
-  /**
-   * 重写销毁方法，添加事件清理
-   */
   public destroy(): void {
     this.unbindEvents();
 
