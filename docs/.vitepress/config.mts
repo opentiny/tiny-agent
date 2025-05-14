@@ -14,6 +14,12 @@ export default defineConfig({
       md.use(vitepressDemoPlugin);
     },
   },
+  vite: {
+    server: {
+      host: '0.0.0.0', // 允许外部访问
+      open: true,      // 开发时自动打开浏览器
+    },
+  },
   themeConfig: {
     logo: '/logo.svg',
     // https://vitepress.dev/reference/default-theme-config
