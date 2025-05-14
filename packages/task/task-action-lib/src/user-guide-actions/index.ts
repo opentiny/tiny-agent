@@ -1,6 +1,5 @@
-import { Action } from '../common/action.d';
-import { findElement } from '../common/dom';
-import { simulateClick } from '../dom-actions/dom-simulate';
+import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import { findElement } from '../dom-actions/dom';
 import GuideModal from './guide-modal';
 
 // 定义危险操作类型的枚举
@@ -12,34 +11,19 @@ enum UserGuideActionType {
 const UserGuide: Action = {
   name: UserGuideActionType.USER_GUIDE,
   execute: async (params, context) => {
-    const { selector, timeout, title, text, type } = params;
+    const { selector, timeout, title, text, tip } = params;
     const element = await findElement(selector, timeout);
     const guideModal = new GuideModal(element);
     guideModal.show({ title, text });
-    const { pause, resume } = context?.$scheduler || {};
+    const { pause } = context?.$scheduler || {};
     const { tipToResume } = context?.$ui || {};
     pause && pause();
 
-    // if (type === 'click') {
-    //   element.addEventListener(
-    //     'click',
-    //     () => {
-    //       guideModal.hide();
-    //       resume && resume();
-    //     },
-    //     { once: true }
-    //   );
-    // }
-
     guideModal.onHide(() => {
-      tipToResume && tipToResume('完成操作后点击继续');
+      tipToResume && tipToResume(tip || '完成操作后继续');
     });
 
     return { status: 'success' };
-    // return new Promise((resolve) => {
-    //   guideModal.onHide(() => {
-    //   });
-    // });
   },
 };
 export default [UserGuide];

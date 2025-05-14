@@ -1,25 +1,24 @@
 import { defineConfig } from 'vite';
-import path from 'path';
-
+import dts from 'vite-plugin-dts';
 export default defineConfig({
-  base: './',
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'), // 路径别名（可选，方便导入）
-    },
-  },
   build: {
-    target: 'esnext', // 编译为最新 ES 语法（浏览器兼容）
-    manifest: false, // 不生成 manifest 文件（可选）
+    lib: {
+      entry: './src/index.ts',
+      formats: ['es'],
+      name: 'task-runtime-service',
+      fileName: 'index',
+    },
     sourcemap: true,
     rollupOptions: {
-      output: {
-        // 按需配置输出格式（默认已处理 ES 模块）
-      },
+      external: [
+        '@opentiny/tiny-agent-task-runtime-service',
+        '@opentiny/tiny-agent-ui-components',
+      ],
     },
   },
-  server: {
-    port: 3000, // 开发服务器端口
-    open: true, // 自动打开浏览器
-  },
+  plugins: [
+    dts({
+      tsconfigPath: './tsconfig.json',
+    }),
+  ],
 });

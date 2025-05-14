@@ -116,7 +116,7 @@ export const getElementByText = async (
   selector: string | HTMLElement,
   text: string,
   timeout: number = 3000
-): Promise<HTMLElement> => {
+): Promise<Node> => {
   let element: HTMLElement;
   if (typeof selector === 'string') {
     element = await findElement(selector, timeout);

@@ -1,5 +1,5 @@
-import { Action } from '../common/action.d';
-import { findElement } from '../common/dom';
+import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import { findElement } from '../dom-actions/dom';
 import {
   simulateCheckboxSelection,
   simulateRadioSelection,

@@ -1,6 +1,6 @@
 {
   "name": "@opentiny/tiny-agent-task-action-lib",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "本库是一个用于模拟前端用户操作的工具库",
   "main": "src/index.ts",
   "type": "module",
@@ -16,7 +16,8 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@opentiny/tiny-agent-ui-components": "workspace:*"
+    "@opentiny/tiny-agent-ui-components": "workspace:*",
+    "@opentiny/tiny-agent-task-runtime-service": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3",

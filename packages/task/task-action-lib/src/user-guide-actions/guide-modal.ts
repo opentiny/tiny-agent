@@ -2,6 +2,7 @@ import {
   addBreathe,
   removeBreathe,
   addPopup,
+  Popup,
 } from '@opentiny/tiny-agent-ui-components';
 import '../assets/styles/guide.css';
 import closeSvg from '../assets/images/close.svg?raw';
@@ -12,9 +13,10 @@ export default class GuideModal {
   popupContent: HTMLDivElement;
   titleEl: HTMLHeadingElement;
   content: HTMLParagraphElement;
-  closeIcon: HTMLButtonElement;
+  closeIcon: HTMLDivElement;
   nextButton: HTMLButtonElement;
-  arrow: HTMLDivElement;
+  btnContainer: HTMLDivElement;
+  popup: Popup | null = null;
   private onHideCallback: (() => void) | null = null;
 
   constructor(targetDom: HTMLElement) {

@@ -1,6 +1,6 @@
 // dom_operation_lib.ts
-import { Action } from '../common/action.d';
-import { findElement, getElementByText } from '../common/dom';
+import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import { findElement, getElementByText } from './dom';
 import { simulateClick } from './dom-simulate';
 
 // 历史堆栈操作
@@ -232,8 +232,6 @@ const selectDate: Action = {
     return {
       status: 'success',
     };
-
-    // const prev = element.querySelector('.tiny-date-picker__header-label');
   },
 };
 

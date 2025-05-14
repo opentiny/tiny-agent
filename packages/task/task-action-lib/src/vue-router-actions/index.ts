@@ -1,4 +1,4 @@
-import { Action } from '../common/action.d';
+import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
 
 // 定义路由操作类型的枚举，添加 vue_ 前缀区分
 enum RouterActionType {

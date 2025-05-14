@@ -5,13 +5,13 @@ interface IParams {
 }
 
 interface IResult {
-  response: AxiosResponse;
+  response: any;
   matchInfo?: MatchInfo;
 }
 
 interface IContext {
   $axiosConfig?: {
-    axios: AxiosInstance;
+    axios: any;
     timeout?: number;
     valid?: (result: IResult) => boolean;
   };

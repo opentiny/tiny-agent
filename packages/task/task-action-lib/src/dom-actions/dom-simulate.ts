@@ -1,4 +1,4 @@
-import { commonEvents, dispatchEvent } from '../common/dom';
+import { commonEvents, dispatchEvent } from './dom';
 
 /**
  * 模拟用户点击按钮
