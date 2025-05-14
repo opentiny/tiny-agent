@@ -247,6 +247,8 @@ class FloatingElement {
  */
 export class Tooltip extends FloatingElement {
   private showTimer: number | null = null;
+  private handleMouseEnterFn: () => void;
+  private handleMouseLeaveFn: () => void;
 
   constructor(
     reference: HTMLElement,
@@ -270,8 +272,8 @@ export class Tooltip extends FloatingElement {
     super(reference, content, { ...defaultOptions, ...options });
 
     // 绑定事件处理方法到实例
-    this.handleMouseEnter = this.handleMouseEnter.bind(this);
-    this.handleMouseLeave = this.handleMouseLeave.bind(this);
+    this.handleMouseEnterFn = this.handleMouseEnter.bind(this);
+    this.handleMouseLeaveFn = this.handleMouseLeave.bind(this);
 
     // 添加事件监听器
     this.bindEvents();
@@ -281,20 +283,20 @@ export class Tooltip extends FloatingElement {
    * 绑定事件监听器
    */
   private bindEvents(): void {
-    this.reference.addEventListener('mouseenter', this.handleMouseEnter);
-    this.reference.addEventListener('mouseleave', this.handleMouseLeave);
-    this.reference.addEventListener('focus', this.handleMouseEnter);
-    this.reference.addEventListener('blur', this.handleMouseLeave);
+    this.reference.addEventListener('mouseenter', this.handleMouseEnterFn);
+    this.reference.addEventListener('mouseleave', this.handleMouseLeaveFn);
+    this.reference.addEventListener('focus', this.handleMouseEnterFn);
+    this.reference.addEventListener('blur', this.handleMouseLeaveFn);
   }
 
   /**
    * 解绑事件监听器
    */
   private unbindEvents(): void {
-    this.reference.removeEventListener('mouseenter', this.handleMouseEnter);
-    this.reference.removeEventListener('mouseleave', this.handleMouseLeave);
-    this.reference.removeEventListener('focus', this.handleMouseEnter);
-    this.reference.removeEventListener('blur', this.handleMouseLeave);
+    this.reference.removeEventListener('mouseenter', this.handleMouseEnterFn);
+    this.reference.removeEventListener('mouseleave', this.handleMouseLeaveFn);
+    this.reference.removeEventListener('focus', this.handleMouseEnterFn);
+    this.reference.removeEventListener('blur', this.handleMouseLeaveFn);
   }
 
   private handleMouseEnter(): void {
@@ -335,6 +337,9 @@ export class Popup extends FloatingElement {
   private triggerMode: 'click' | 'manual';
   private closeOnClickOutside: boolean;
   private closeOnEsc: boolean;
+  private handleClickOutsideFn: (event: MouseEvent) => void;
+  private handleEscKeyFn: (event: KeyboardEvent) => void;
+  private handleClickFn: (event: MouseEvent) => void;
 
   constructor(
     reference: HTMLElement,
@@ -366,15 +371,9 @@ export class Popup extends FloatingElement {
     this.closeOnEsc = mergedOptions.closeOnEsc!;
 
     // 绑定事件处理方法到实例
-    this.handleClick = (event: MouseEvent) => {
-      this.handleClick(event);
-    };
-    this.handleClickOutside = (event: MouseEvent) => {
-      this.handleClickOutside(event);
-    };
-    this.handleEscKey = (event: KeyboardEvent) => {
-      this.handleEscKey(event);
-    };
+    this.handleClickOutsideFn = this.handleClickOutside.bind(this);
+    this.handleEscKeyFn = this.handleEscKey.bind(this);
+    this.handleClickFn = this.handleClick.bind(this);
 
     // 如果是点击触发模式，绑定点击事件
     if (this.triggerMode === 'click') {
@@ -402,13 +401,13 @@ export class Popup extends FloatingElement {
 
     if (this.closeOnClickOutside) {
       this.clickOutsideTimer = setTimeout(() => {
-        document.addEventListener('click', this.handleClickOutside);
+        document.addEventListener('click', this.handleClickOutsideFn);
         this.clickOutsideTimer = null;
       }, 0);
     }
 
     if (this.closeOnEsc) {
-      document.addEventListener('keydown', this.handleEscKey);
+      document.addEventListener('keydown', this.handleEscKeyFn);
     }
   }
 
@@ -419,8 +418,8 @@ export class Popup extends FloatingElement {
     super.hide();
     this.isShown = false;
 
-    document.removeEventListener('click', this.handleClickOutside);
-    document.removeEventListener('keydown', this.handleEscKey);
+    document.removeEventListener('click', this.handleClickOutsideFn);
+    document.removeEventListener('keydown', this.handleEscKeyFn);
   }
 
   /**
@@ -467,11 +466,11 @@ export class Popup extends FloatingElement {
    */
   public destroy(): void {
     if (this.triggerMode === 'click') {
-      this.reference.removeEventListener('click', this.handleClick);
+      this.reference.removeEventListener('click', this.handleClickFn);
     }
 
-    document.removeEventListener('click', this.handleClickOutside);
-    document.removeEventListener('keydown', this.handleEscKey);
+    document.removeEventListener('click', this.handleClickOutsideFn);
+    document.removeEventListener('keydown', this.handleEscKeyFn);
 
     if (this.clickOutsideTimer) {
       clearTimeout(this.clickOutsideTimer);
