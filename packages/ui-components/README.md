@@ -60,12 +60,11 @@ if (clickPopupBtn) {
 // 示例 3: 手动控制的 popup
 const manualBtn = document.getElementById('manual-btn');
 const openPopupBtn = document.getElementById('open-popup-btn');
-const closePopupBtn = document.getElementById('close-popup-btn');
 
 if (manualBtn && openPopupBtn) {
   const content = document.createElement('div');
   content.innerHTML =
-    '<h4>手动控制的弹出框</h4><p>这个弹出框需要通过代码控制</p><button id="close-popup-btn">关闭</button>';
+    '<h4>手动控制的弹出框</h4><p>这个弹出框需要通过代码控制</p><button class="close-popup-btn">关闭</button>';
 
   // 创建手动控制的弹出框
   const popup = addPopup(manualBtn, content, {
@@ -82,7 +81,7 @@ if (manualBtn && openPopupBtn) {
 
   // 找到关闭按钮并添加事件
   setTimeout(() => {
-    const closeBtn = document.getElementById('close-popup-btn');
+    const closeBtn = content.querySelector('.close-popup-btn');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
         popup.hide();

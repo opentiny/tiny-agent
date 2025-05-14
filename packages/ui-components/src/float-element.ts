@@ -47,7 +47,8 @@ class FloatingElement {
   protected element: HTMLElement | null = null;
   protected arrowElement: HTMLElement | null = null;
   protected cleanupAutoUpdate: (() => void) | null = null;
-  protected hideTimeout: number | null = null;
+  protected hideTimer: number | null = null;
+  protected clickOutsideTimer: number | null = null;
 
   constructor(
     reference: HTMLElement,
@@ -119,9 +120,9 @@ class FloatingElement {
   public show(): void {
     if (!this.element) return;
 
-    if (this.hideTimeout) {
-      clearTimeout(this.hideTimeout);
-      this.hideTimeout = null;
+    if (this.hideTimer) {
+      clearTimeout(this.hideTimer);
+      this.hideTimer = null;
     }
 
     // 如果浮动元素不在 DOM 中，添加它
@@ -153,14 +154,15 @@ class FloatingElement {
     this.element.style.opacity = '0';
     this.element.style.visibility = 'hidden';
 
-    this.hideTimeout = window.setTimeout(() => {
-      if (this.element && this.element.parentNode) {
-        document.body.removeChild(this.element);
+    this.hideTimer = setTimeout(() => {
+      if (this.element?.parentNode) {
+        this.element.parentNode.removeChild(this.element);
       }
       if (this.cleanupAutoUpdate) {
         this.cleanupAutoUpdate();
         this.cleanupAutoUpdate = null;
       }
+      this.hideTimer = null;
     }, this.options.duration);
   }
 
@@ -227,14 +229,14 @@ class FloatingElement {
       this.cleanupAutoUpdate = null;
     }
 
-    if (this.element && this.element.parentNode) {
-      document.body.removeChild(this.element);
+    if (this.element?.parentNode) {
+      this.element.parentNode.removeChild(this.element);
       this.element = null;
     }
 
-    if (this.hideTimeout) {
-      clearTimeout(this.hideTimeout);
-      this.hideTimeout = null;
+    if (this.hideTimer) {
+      clearTimeout(this.hideTimer);
+      this.hideTimer = null;
     }
   }
 }
@@ -244,7 +246,7 @@ class FloatingElement {
  * 处理鼠标悬停触发的提示
  */
 export class Tooltip extends FloatingElement {
-  private showTimeout: number | null = null;
+  private showTimer: number | null = null;
 
   constructor(
     reference: HTMLElement,
@@ -296,18 +298,18 @@ export class Tooltip extends FloatingElement {
   }
 
   private handleMouseEnter(): void {
-    if (this.showTimeout) {
-      clearTimeout(this.showTimeout);
+    if (this.showTimer) {
+      clearTimeout(this.showTimer);
     }
-    this.showTimeout = window.setTimeout(() => {
+    this.showTimer = setTimeout(() => {
       this.show();
     }, (this.options as TooltipOptions).delay);
   }
 
   private handleMouseLeave(): void {
-    if (this.showTimeout) {
-      clearTimeout(this.showTimeout);
-      this.showTimeout = null;
+    if (this.showTimer) {
+      clearTimeout(this.showTimer);
+      this.showTimer = null;
     }
     this.hide();
   }
@@ -315,9 +317,9 @@ export class Tooltip extends FloatingElement {
   public destroy(): void {
     this.unbindEvents();
 
-    if (this.showTimeout) {
-      clearTimeout(this.showTimeout);
-      this.showTimeout = null;
+    if (this.showTimer) {
+      clearTimeout(this.showTimer);
+      this.showTimer = null;
     }
 
     super.destroy();
@@ -364,9 +366,15 @@ export class Popup extends FloatingElement {
     this.closeOnEsc = mergedOptions.closeOnEsc!;
 
     // 绑定事件处理方法到实例
-    this.handleClick = this.handleClick.bind(this);
-    this.handleClickOutside = this.handleClickOutside.bind(this);
-    this.handleEscKey = this.handleEscKey.bind(this);
+    this.handleClick = (event: MouseEvent) => {
+      this.handleClick(event);
+    };
+    this.handleClickOutside = (event: MouseEvent) => {
+      this.handleClickOutside(event);
+    };
+    this.handleEscKey = (event: KeyboardEvent) => {
+      this.handleEscKey(event);
+    };
 
     // 如果是点击触发模式，绑定点击事件
     if (this.triggerMode === 'click') {
@@ -393,8 +401,9 @@ export class Popup extends FloatingElement {
     this.isShown = true;
 
     if (this.closeOnClickOutside) {
-      setTimeout(() => {
+      this.clickOutsideTimer = setTimeout(() => {
         document.addEventListener('click', this.handleClickOutside);
+        this.clickOutsideTimer = null;
       }, 0);
     }
 
@@ -463,6 +472,11 @@ export class Popup extends FloatingElement {
 
     document.removeEventListener('click', this.handleClickOutside);
     document.removeEventListener('keydown', this.handleEscKey);
+
+    if (this.clickOutsideTimer) {
+      clearTimeout(this.clickOutsideTimer);
+      this.clickOutsideTimer = null;
+    }
 
     super.destroy();
   }

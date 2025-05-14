@@ -1,14 +1,14 @@
+import cssStr from './assets/styles/breathe.css?raw';
+
 const className = 'ta-breathe';
 
 let isInsert = false;
 
 const insertStyle = () => {
   if (isInsert) return;
-  import('./assets/styles/breathe.css?raw').then(({ default: string }) => {
-    const style = document.createElement('style');
-    style.textContent = string;
-    document.head.appendChild(style);
-  });
+  const style = document.createElement('style');
+  style.textContent = cssStr;
+  document.head.appendChild(style);
   isInsert = true;
 };
 const addBreathe = (element: HTMLElement) => {
