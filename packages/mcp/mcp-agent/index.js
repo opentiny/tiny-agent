@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from 'cors'
 import { createMCPClient } from "../mcp-client-core/dist/index.js";
 
 dotenv.config();
@@ -13,11 +14,12 @@ const main = async () => {
       iterationCount: 3,
     },
     mcpServerConfig: {
-      url: "http://localhost:3000/mcp",
+      url: "",
     },
   });
 
   const app = express();
+  app.use(cors());
   app.use(express.json());
 
   app.post("/chat", async (req, res) => {
