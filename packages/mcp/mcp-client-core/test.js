@@ -7,9 +7,14 @@ if (process.argv.length < 3) {
 }
 
 const client = await createMCPClient({
-  apiKey: process.env.OPEN_ROUTER_API_KEY,
-  model: process.env.OPEN_ROUTER_MODEL,
-  serverScriptPath: process.argv[2],
+  llmConfig: {
+    apiKey: process.env.OPEN_ROUTER_API_KEY,
+    model: process.env.OPEN_ROUTER_MODEL,
+    systemPrompt: "You are a helpful assistant with access to tools."
+  },
+  mcpServerConfig: {
+    url: "http://localhost:3000/mcp",
+  },
 });
 
 const rl = readline.createInterface({

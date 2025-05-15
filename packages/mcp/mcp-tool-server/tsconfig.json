@@ -6,5 +6,5 @@
     "moduleResolution": "nodenext",
     "outDir": "./dist",
   },
-  "files": ["src/index.ts"],
+  "include": ["src"],
 }

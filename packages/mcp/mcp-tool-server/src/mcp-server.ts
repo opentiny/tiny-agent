@@ -31,6 +31,7 @@ server.resource(
 );
 
 const app = express();
+app.use(express.json())
 
 // to support multiple simultaneous connections we have a lookup object from
 // sessionId to transport
@@ -55,4 +56,4 @@ app.post("/messages", async (req: Request, res: Response) => {
   }
 });
 
-app.listen(3001, '0.0.0.0');
+app.listen(3000);

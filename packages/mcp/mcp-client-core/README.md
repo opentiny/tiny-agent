@@ -36,9 +36,15 @@ import { createMCPClient } from "./index.js";
 async function example() {
   // 创建客户端实例
   const client = await createMCPClient({
-    serverScriptPath: "path/to/server.js", // mcp-server脚本文件路径
-    apiKey: "<your_api_key>",
-    model: "mistralai/mistral-7b-instruct:free",
+    llmConfig: {
+      apiKey: process.env.OPEN_ROUTER_API_KEY, // api key
+      model: process.env.OPEN_ROUTER_MODEL, // 模型名
+      systemPrompt: "You are a helpful assistant with access to tools.", // 系统提示词
+      iterationCount: 3, // 工具调用最大迭代次数
+    },
+    mcpServerConfig: {
+      url: "http://localhost:3000/mcp", // mcp-server地址，支持SSE和Streamable HTTP
+    },
   });
 
   try {

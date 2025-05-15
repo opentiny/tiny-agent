@@ -1,15 +1,25 @@
+import { randomUUID } from "node:crypto";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import dotenv from "dotenv";
 
 dotenv.config();
 
+export interface McpServerConfig {
+  url: string;
+}
 export interface MCPClientOptions {
-  serverScriptPath: string;
-  apiKey: string;
-  model: string;
+  llmConfig: {
+    apiKey: string; // 调用大模型api key
+    model: string; // 大模型名称
+    systemPrompt: string; // 系统提示词
+    iterationCount?: number; // 工具调用最大迭代次数
+  };
+  mcpServerConfig?: McpServerConfig;
 }
 
 interface ChatBody {
@@ -43,36 +53,43 @@ export class MCPClient {
     });
   }
 
-  async initialize(serverScriptPath: string) {
+  async initialize(options: MCPClientOptions) {
+    const url = options.mcpServerConfig?.url;
+
+    if (!url) {
+      return this.client;
+    }
+
+    const baseUrl = new URL(url);
+
     try {
-      const isPython = serverScriptPath.endsWith(".py");
-      const isJs = serverScriptPath.endsWith(".js");
-
-      if (!isPython && !isJs) {
-        throw new Error("Server script must be a .py or .js file");
-      }
-
-      const command = isPython ? "python" : "node";
-      const transport = new StdioClientTransport({
-        command,
-        args: [serverScriptPath],
-      });
+      const transport = new StreamableHTTPClientTransport(new URL(baseUrl));
 
       await this.client.connect(transport);
-      this.tools = (await this.client.listTools()).tools as unknown as Tool[];
+      console.log("Connected using Streamable HTTP transport");
+    } catch (error) {
+      // If that fails with a 4xx error, try the older SSE transport
       console.log(
-        `Connected to server with tools: ${this.tools
-          .map((tool) => tool.name)
-          .join(", ")}`
+        "Streamable HTTP connection failed, falling back to SSE transport"
       );
-    } catch (e) {
-      console.log("Failed to connect to MCP server: ", e);
-      throw e;
+      const sseTransport = new SSEClientTransport(baseUrl);
+
+      await this.client.connect(sseTransport);
+      console.log("Connected using SSE transport");
     }
+
+    this.tools = (await this.client.listTools()).tools as unknown as Tool[];
+    console.log(
+      `Connected to server with tools: ${this.tools
+        .map((tool) => tool.name)
+        .join(", ")}`
+    );
+
+    return this.client;
   }
 
   async chat(body: ChatBody) {
-    const { apiKey } = this.options;
+    const { apiKey } = this.options.llmConfig;
     try {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -112,25 +129,27 @@ export class MCPClient {
         },
       }));
 
+      let iterationCount = this.options.llmConfig.iterationCount || 1;
+
+      const finalText: string[] = [];
+      const toolResults = [];
+
       const response = await this.chat({
-        model: this.options.model,
+        model: this.options.llmConfig.model,
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant with access to tools.",
+            content: this.options.llmConfig.systemPrompt,
           },
           ...messages,
         ],
         tools: availableTools,
       });
 
-      const finalText: string[] = [];
-      const toolResults = [];
+      let message = response?.choices?.[0]?.message;
 
-      const content = response?.choices?.[0]?.message?.tool_calls;
-
-      if (content) {
-        for (const toolCall of content) {
+      while (iterationCount > 0 && message?.tool_calls) {
+        for (const toolCall of message?.tool_calls) {
           const toolName = toolCall.function.name;
           const toolArgs = JSON.parse(toolCall.function.arguments);
 
@@ -153,20 +172,22 @@ export class MCPClient {
         }
 
         const nextResponse = await this.chat({
-          model: this.options.model,
+          model: this.options.llmConfig.model,
           messages: [
             {
               role: "system",
-              content: "You are a helpful assistant with access to tools.",
+              content: this.options.llmConfig.systemPrompt,
             },
             ...messages,
           ],
           tools: availableTools,
         });
 
-        finalText.push(nextResponse.choices[0].message.content || "");
-      } else {
-        finalText.push(response.choices[0].message.content || "");
+        message = nextResponse.choices[0].message;
+
+        finalText.push(message?.content || "");
+
+        iterationCount--;
       }
 
       return {
@@ -187,7 +208,11 @@ export class MCPClient {
 }
 
 export async function createMCPClient(options: MCPClientOptions) {
-  const client = new MCPClient(options);
-  await client.initialize(options.serverScriptPath);
-  return client;
+  try {
+    const client = new MCPClient(options);
+    await client.initialize(options);
+    return client;
+  } catch (error) {
+    return null;
+  }
 }

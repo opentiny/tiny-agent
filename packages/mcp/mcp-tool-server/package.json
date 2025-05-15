@@ -1,6 +1,7 @@
 {
     "name": "@opentiny/tiny-agent-mcp-tool-server",
     "version": "0.0.1",
+    "type": "module",
     "scripts": {
         "dev": "ts-node src/index.ts",
         "build": "tsc -p tsconfig.json",
