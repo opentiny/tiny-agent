@@ -193,18 +193,22 @@ export default class TinyAgentMcpServer {
     this.mcpToolFilePath = file
 
     this.app.post('/mcp', async (req, res) => {
+      const { client } = req.query
       const sessionId = req.headers['mcp-session-id'] as string | undefined
       let transport: StreamableHTTPServerTransport
 
       if (sessionId && this.transports.streamable[sessionId]) {
         transport = this.transports.streamable[sessionId]
-      } else if (!sessionId && isInitializeRequest(req.body)) {
+      } else {
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sessionId) => {
             this.transports.streamable[sessionId] = transport
           },
+          enableJsonResponse: true,
         })
+
+        this.sessionConntionMap.set(transport.sessionId, String(client))
 
         transport.onclose = () => {
           if (transport.sessionId) {
@@ -215,17 +219,6 @@ export default class TinyAgentMcpServer {
         const server = this.initServer(transport.sessionId)
 
         await server.connect(transport)
-      } else {
-        // Invalid request
-        res.status(400).json({
-          jsonrpc: '2.0',
-          error: {
-            code: -32000,
-            message: 'Bad Request: No valid session ID provided',
-          },
-          id: null,
-        })
-        return
       }
 
       await transport.handleRequest(req, res, req.body)
