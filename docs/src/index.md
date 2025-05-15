@@ -3,8 +3,8 @@
 layout: home
 
 hero:
-  name: "TinyAgent"
-  text: "沉浸式AI交互工具"
+  name: 'TinyAgent'
+  text: '沉浸式AI交互工具'
   tagline: Enable AI to Operate on User Pages
   # image:
   #   src: /logo.svg

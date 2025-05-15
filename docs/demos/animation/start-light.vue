@@ -1,7 +1,7 @@
 <template>
   <div class="animation-container" @mousemove="handleMouseMove">
-    <div 
-      v-for="(particle, index) in particles" 
+    <div
+      v-for="(particle, index) in particles"
       :key="index"
       :style="getParticleStyle(particle)"
       class="particle"
@@ -10,11 +10,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 
-const container = ref(null)
-const particles = reactive([])
-const particleCount = 100
+const container = ref(null);
+const particles = reactive([]);
+const particleCount = 100;
 
 // 创建粒子
 const createParticles = () => {
@@ -25,41 +25,43 @@ const createParticles = () => {
       size: Math.random() * 3 + 1,
       speedX: (Math.random() - 0.5) * 0.5,
       speedY: (Math.random() - 0.5) * 0.5,
-      color: `hsla(${Math.random() * 360}, 70%, 60%, ${Math.random() * 0.8 + 0.2})`
-    })
+      color: `hsla(${Math.random() * 360}, 70%, 60%, ${
+        Math.random() * 0.8 + 0.2
+      })`,
+    });
   }
-}
+};
 
 // 更新粒子位置
 const updateParticles = () => {
-  particles.forEach(particle => {
-    particle.x += particle.speedX
-    particle.y += particle.speedY
-    
-    if (particle.x < 0 || particle.x > 100) particle.speedX *= -1
-    if (particle.y < 0 || particle.y > 100) particle.speedY *= -1
-  })
-  
-  requestAnimationFrame(updateParticles)
-}
+  particles.forEach((particle) => {
+    particle.x += particle.speedX;
+    particle.y += particle.speedY;
+
+    if (particle.x < 0 || particle.x > 100) particle.speedX *= -1;
+    if (particle.y < 0 || particle.y > 100) particle.speedY *= -1;
+  });
+
+  requestAnimationFrame(updateParticles);
+};
 
 // 鼠标交互
 const handleMouseMove = (e) => {
-  const rect = e.currentTarget.getBoundingClientRect()
-  const mouseX = e.clientX - rect.left
-  const mouseY = e.clientY - rect.top
-  
-  particles.forEach(particle => {
-    const dx = mouseX / rect.width * 100 - particle.x
-    const dy = mouseY / rect.height * 100 - particle.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    
+  const rect = e.currentTarget.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  particles.forEach((particle) => {
+    const dx = (mouseX / rect.width) * 100 - particle.x;
+    const dy = (mouseY / rect.height) * 100 - particle.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
     if (distance < 20) {
-      particle.x += dx * 0.01
-      particle.y += dy * 0.01
+      particle.x += dx * 0.01;
+      particle.y += dy * 0.01;
     }
-  })
-}
+  });
+};
 
 // 获取粒子样式
 const getParticleStyle = (particle) => {
@@ -69,18 +71,18 @@ const getParticleStyle = (particle) => {
     width: `${particle.size}px`,
     height: `${particle.size}px`,
     backgroundColor: particle.color,
-    boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`
-  }
-}
+    boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
+  };
+};
 
 onMounted(() => {
-  createParticles()
-  updateParticles()
-})
+  createParticles();
+  updateParticles();
+});
 
 onBeforeUnmount(() => {
   // 清理工作
-})
+});
 </script>
 
 <style scoped>
@@ -97,4 +99,4 @@ onBeforeUnmount(() => {
   border-radius: 50%;
   transition: all 0.1s ease-out;
 }
-</style>  
+</style>

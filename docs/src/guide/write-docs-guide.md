@@ -1,4 +1,5 @@
 # 一、GitHub 风格的提示信息
+
 > [!NOTE]
 > 强调用户在快速浏览文档时也不应忽略的重要信息。
 
@@ -15,23 +16,30 @@
 > 行为可能带来的负面影响。
 
 # 二、代码展示
+
 ## 2.1 默认展开代码
+
 ```ts
 const a = 1;
-console.log(a)
+console.log(a);
 ```
 
 ## 2.2 默认折叠代码
+
 ::: details 点我查看代码
+
 ```js
-console.log('Hello, TinyAgent!')
+console.log('Hello, TinyAgent!');
 ```
+
 :::
 
-## 2.3 引入vue文件demo案例
+## 2.3 引入 vue 文件 demo 案例
+
 <demo vue="../../demos/animation/start-light.vue" />
 
 # 三、跳转
+
 [跳到根目录](/) <!-- 将用户导航至根目录下的 index.html -->
 
 [跳到扩展目录](/plugins/simulate-lib) <!-- 将用户导航至目录 foo 下的 index.html -->
@@ -43,4 +51,5 @@ console.log('Hello, TinyAgent!')
 [外链](https://vitepress.dev/zh/guide/markdown)
 
 # 更多使用方式
-参考 [vitepress官网](https://vitepress.dev/zh/guide/markdown)
+
+参考 [vitepress 官网](https://vitepress.dev/zh/guide/markdown)
