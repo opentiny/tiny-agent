@@ -20,7 +20,7 @@ export default defineConfig({
     nav: [
       { text: '指引', link: '/guide/write-docs-guide' },
       { text: '配置', link: '/config/config' },
-      { text: '插件', link: '/plugins/simulate-lib' },
+      { text: '扩展', link: '/plugins/simulate-lib' },
       { text: '演示', link: '/examples/demo' },
       { text: '1.0.0', link: '/releases/releases', },
     ],
@@ -49,7 +49,7 @@ export default defineConfig({
       ],
       '/plugins/': [
         {
-          text: '插件',
+          text: '扩展',
           base: '/plugins/',
           items: [
             { text: '模拟dom操作库', link: 'simulate-lib' },
@@ -59,6 +59,9 @@ export default defineConfig({
     },
     socialLinks: [
       { icon: 'github', link: 'https://github.com/opentiny/tiny-agent' }
-    ]
+    ],
+    search: {
+      provider: 'local',
+    },
   }
 })

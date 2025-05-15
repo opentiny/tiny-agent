@@ -14,7 +14,7 @@ hero:
       text: 指引
       link: /guide/write-docs-guide
     - theme: alt
-      text: 插件
+      text: 扩展
       link: /plugins/simulate-lib.md
 
 features:
