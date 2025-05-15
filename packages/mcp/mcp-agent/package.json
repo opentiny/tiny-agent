@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "ts-node index.ts"
+    "dev": "node index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
