@@ -147,46 +147,50 @@ export class MCPClient {
 
       let message = response?.choices?.[0]?.message;
 
-      while (iterationCount > 0 && message?.tool_calls) {
-        for (const toolCall of message?.tool_calls) {
-          const toolName = toolCall.function.name;
-          const toolArgs = JSON.parse(toolCall.function.arguments);
+      if (message?.tool_calls) {
+        while (iterationCount > 0 && message?.tool_calls) {
+          for (const toolCall of message?.tool_calls) {
+            const toolName = toolCall.function.name;
+            const toolArgs = JSON.parse(toolCall.function.arguments);
 
-          console.log(
-            `[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`
-          );
-          const result = await this.client.callTool({
-            name: toolName,
-            arguments: toolArgs,
+            console.log(
+              `[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`
+            );
+            const result = await this.client.callTool({
+              name: toolName,
+              arguments: toolArgs,
+            });
+
+            toolResults.push({ call: toolName, result });
+
+            messages.push(response.choices[0].message);
+            messages.push({
+              role: "tool",
+              tool_call_id: toolCall.id,
+              content: JSON.stringify(result.content),
+            } as ChatCompletionMessageParam);
+          }
+
+          const nextResponse = await this.chat({
+            model: this.options.llmConfig.model,
+            messages: [
+              {
+                role: "system",
+                content: this.options.llmConfig.systemPrompt,
+              },
+              ...messages,
+            ],
+            tools: availableTools,
           });
 
-          toolResults.push({ call: toolName, result });
+          message = nextResponse.choices[0].message;
 
-          messages.push(response.choices[0].message);
-          messages.push({
-            role: "tool",
-            tool_call_id: toolCall.id,
-            content: JSON.stringify(result.content),
-          } as ChatCompletionMessageParam);
+          finalText.push(message?.content || "");
+
+          iterationCount--;
         }
-
-        const nextResponse = await this.chat({
-          model: this.options.llmConfig.model,
-          messages: [
-            {
-              role: "system",
-              content: this.options.llmConfig.systemPrompt,
-            },
-            ...messages,
-          ],
-          tools: availableTools,
-        });
-
-        message = nextResponse.choices[0].message;
-
+      } else {
         finalText.push(message?.content || "");
-
-        iterationCount--;
       }
 
       return {
