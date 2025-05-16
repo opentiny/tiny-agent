@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "mcp service",
   "main": "index.js",
+  "files": [
+    "core",
+    "vue",
+    "index.ts"
+  ],
   "dependencies": {
     "zod": "^3.24.2",
     "zod-to-json-schema": "^3.24.5"

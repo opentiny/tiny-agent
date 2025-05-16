@@ -13,6 +13,9 @@
   "bin": {
     "@opentiny/tiny-agent-mcp-tool-server": "src/index.ts"
   },
+  "files": [
+    "src"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.9.0",
     "@opentiny/tiny-agent-mcp-service": "workspace:*",

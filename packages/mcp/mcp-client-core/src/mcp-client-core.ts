@@ -1,10 +1,10 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import dotenv from "dotenv";
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import dotenv from 'dotenv';
 
-import type { Tool } from "@modelcontextprotocol/sdk/types.js";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 dotenv.config();
 
@@ -25,12 +25,12 @@ interface ChatBody {
   model: string;
   messages: ChatCompletionMessageParam[];
   tools?: {
-    type: "function";
+    type: 'function';
     function: {
       name: string;
       description?: string;
       parameters: {
-        type: "object";
+        type: 'object';
         properties?: Record<string, unknown>;
         required?: string[];
       };
@@ -47,8 +47,8 @@ export class MCPClient {
     this.options = options;
 
     this.client = new Client({
-      name: "mcp-typescript-client",
-      version: "1.0.0",
+      name: 'mcp-typescript-client',
+      version: '1.0.0',
     });
   }
 
@@ -65,23 +65,23 @@ export class MCPClient {
       const transport = new StreamableHTTPClientTransport(new URL(baseUrl));
 
       await this.client.connect(transport);
-      console.log("Connected using Streamable HTTP transport");
+      console.log('Connected using Streamable HTTP transport');
     } catch (error) {
       // If that fails with a 4xx error, try the older SSE transport
       console.log(
-        "Streamable HTTP connection failed, falling back to SSE transport"
+        'Streamable HTTP connection failed, falling back to SSE transport'
       );
       const sseTransport = new SSEClientTransport(baseUrl);
 
       await this.client.connect(sseTransport);
-      console.log("Connected using SSE transport");
+      console.log('Connected using SSE transport');
     }
 
     this.tools = (await this.client.listTools()).tools as unknown as Tool[];
     console.log(
       `Connected to server with tools: ${this.tools
         .map((tool) => tool.name)
-        .join(", ")}`
+        .join(', ')}`
     );
 
     return this.client;
@@ -90,11 +90,11 @@ export class MCPClient {
   async chat(body: ChatBody) {
     const { apiKey } = this.options.llmConfig;
     try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
       });
@@ -110,18 +110,20 @@ export class MCPClient {
     try {
       const messages: ChatCompletionMessageParam[] = [
         {
-          role: "user",
+          role: 'user',
           content: query,
         },
       ];
 
+      this.tools = (await this.client.listTools()).tools as unknown as Tool[];
+
       const availableTools = this.tools.map((tool) => ({
-        type: "function" as const,
+        type: 'function' as const,
         function: {
           name: tool.name as string,
           description: tool.description as string,
           parameters: {
-            type: "object" as const,
+            type: 'object' as const,
             properties: tool.inputSchema.properties as Record<string, unknown>,
             required: tool.inputSchema.required as string[],
           },
@@ -133,11 +135,13 @@ export class MCPClient {
       const finalText: string[] = [];
       const toolResults = [];
 
+      console.log(availableTools);
+
       const response = await this.chat({
         model: this.options.llmConfig.model,
         messages: [
           {
-            role: "system",
+            role: 'system',
             content: this.options.llmConfig.systemPrompt,
           },
           ...messages,
@@ -146,12 +150,12 @@ export class MCPClient {
       });
 
       let message = response?.choices?.[0]?.message;
-
+      console.log('message?.tool_calls', message?.tool_calls);
       if (message?.tool_calls) {
         while (iterationCount > 0 && message?.tool_calls) {
           for (const toolCall of message?.tool_calls) {
             const toolName = toolCall.function.name;
-            const toolArgs = JSON.parse(toolCall.function.arguments);
+            const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
 
             console.log(
               `[Calling tool ${toolName} with args ${JSON.stringify(toolArgs)}]`
@@ -165,7 +169,7 @@ export class MCPClient {
 
             messages.push(response.choices[0].message);
             messages.push({
-              role: "tool",
+              role: 'tool',
               tool_call_id: toolCall.id,
               content: JSON.stringify(result.content),
             } as ChatCompletionMessageParam);
@@ -175,7 +179,7 @@ export class MCPClient {
             model: this.options.llmConfig.model,
             messages: [
               {
-                role: "system",
+                role: 'system',
                 content: this.options.llmConfig.systemPrompt,
               },
               ...messages,
@@ -185,20 +189,20 @@ export class MCPClient {
 
           message = nextResponse.choices[0].message;
 
-          finalText.push(message?.content || "");
+          finalText.push(message?.content || '');
 
           iterationCount--;
         }
       } else {
-        finalText.push(message?.content || "");
+        finalText.push(message?.content || '');
       }
 
       return {
-        text: finalText.join("\n"),
+        text: finalText.join('\n'),
         toolResults,
       };
     } catch (error) {
-      console.error("Error processing query:", error);
+      console.error('Error processing query:', error);
       throw error;
     }
   }
