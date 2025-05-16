@@ -1,0 +1,22 @@
+.ta-breathe.ta-breathe {
+  outline: 2px solid rgba(20, 115, 255, 0.6);
+  outline-offset: 2px;
+  animation: breathing 2s ease-in-out infinite;
+  position: relative;
+  transition: outline 0.3s; /* 平滑背景变化 */
+}
+
+@keyframes breathing {
+  0% {
+    outline-width: 2px;
+    outline-offset: 2px;
+  }
+  50% {
+    outline-width: 5px;
+    outline-offset: 4px;
+  }
+  100% {
+    outline-width: 2px;
+    outline-offset: 2px;
+  }
+}
