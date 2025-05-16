@@ -2,7 +2,7 @@
   "name": "@opentiny/tiny-agent-mcp-service",
   "version": "1.0.0",
   "description": "mcp service",
-  "main": "index.js",
+  "main": "index.ts",
   "files": [
     "core",
     "vue",
