@@ -15,7 +15,6 @@ interface IContext {
     timeout?: number;
     valid?: (result: IResult) => boolean;
   };
-  _clearEffect: (() => void)[];
 }
 
 interface MatchInfo {
@@ -149,7 +148,7 @@ const start = {
     params: IParams,
     context: IContext
   ): Promise<{ status: string }> => {
-    const { $axiosConfig } = context;
+    const { $axiosConfig, $task } = context;
     const { axios, timeout: globalTimeout } = $axiosConfig || {};
     if (!axios) {
       return;
@@ -169,8 +168,7 @@ const start = {
       }
     };
 
-    context._clearEffect.push(() => {
-      console.log('axios _clearEffect');
+    $task.addCleanEffect(() => {
       setTimeout(remove, timeout);
     });
 

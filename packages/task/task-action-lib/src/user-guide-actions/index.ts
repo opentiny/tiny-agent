@@ -15,12 +15,13 @@ const UserGuide: Action = {
     const element = await findElement(selector, timeout);
     const guideModal = new GuideModal(element);
     guideModal.show({ title, text });
-    const { pause } = context?.$scheduler || {};
-    const { tipToResume } = context?.$ui || {};
+    const { pause } = context?.$task || {};
+    const { tipToResume } = context?.$taskUI || {};
     pause && pause();
 
     guideModal.onHide(() => {
-      tipToResume && tipToResume(tip || '完成操作后继续');
+      tipToResume &&
+        tipToResume.call(context?.$taskUI, tip || '完成操作后继续');
     });
 
     return { status: 'success' };
