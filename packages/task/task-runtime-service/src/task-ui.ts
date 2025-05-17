@@ -40,8 +40,18 @@ const createImg = (src: string) => {
   });
   return img;
 };
+export interface ITaskUI {
+  show(): void;
+  hide(): void;
+  stop(): void;
+  pause(isEmit?: boolean): void;
+  skip(isEmit?: boolean): void;
+  resume(isEmit?: boolean): void;
+  on(event: string, callback: (...args: any[]) => void): void;
+  setTitle(title: string): void;
+}
 
-export class TaskUI extends EventEmitter {
+export class TaskUI extends EventEmitter implements ITaskUI {
   messageBox: HTMLDivElement;
   titleElm!: HTMLDivElement;
   pauseBtn!: HTMLImageElement;

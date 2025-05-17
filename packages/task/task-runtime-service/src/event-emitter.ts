@@ -1,4 +1,4 @@
-type EventCallback<T = any> = (...args: T[]) => void;
+export type EventCallback<T = any> = (...args: T[]) => void;
 
 export class EventEmitter {
   private listeners: Map<string, Set<EventCallback>>;

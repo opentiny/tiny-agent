@@ -1,12 +1,7 @@
-import type {
-  Action,
-  ITaskDescription,
-  TaskResult,
-  ISchedulerContext,
-} from './types';
+import type { ITaskDescription, TaskResult, ISchedulerContext } from './types';
 import { Task } from './task';
 import { ActionManager } from './action-manager';
-import { TaskUI } from './task-ui';
+import type { ITaskUI } from './task-ui';
 import { t } from './locale/i18n';
 
 export class TaskScheduler {
@@ -15,12 +10,12 @@ export class TaskScheduler {
   private context: ISchedulerContext;
   private actionManager: ActionManager;
   private task: Task | null = null;
-  private taskUI: TaskUI | undefined;
+  private taskUI: ITaskUI | undefined;
 
   constructor(
     actionManager: ActionManager,
     context?: ISchedulerContext,
-    taskUI?: TaskUI
+    taskUI?: ITaskUI
   ) {
     // 注册所有的ACTION并且提供上下文
     this.context = context || {};

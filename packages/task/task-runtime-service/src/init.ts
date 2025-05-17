@@ -4,7 +4,7 @@ import { ActionManager } from './action-manager';
 import { t } from './locale/i18n';
 import type { Action, ISchedulerContext } from './types';
 
-const createScheduler = (actions: Action[], context: ISchedulerContext) => {
+export function createScheduler(actions: Action[], context: ISchedulerContext) {
   const actionManager = new ActionManager();
   const taskUI = new TaskUI({
     title: t('scheduler.startDesc'),
@@ -13,6 +13,4 @@ const createScheduler = (actions: Action[], context: ISchedulerContext) => {
   actionManager.registerActions(actions);
 
   return { taskScheduler, actionManager };
-};
-
-export { createScheduler };
+}
