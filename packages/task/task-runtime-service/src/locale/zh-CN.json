@@ -1,0 +1,22 @@
+{
+  "scheduler": {
+    "startDesc": "AI操作中，您可以暂停或终止",
+    "executingStep": "执行指令"
+  },
+  "taskUI": {
+    "pause": "暂停",
+    "resume": "继续",
+    "skip": "跳过",
+    "stop": "终止"
+  },
+  "task": {
+    "emptyInstructions": "指令列表为空",
+    "actionNotFound": "未找到名为 '{{action}}' 的ACTION"
+  },
+  "action": {
+    "click": {
+      "title": "点击",
+      "description": "点击元素"
+    }
+  }
+}

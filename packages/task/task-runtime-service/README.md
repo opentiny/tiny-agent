@@ -85,5 +85,5 @@ const taskDescription = {
   id: '123',
   instructions: [{ action: 'click', params: { selector: '#submitBtn' } }],
 };
-taskScheduler.doTask();
+taskScheduler.pushTask(taskDescription);
 ```

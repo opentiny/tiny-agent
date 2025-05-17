@@ -1,4 +1,4 @@
-import { Action, IActionResult } from './types';
+import { Action } from './types';
 
 // ACTION管理类
 class ActionManager {
@@ -7,7 +7,7 @@ class ActionManager {
   // 注册ACTION
   registerAction(action: Action): void {
     if (this.actions[action.name]) {
-      throw new Error(action.name + '名已被使用');
+      throw new Error(action.name + 'action name already exists');
     }
     this.actions[action.name] = action;
   }
