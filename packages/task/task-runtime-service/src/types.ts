@@ -3,7 +3,7 @@ export interface IInstruction {
   params: { [key: string]: any };
 }
 
-export interface ITask {
+export interface ITaskDescription {
   id: string;
   instructions: IInstruction[];
 }
@@ -30,10 +30,10 @@ export type ActionsResult = IActionResult & {
 export type TaskResult = ActionsResult & { id: string };
 
 export interface ISchedulerContext {
-  _clearEffect: Array<() => void>;
-  $scheduler?: {
+  $task?: {
     pause: (...args: unknown[]) => void;
     resume: () => Promise<void>;
+    addCleanEffect: (fn: () => void) => void;
   };
   [key: string]: any;
 }
