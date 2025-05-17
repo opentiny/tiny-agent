@@ -6,7 +6,7 @@ import type {
 } from './types';
 import ActionManager from './action-manager';
 import EventEmitter from './event-emitter';
-
+import { t } from './locale/i18n';
 // 执行器状态枚举
 export enum ExecutorStatus {
   Idle = 'idle',
@@ -46,7 +46,7 @@ export class Task extends EventEmitter {
       return Promise.reject({
         status: 'error',
         index: -1,
-        error: { message: '指令列表为空' },
+        error: { message: t('task.emptyInstructions') },
       });
     }
 
@@ -95,7 +95,7 @@ export class Task extends EventEmitter {
       });
       const actionExecutor = this.actionManager.findAction(action)?.execute;
       if (!actionExecutor) {
-        this.finalResult = { message: `未找到名为 '${action}' 的ACTION` };
+        this.finalResult = { message: t('task.actionNotFound', { action }) };
         this.resultStatus = 'error';
         return this.finish();
       }

@@ -7,6 +7,7 @@ import type {
 import { Task } from './task';
 import ActionManager from './action-manager';
 import { TaskUI } from './task-ui';
+import { t } from './locale/i18n';
 
 class TaskScheduler {
   private tasksQueue: any = [];
@@ -18,11 +19,11 @@ class TaskScheduler {
 
   constructor(
     actionManager: ActionManager,
-    context: ISchedulerContext,
+    context?: ISchedulerContext,
     taskUI?: TaskUI
   ) {
     // 注册所有的ACTION并且提供上下文
-    this.context = context;
+    this.context = context || {};
     this.actionManager = actionManager;
     this.taskUI = taskUI;
   }
@@ -63,13 +64,13 @@ class TaskScheduler {
       this.task.on(
         'beforeStep',
         ({ index, instruction }: { index: number; instruction: any }) => {
-          this.taskUI!.setTitle(`执行指令${index}`);
+          this.taskUI!.setTitle(`${t('scheduler.executingStep')} ${index}`);
         }
       );
     }
   }
 
-  doTask(taskDescription: ITaskDescription): Promise<TaskResult> {
+  pushTask(taskDescription: ITaskDescription): Promise<TaskResult> {
     return new Promise((resolve, reject) => {
       const { instructions, id } = taskDescription;
       const taskContext = { ...this.context };

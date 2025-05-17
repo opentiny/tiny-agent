@@ -1,0 +1,16 @@
+{
+  "scheduler": {
+    "startDesc": "AI operation, you can pause or terminate",
+    "executingStep": "Execute instruction"
+  },
+  "taskUI": {
+    "pause": "Pause",
+    "resume": "Resume",
+    "skip": "Skip",
+    "stop": "Terminate"
+  },
+  "task": {
+    "emptyInstructions": "Instructions list is empty",
+    "actionNotFound": "No action named '{{action}}' found"
+  }
+}
