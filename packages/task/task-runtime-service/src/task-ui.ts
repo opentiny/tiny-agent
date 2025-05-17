@@ -4,7 +4,7 @@ import {
   removeBreathe,
   addTooltip,
 } from '@opentiny/tiny-agent-ui-components';
-
+import { t } from './locale/i18n';
 import skip from './assets/images/skip.svg?url';
 import skipDisabled from './assets/images/skip-disabled.svg?url';
 import pause from './assets/images/pause.svg?url';
@@ -88,25 +88,25 @@ export class TaskUI extends EventEmitter {
 
     this.skipBtn = createImg(skip);
     this.skipBtn.onclick = () => this.skip(true);
-    this.skipBtn.title = '跳过';
+    this.skipBtn.title = t('taskUI.skip');
 
     this.skipDisabledBtn = createImg(skipDisabled);
     this.skipDisabledBtn.style.cursor = 'not-allowed';
 
     this.stopBtn = createImg(stop);
     this.stopBtn.onclick = () => this.stop(true);
-    this.stopBtn.title = '停止';
+    this.stopBtn.title = t('taskUI.stop');
 
     this.stopDisabledBtn = createImg(stopDisabled);
     this.stopDisabledBtn.style.cursor = 'not-allowed';
 
     this.pauseBtn = createImg(pause);
     this.pauseBtn.onclick = () => this.pause(true);
-    this.pauseBtn.title = '暂停';
+    this.pauseBtn.title = t('taskUI.pause');
 
     this.resumeBtn = createImg(resume);
     this.resumeBtn.onclick = () => this.resume(true);
-    this.resumeBtn.title = '恢复';
+    this.resumeBtn.title = t('taskUI.resume');
 
     this.messageBox.append(
       this.titleElm,

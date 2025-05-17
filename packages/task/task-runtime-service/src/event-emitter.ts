@@ -35,7 +35,7 @@ class EventEmitter {
       try {
         callback(...args);
       } catch (error) {
-        console.error(`事件 ${event} 的回调执行出错:`, error);
+        console.error(`event ${event} callback execution error:`, error);
       }
     }
   }

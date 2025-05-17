@@ -187,6 +187,56 @@ export default class TinyAgentMcpServer {
   start(file: string) {
     this.mcpToolFilePath = file;
 
+    this.app.post('/mcp', async (req, res) => {
+      const { client } = req.query;
+      const sessionId = req.headers['mcp-session-id'] as string | undefined;
+      let transport: StreamableHTTPServerTransport;
+
+      if (sessionId && this.transports.streamable[sessionId]) {
+        transport = this.transports.streamable[sessionId];
+      } else {
+        transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => randomUUID(),
+          onsessioninitialized: (sessionId) => {
+            this.transports.streamable[sessionId] = transport;
+          },
+          enableJsonResponse: true,
+        });
+
+        this.sessionConntionMap.set(transport.sessionId, String(client));
+
+        transport.onclose = () => {
+          if (transport.sessionId) {
+            delete this.transports.streamable[transport.sessionId];
+          }
+        };
+
+        const server = this.initServer(transport.sessionId);
+
+        await server.connect(transport);
+      }
+
+      await transport.handleRequest(req, res, req.body);
+    });
+
+    const handleSessionRequest = async (
+      req: express.Request,
+      res: express.Response
+    ) => {
+      const sessionId = req.headers['mcp-session-id'] as string | undefined;
+      if (!sessionId || !this.transports.streamable[sessionId]) {
+        res.status(400).send('Invalid or missing session ID');
+        return;
+      }
+
+      const transport = this.transports.streamable[sessionId];
+      await transport.handleRequest(req, res);
+    };
+
+    this.app.get('/mcp', handleSessionRequest);
+
+    this.app.delete('/mcp', handleSessionRequest);
+
     this.app.get('/sse', async (req: Request, res: Response) => {
       const { client } = req.query;
       const transport = new SSEServerTransport('/messages', res);

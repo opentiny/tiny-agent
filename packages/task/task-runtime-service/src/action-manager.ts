@@ -1,15 +1,15 @@
-import { Action, IActionResult } from './types';
+import { Action } from './types';
 
 // ACTION管理类
 class ActionManager {
   private actions: { [name: string]: Action } = {};
 
   // 注册ACTION
-  registerAction(plugin: Action): void {
-    if (this.actions[plugin.name]) {
-      throw new Error(plugin.name + '名已被使用');
+  registerAction(action: Action): void {
+    if (this.actions[action.name]) {
+      throw new Error(action.name + 'action name already exists');
     }
-    this.actions[plugin.name] = plugin;
+    this.actions[action.name] = action;
   }
 
   // 批量注册ACTION
@@ -29,6 +29,10 @@ class ActionManager {
     }
   }
 
+  unregisterActions(names: string[]): void {
+    names.forEach((name) => this.unregisterAction(name));
+  }
+
   // 获取ACTION列表
   getActionList(): Action[] {
     return Object.values(this.actions);
@@ -39,20 +43,8 @@ class ActionManager {
     this.actions[action.name] = action;
   }
 
-  // 执行ACTION操作
-  executeAction(
-    name: string,
-    params: { [key: string]: any },
-    context?: any
-  ): IActionResult | Promise<IActionResult> {
-    const plugin = this.actions[name];
-    if (plugin) {
-      return plugin.execute(params, context);
-    }
-    return {
-      status: 'error',
-      error: { message: `未找到名为 '${name}' 的ACTION` },
-    };
+  findAction(name: string): Action | undefined {
+    return this.actions[name];
   }
 }
 

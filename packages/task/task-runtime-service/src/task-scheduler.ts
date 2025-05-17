@@ -1,23 +1,85 @@
-import type { Action, ITask, TaskResult, ISchedulerContext } from './types';
+import type {
+  Action,
+  ITaskDescription,
+  TaskResult,
+  ISchedulerContext,
+} from './types';
 import { Task } from './task';
+import ActionManager from './action-manager';
+import { TaskUI } from './task-ui';
+import { t } from './locale/i18n';
 
 class TaskScheduler {
   private tasksQueue: any = [];
   private isExecuting = false;
-  public task: Task;
+  private context: ISchedulerContext;
+  private actionManager: ActionManager;
+  private task: Task | null = null;
+  private taskUI: TaskUI | undefined;
 
-  constructor(actions: Action[], context: ISchedulerContext) {
-    const task = new Task();
-    this.task = task;
+  constructor(
+    actionManager: ActionManager,
+    context?: ISchedulerContext,
+    taskUI?: TaskUI
+  ) {
     // 注册所有的ACTION并且提供上下文
-    this.task.registerActions(actions);
-    this.task.provideContext(context);
+    this.context = context || {};
+    this.actionManager = actionManager;
+    this.taskUI = taskUI;
   }
 
-  doTask(task: ITask): Promise<TaskResult> {
+  addContext(context: ISchedulerContext) {
+    this.context = {
+      ...this.context,
+      ...context,
+    };
+  }
+
+  connectTaskUI() {
+    if (this.taskUI && this.task) {
+      this.taskUI.on('pause', () => {
+        this.task!.waitPause();
+      });
+      this.taskUI.on('skip', () => {
+        this.task!.skip();
+      });
+      this.taskUI.on('resume', () => {
+        this.task!.resume();
+      });
+      this.taskUI.on('stop', () => {
+        this.task!.stop();
+      });
+      this.task.on('start', () => {
+        this.taskUI!.show();
+      });
+      this.task.on('pause', () => {
+        this.taskUI!.pause();
+      });
+      this.task.on('resume', () => {
+        this.taskUI!.resume();
+      });
+      this.task.on('finish', () => {
+        this.taskUI!.stop();
+      });
+      this.task.on(
+        'beforeStep',
+        ({ index, instruction }: { index: number; instruction: any }) => {
+          this.taskUI!.setTitle(`${t('scheduler.executingStep')} ${index}`);
+        }
+      );
+    }
+  }
+
+  pushTask(taskDescription: ITaskDescription): Promise<TaskResult> {
     return new Promise((resolve, reject) => {
-      const { instructions, id } = task;
-      const taskFn = () => this.task.execute(instructions); // 执行任务
+      const { instructions, id } = taskDescription;
+      const taskContext = { ...this.context };
+      if (this.taskUI) {
+        taskContext.$taskUI = this.taskUI;
+      }
+      this.task = new Task(this.actionManager, taskContext);
+      this.connectTaskUI();
+      const taskFn = () => this.task!.execute(instructions); // 执行任务
       this.tasksQueue.push({ taskFn, id, resolve, reject }); // 将任务及回调存入队列
       this.execute(); // 尝试执行下一个任务
     });

@@ -6,7 +6,7 @@ import type {
 } from './types';
 import ActionManager from './action-manager';
 import EventEmitter from './event-emitter';
-
+import { t } from './locale/i18n';
 // 执行器状态枚举
 export enum ExecutorStatus {
   Idle = 'idle',
@@ -26,30 +26,19 @@ export class Task extends EventEmitter {
   private finalResult: ActionsResult['result']; // 最后结果
   private pauseResolve: (() => void) | null = null;
   private waitPromise: Promise<void> | null = null;
+  private cleanEffectFns: (() => void)[] = [];
 
-  constructor() {
+  constructor(actionManager: ActionManager, context: ISchedulerContext) {
     super();
-    this.context = { _clearEffect: [] };
-    this.actionManager = new ActionManager();
-  }
-
-  provideContext(context: Partial<ISchedulerContext>) {
     this.context = {
-      ...this.context,
       ...context,
-      $scheduler: {
+      $task: {
         pause: (...args: unknown[]) => this.pause(...args),
         resume: () => this.resume(),
+        addCleanEffect: (fn: () => void) => this.addCleanEffect(fn),
       },
     };
-  }
-
-  registerAction(action: Action): void {
-    this.actionManager.registerAction(action);
-  }
-
-  registerActions(actions: Action[]): void {
-    this.actionManager.registerActions(actions);
+    this.actionManager = actionManager;
   }
 
   execute(instructions: IInstruction[]): Promise<ActionsResult> {
@@ -57,7 +46,7 @@ export class Task extends EventEmitter {
       return Promise.reject({
         status: 'error',
         index: -1,
-        error: { message: '指令列表为空' },
+        error: { message: t('task.emptyInstructions') },
       });
     }
 
@@ -72,6 +61,27 @@ export class Task extends EventEmitter {
     });
   }
 
+  addCleanEffect(fn: () => void) {
+    this.cleanEffectFns.push(fn);
+  }
+  clearCleanEffect() {
+    this.cleanEffectFns.forEach((fn: () => void) => fn());
+    this.cleanEffectFns = [];
+  }
+
+  initialize() {
+    this.instructions = [];
+    this.currentIndex = 0;
+    this.status = ExecutorStatus.Idle;
+    this.resolve = null;
+    this.reject = null;
+    this.resultStatus = 'error';
+    this.finalResult = undefined;
+    this.pauseResolve = null;
+    this.waitPromise = null;
+    this.cleanEffectFns = [];
+  }
+
   async start(): Promise<void> {
     while (
       this.currentIndex < this.instructions.length &&
@@ -83,9 +93,17 @@ export class Task extends EventEmitter {
         index: this.currentIndex,
         instruction,
       });
+      const actionExecutor = this.actionManager.findAction(action)?.execute;
+      if (!actionExecutor) {
+        this.finalResult = { message: t('task.actionNotFound', { action }) };
+        this.resultStatus = 'error';
+        return this.finish();
+      }
       try {
-        const { status, result, error } =
-          await this.actionManager.executeAction(action, params, this.context);
+        const { status, result, error } = await actionExecutor(
+          params,
+          this.context
+        );
 
         // 延迟等待200ms，使每个action之间有停顿
         await new Promise((resolve) => setTimeout(resolve, 200));
@@ -138,17 +156,9 @@ export class Task extends EventEmitter {
       this.resolve?.(result);
     }
 
+    this.clearCleanEffect();
+    this.initialize();
     this.emit('finish');
-    this.context?._clearEffect.forEach((fn: () => void) => fn());
-
-    if (this.context?._clearEffect) {
-      this.context._clearEffect.length = 0;
-    }
-    this.instructions = [];
-    this.currentIndex = 0;
-    this.status = ExecutorStatus.Idle;
-    this.resolve = null;
-    this.reject = null;
   }
 
   pause(...args: unknown[]): void {
