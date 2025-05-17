@@ -1,12 +1,14 @@
 import express, { Express, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import fs from 'fs/promises';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
-  Tool,
+  isInitializeRequest,
 } from '@modelcontextprotocol/sdk/types.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import SocketServer, { MessageType } from '../socket/server';
 import { McpTool, McpToolTaskSchema } from './type';
 
@@ -21,7 +23,10 @@ export default class TinyAgentMcpServer {
 
   constructor(socketServer: SocketServer) {
     this.socketServer = socketServer;
-    this.transports = {};
+    this.transports = {
+      streamable: {} as Record<string, StreamableHTTPServerTransport>,
+      sse: {} as Record<string, SSEServerTransport>,
+    };
     this.sessionConntionMap = new Map();
     this.serverMap = new Map();
     this.tools = [];
@@ -241,11 +246,11 @@ export default class TinyAgentMcpServer {
       const { client } = req.query;
       const transport = new SSEServerTransport('/messages', res);
 
-      this.transports[transport.sessionId] = transport;
+      this.transports.sse[transport.sessionId] = transport;
       this.sessionConntionMap.set(transport.sessionId, String(client));
 
       res.on('close', () => {
-        delete this.transports[transport.sessionId];
+        delete this.transports.sse[transport.sessionId];
       });
 
       const server = this.initServer(transport.sessionId);
@@ -257,7 +262,7 @@ export default class TinyAgentMcpServer {
       const sessionId = req.query.sessionId as string;
 
       if (sessionId) {
-        const transport = this.transports[sessionId];
+        const transport = this.transports.sse[sessionId];
         if (transport) {
           await transport.handlePostMessage(req, res);
         } else {
