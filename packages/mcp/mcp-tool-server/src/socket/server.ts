@@ -1,17 +1,8 @@
 import { WebSocket, WebSocketServer } from 'ws'
 import { genClientId } from '../utils/genClientId'
+import { MessageType, Server } from './type'
 
-export enum MessageType {
-  Connection = 'connection',
-  DoTask = 'doTask',
-  TaskSuccess = 'taskSuccess',
-  TaskFail = 'taskFail',
-  Chat = 'chat',
-  Ping = 'ping',
-  McpTool = 'mcpTool',
-}
-
-export default class SocketServer {
+export class SocketServer implements Server {
   private wss: WebSocketServer
 
   private clientMap: Map<string, WebSocket>
@@ -60,7 +51,7 @@ export default class SocketServer {
     })
   }
 
-  sendMsg(clientId: string, message: string): Promise<WebSocket> {
+  sendMessage(clientId: string, message: string): Promise<WebSocket> {
     return new Promise((resolve, reject) => {
       const ws = this.clientMap.get(clientId)
 
@@ -73,13 +64,13 @@ export default class SocketServer {
     })
   }
 
-  sendAndWaitTaskMsg(
+  sendAndListen(
     clientId: string,
     message: string,
     responseMessageTypes?: MessageType[]
-  ) {
+  ): Promise<any> {
     return new Promise((resolve, reject) => {
-      this.sendMsg(clientId, message)
+      this.sendMessage(clientId, message)
         .then((ws: WebSocket) => {
           ws.on('message', (message) => {
             try {

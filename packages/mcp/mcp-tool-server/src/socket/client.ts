@@ -1,16 +1,17 @@
 import { McpService } from '@opentiny/tiny-agent-mcp-service'
+import { Client } from './type'
 
 interface SocketMessage {
   type: string
   data: any
 }
 
-class WebSocketClient {
-  private socket: WebSocket | null
+class WebSocketClient implements Client {
+  private socket!: WebSocket | null
   private url: string
   private messageHandlerMap: Map<string, (data: any) => void>
 
-  clientId: string
+  clientId: string | undefined
 
   constructor(url: string) {
     this.url = url
@@ -22,7 +23,7 @@ class WebSocketClient {
       this.socket = new WebSocket(this.url)
 
       this.socket.onopen = () => {
-        console.log('WebSocket 连接已建立')
+        console.log('WebSocket connected')
         resolve()
       }
 
@@ -46,16 +47,16 @@ class WebSocketClient {
             handler(message)
           }
         } catch (error) {
-          console.log('消息解析错误：', error)
+          console.log('Message parsing error:', error)
         }
       }
 
       this.socket.onerror = (error: Event) => {
-        console.error('WebSocket 错误：', error)
+        console.error('WebSocket Error：', error)
       }
 
       this.socket.onclose = () => {
-        console.log('WebSocket 连接已关闭')
+        console.log('WebSocket Closed')
       }
     })
   }
@@ -64,7 +65,7 @@ class WebSocketClient {
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({ type, data, id: this.clientId || '' }))
     } else {
-      console.error('WebSocket 未连接')
+      console.error('WebSocket not connected')
     }
   }
 
@@ -79,7 +80,11 @@ class WebSocketClient {
 
 let client: WebSocketClient
 
-export function startClient(onTask, mcpService: McpService, url: string) {
+export function startClient(
+  onTask: (arg: any) => any,
+  mcpService: McpService,
+  url: string
+) {
   const wsUrl = url || 'ws://localhost:8082'
   client = new WebSocketClient(wsUrl)
 
@@ -90,7 +95,7 @@ export function startClient(onTask, mcpService: McpService, url: string) {
     client.onMessage('connection', (message) => {
       if (message?.clientId) {
         client.clientId = message.clientId
-        console.log('建立握手：', client.clientId)
+        console.log('established:', client.clientId)
       }
     })
 
@@ -111,21 +116,22 @@ export function startClient(onTask, mcpService: McpService, url: string) {
             text: 'execute task success!',
           })
         })
-        .catch((err) => {
+        .catch((err: Error) => {
           client.sendMessage('taskFail', { text: err })
         })
     })
 
     client.onMessage('queryTools', () => {
-      client.sendMessage(
-        'mcpTool',
-        JSON.stringify(mcpService.getAllTools().map(McpService.toolToJson))
-      )
+      client.sendMessage('mcpTool', {
+        text: JSON.stringify(
+          mcpService.getAllTools().map(McpService.toolToJson)
+        ),
+      })
     })
 
     // 接收消息
     client.onMessage('chat', (message) => {
-      console.log('收到消息:', message)
+      console.log('chat:', message)
     })
 
     // 心跳检测

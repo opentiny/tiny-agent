@@ -5,12 +5,11 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js'
 import {
   ListToolsRequestSchema,
   CallToolRequestSchema,
-  isInitializeRequest,
 } from '@modelcontextprotocol/sdk/types.js'
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
-import SocketServer, { MessageType } from '../socket/server'
 import { McpTool, McpToolTaskSchema } from './type'
+import { MessageType, Server as SocketServer } from '../socket/type'
 
 export default class TinyAgentMcpServer {
   private socketServer: SocketServer
@@ -18,7 +17,7 @@ export default class TinyAgentMcpServer {
   private sessionConntionMap: Map<string, string>
   private app: Express
   private serverMap: Map<string, Server>
-  private mcpToolFilePath: string
+  private mcpToolFilePath!: string
   private tools: McpTool[]
 
   constructor(socketServer: SocketServer) {
@@ -36,16 +35,18 @@ export default class TinyAgentMcpServer {
   private replacePlaceholder(
     task: McpToolTaskSchema,
     inputSchema: any,
-    actualParams: Record<string, unknown>
+    actualParams: Record<string, unknown> | undefined
   ) {
     let schemaStr = JSON.stringify(task)
     let taskSchema
 
-    Object.keys(inputSchema)?.forEach((param) => {
-      schemaStr = schemaStr
-        .split(`{{${param}}}`)
-        .join(actualParams[param].toString())
-    })
+    if (actualParams) {
+      Object.keys(inputSchema)?.forEach((param) => {
+        schemaStr = schemaStr
+          .split(`{{${param}}}`)
+          .join(actualParams[param]?.toString())
+      })
+    }
 
     try {
       taskSchema = JSON.parse(schemaStr)
@@ -61,11 +62,11 @@ export default class TinyAgentMcpServer {
       try {
         await fs.access(file)
       } catch {
-        throw new Error(`文件不存在： ${file}`)
+        throw new Error(`File Not Exist: ${file}`)
       }
 
       if (!file.toLocaleLowerCase().endsWith('.json')) {
-        console.warn('警告：文件扩展名不是 .json')
+        console.warn('Warning: The file extension is not. json')
       }
 
       const fileContent = await fs.readFile(file, 'utf-8')
@@ -74,7 +75,7 @@ export default class TinyAgentMcpServer {
       return tools
     } catch (error) {
       if (error instanceof SyntaxError) {
-        console.error('error: 文件内容不是有效的JSON格式')
+        console.error('Error: The file content is not in a valid JSON format')
       } else {
         console.error(error)
       }
@@ -90,23 +91,23 @@ export default class TinyAgentMcpServer {
 
     if (clientId) {
       const message = JSON.stringify({
-        type: 'queryTools',
-        message: 'query mcp tool',
+        type: MessageType.QueryTools,
+        message: 'query mcp tools',
       })
 
       try {
-        const res: any = await this.socketServer.sendAndWaitTaskMsg(
+        const res: any = await this.socketServer.sendAndListen(
           clientId,
           message,
           [MessageType.McpTool]
         )
 
-        if (res?.data?.length) {
-          tools = JSON.parse(res.data)
+        if (res.data?.text?.length) {
+          tools = res.data.text
         }
       } catch (e) {
         tools = []
-        console.error(`send msg error: ${e}`)
+        console.error(`Send Msg Error: ${e}`)
       }
     }
 
@@ -135,39 +136,46 @@ export default class TinyAgentMcpServer {
       const { name, arguments: args } = request.params
       const targetTool = this.tools.find((tool) => name === tool.name)
       const clientId = this.sessionConntionMap.get(sessionId)
+      let response
 
-      if (targetTool?.task) {
-        targetTool.task = this.replacePlaceholder(
-          targetTool.task,
-          targetTool.inputSchema,
-          args
-        )
+      if (targetTool) {
+        if (targetTool?.task) {
+          targetTool.task = this.replacePlaceholder(
+            targetTool.task,
+            targetTool.inputSchema,
+            args
+          )
+        } else {
+          targetTool.args = args
+        }
+
+        const message = {
+          type: MessageType.DoTask,
+          data: targetTool,
+        }
+
+        if (clientId) {
+          response = await this.socketServer.sendAndListen(
+            clientId,
+            JSON.stringify(message)
+          )
+        }
       } else {
-        targetTool.args = args
+        response = 'invalid tool'
       }
-
-      const message = {
-        type: MessageType.DoTask,
-        data: targetTool,
-      }
-
-      const res = await this.socketServer.sendAndWaitTaskMsg(
-        clientId,
-        JSON.stringify(message)
-      )
 
       return {
         content: [
           {
             type: 'text',
-            text: res,
+            text: response,
           },
         ],
       }
     })
   }
 
-  private initServer(sessionId) {
+  private initServer(sessionId: string) {
     let server = this.serverMap.get(sessionId)
 
     if (!server) {
@@ -208,15 +216,17 @@ export default class TinyAgentMcpServer {
           enableJsonResponse: true,
         })
 
-        this.sessionConntionMap.set(transport.sessionId, String(client))
+        const sessionId = transport.sessionId || ''
+
+        this.sessionConntionMap.set(sessionId, String(client))
 
         transport.onclose = () => {
-          if (transport.sessionId) {
-            delete this.transports.streamable[transport.sessionId]
+          if (sessionId) {
+            delete this.transports.streamable[sessionId]
           }
         }
 
-        const server = this.initServer(transport.sessionId)
+        const server = this.initServer(sessionId)
 
         await server.connect(transport)
       }
