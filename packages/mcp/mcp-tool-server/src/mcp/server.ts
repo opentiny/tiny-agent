@@ -102,8 +102,8 @@ export default class TinyAgentMcpServer {
           [MessageType.McpTool]
         )
 
-        if (res.data?.text?.length) {
-          tools = res.data.text
+        if (res.data?.text) {
+          tools = JSON.parse(res.data.text)
         }
       } catch (e) {
         tools = []
