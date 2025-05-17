@@ -1,6 +1,6 @@
 type EventCallback<T = any> = (...args: T[]) => void;
 
-class EventEmitter {
+export class EventEmitter {
   private listeners: Map<string, Set<EventCallback>>;
 
   constructor() {
@@ -49,5 +49,3 @@ class EventEmitter {
     this.on(event, wrapper);
   }
 }
-
-export default EventEmitter;

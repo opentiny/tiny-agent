@@ -1,11 +1,6 @@
-import type {
-  Action,
-  ActionsResult,
-  IInstruction,
-  ISchedulerContext,
-} from './types';
-import ActionManager from './action-manager';
-import EventEmitter from './event-emitter';
+import type { ActionsResult, IInstruction, ISchedulerContext } from './types';
+import { ActionManager } from './action-manager';
+import { EventEmitter } from './event-emitter';
 import { t } from './locale/i18n';
 // 执行器状态枚举
 export enum ExecutorStatus {

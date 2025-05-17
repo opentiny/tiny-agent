@@ -5,11 +5,11 @@ import type {
   ISchedulerContext,
 } from './types';
 import { Task } from './task';
-import ActionManager from './action-manager';
+import { ActionManager } from './action-manager';
 import { TaskUI } from './task-ui';
 import { t } from './locale/i18n';
 
-class TaskScheduler {
+export class TaskScheduler {
   private tasksQueue: any = [];
   private isExecuting = false;
   private context: ISchedulerContext;
@@ -105,5 +105,3 @@ class TaskScheduler {
     }
   }
 }
-
-export default TaskScheduler;

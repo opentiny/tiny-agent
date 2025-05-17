@@ -1,6 +1,6 @@
-import TaskScheduler from './task-scheduler';
+import { TaskScheduler } from './task-scheduler';
 import { TaskUI } from './task-ui';
-import ActionManager from './action-manager';
+import { ActionManager } from './action-manager';
 import { t } from './locale/i18n';
 import type { Action, ISchedulerContext } from './types';
 

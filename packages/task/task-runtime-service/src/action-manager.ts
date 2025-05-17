@@ -1,7 +1,7 @@
 import { Action } from './types';
 
 // ACTION管理类
-class ActionManager {
+export class ActionManager {
   private actions: { [name: string]: Action } = {};
 
   // 注册ACTION
@@ -47,7 +47,3 @@ class ActionManager {
     return this.actions[name];
   }
 }
-
-export { ActionManager };
-
-export default ActionManager;
