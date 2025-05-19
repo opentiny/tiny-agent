@@ -1,3 +1,5 @@
+import { t } from '../locale/i18n';
+
 export const findElement = async (
   selector: string,
   timeout: number = 3000
@@ -14,7 +16,10 @@ export const findElement = async (
   }
 
   throw new Error(
-    `在 ${timeout / 1000} 秒内未找到匹配选择器 '${selector}' 的元素`
+    t('domActions.errorMsg.findElement', {
+      timeout: String(timeout / 1000),
+      selector,
+    })
   );
 };
 
@@ -123,7 +128,7 @@ export const getElementByText = async (
   } else if (selector instanceof HTMLElement) {
     element = selector;
   } else {
-    throw new Error('selector 必须是字符串或 HTMLElement');
+    throw new Error(t('domActions.errorMsg.selector'));
   }
   const result = document.evaluate(
     `.//*[normalize-space(text())='${text.replace(/'/g, "\\'")}']`,
@@ -133,7 +138,7 @@ export const getElementByText = async (
     null
   );
   if (!result.singleNodeValue) {
-    throw new Error(`未找到文本内容为 '${text}' 的元素`);
+    throw new Error(t('domActions.errorMsg.textNotFound', { text }));
   }
   return result.singleNodeValue;
 };

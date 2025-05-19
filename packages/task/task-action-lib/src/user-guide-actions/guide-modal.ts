@@ -7,7 +7,7 @@ import {
 import '../assets/styles/guide.css';
 import closeSvg from '../assets/images/close.svg?raw';
 
-export default class GuideModal {
+export const GuideModal = class {
   private targetDom: HTMLElement;
   originOutlines: string;
   popupContent: HTMLDivElement;
@@ -85,4 +85,4 @@ export default class GuideModal {
   onHide(callback: () => void) {
     this.onHideCallback = callback;
   }
-}
+};

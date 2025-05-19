@@ -1,6 +1,7 @@
 import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
 import { findElement } from '../dom-actions/dom';
-import GuideModal from './guide-modal';
+import { GuideModal } from './guide-modal';
+import { t } from '../locale/i18n';
 
 // 定义危险操作类型的枚举
 enum UserGuideActionType {
@@ -21,10 +22,10 @@ const UserGuide: Action = {
 
     guideModal.onHide(() => {
       tipToResume &&
-        tipToResume.call(context?.$taskUI, tip || '完成操作后继续');
+        tipToResume.call(context?.$taskUI, tip || t('userGuideActions.tip'));
     });
 
     return { status: 'success' };
   },
 };
-export default [UserGuide];
+export const GuideActions = [UserGuide];

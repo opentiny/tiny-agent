@@ -1,5 +1,5 @@
 import { dispatchEvent } from '../dom-actions/dom';
-import { inputEvents, selectEvents } from './form_events';
+import { inputEvents, selectEvents } from './form-events';
 
 /**
  * 模拟用户在输入框中的操作
@@ -35,11 +35,6 @@ export async function simulateUserInput(
       target.scrollTop = target.scrollHeight;
     }
   }
-
-  // 4. 鼠标移出输入框外并点击一下
-  // for (const event of inputEvents.mouseLeave) {
-  //   await dispatchEvent(target, event);
-  // }
 }
 
 /**

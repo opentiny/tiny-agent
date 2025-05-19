@@ -1,0 +1,53 @@
+{
+  "domActions": {
+    "errorMsg": {
+      "clickByText": "没有找到匹配的元素",
+      "insertBefore": "执行 insertBefore 操作时缺少 content 参数",
+      "selector": "selector 必须是字符串或 HTMLElement",
+      "textNotFound": "未找到文本内容为 {{text}} 的元素",
+      "findElement": "在 {{timeout}} 秒内未找到匹配选择器 {{selector}} 的元素"
+    }
+  },
+  "formActions": {
+    "description": {
+      "input": "模拟用户输入",
+      "radio": "模拟用户选择单选按钮",
+      "checkbox": "模拟用户选择单选按钮",
+      "select": "模拟用户选择下拉列表选项",
+      "submit": "模拟用户点击提交按钮"
+    },
+    "errorMsg": {
+      "input": "元素不是有效的输入或文本区域元素：{{element}}",
+      "radio": "元素不是有效的单选按钮元素：{{element}}",
+      "checkbox": "元素不是有效的复选框元素：{{element}}",
+      "select": "元素不是有效的下拉列表元素：{{element}}",
+      "submit": "元素不是有效的提交按钮元素：{{element}}"
+    }
+  },
+  "userGuideActions": {
+    "tip": "完成操作后继续"
+  },
+  "vueRouterActions": {
+    "errorMsg": {
+      "instance": "未找到 Vue Router 实例",
+      "push": "路由跳转失败：{{error}}",
+      "replace": "路由替换失败：{{error}}",
+      "goBack": "后退失败：{{error}}",
+      "goForward": "前进失败：{{error}}",
+      "go": "前进或后退失败：{{error}}"
+    },
+    "successMsg": {
+      "push": "成功跳转到 {{to}}",
+      "replace": "成功替换路由到 {{to}}",
+      "goBack": "成功后退",
+      "goForward": "成功前进",
+      "go": "成功前进或后退 {{steps}} 步"
+    }
+  },
+  "axiosActions": {
+    "description":{
+      "startEnd": "确认接口返回成功"
+    },
+    "timeout": "接口请求超时"
+  }
+}

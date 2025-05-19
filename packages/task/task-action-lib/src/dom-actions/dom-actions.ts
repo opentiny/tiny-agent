@@ -2,6 +2,7 @@
 import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
 import { findElement, getElementByText } from './dom';
 import { simulateClick } from './dom-simulate';
+import { t } from '../locale/i18n';
 
 // 历史堆栈操作
 enum StackActionType {
@@ -40,7 +41,7 @@ const clickByText: Action = {
     if (!element) {
       return {
         status: 'error',
-        error: { message: '没有找到匹配的元素' },
+        error: { message: t('domActions.errorMsg.clickByText') },
       };
     }
     await simulateClick(element);
@@ -67,7 +68,7 @@ const insertBefore: Action = {
   name: ActionType.INSERT_BEFORE,
   execute: async (params, context) => {
     if (!params.content) {
-      throw new Error('执行 insertBefore 操作时缺少 content 参数');
+      throw new Error(t('domActions.errorMsg.insertBefore'));
     }
     const element = await findElement(params.selector, params.timeout);
     const newElement = document.createElement('div');
@@ -235,7 +236,7 @@ const selectDate: Action = {
   },
 };
 
-export default [
+export const DomActions = [
   highlight,
   insertBefore,
   scrollTo,

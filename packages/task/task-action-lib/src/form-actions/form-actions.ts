@@ -6,7 +6,8 @@ import {
   simulateSelectOption,
   simulateSubmitClick,
   simulateUserInput,
-} from './form_simulate';
+} from './form-simulate';
+import { t } from '../locale/i18n';
 
 // 元素操作
 enum FormActionType {
@@ -20,7 +21,7 @@ enum FormActionType {
 // input Action
 const input: Action = {
   name: FormActionType.INPUT,
-  description: '模拟用户输入',
+  description: t('formActions.description.input'),
   execute: async (params, context) => {
     const { selector, timeout, value } = params;
     const element = await findElement(selector, timeout);
@@ -30,7 +31,9 @@ const input: Action = {
     ) {
       await simulateUserInput(element, value);
     } else {
-      throw new Error('元素不是有效的输入或文本区域元素:' + element);
+      throw new Error(
+        t('formActions.errorMsg.input', { element: element as any })
+      );
     }
 
     return {
@@ -42,14 +45,16 @@ const input: Action = {
 // radio Action
 const radio: Action = {
   name: FormActionType.RADIO,
-  description: '模拟用户选择单选按钮',
+  description: t('formActions.description.radio'),
   execute: async (params, context) => {
     const { selector, timeout } = params;
     const element = await findElement(selector, timeout);
     if (element instanceof HTMLInputElement && element.type === 'radio') {
       await simulateRadioSelection(element);
     } else {
-      throw new Error('元素不是有效的单选按钮元素:' + element);
+      throw new Error(
+        t('formActions.errorMsg.radio', { element: element as any })
+      );
     }
     return {
       status: 'success',
@@ -60,14 +65,16 @@ const radio: Action = {
 // checkbox Action
 const checkbox: Action = {
   name: FormActionType.CHECKBOX,
-  description: '模拟用户选择复选框',
+  description: t('formActions.description.checkbox'),
   execute: async (params, context) => {
     const { selector, timeout, checked } = params;
     const element = await findElement(selector, timeout);
     if (element instanceof HTMLInputElement && element.type === 'checkbox') {
       await simulateCheckboxSelection(element, checked);
     } else {
-      throw new Error('元素不是有效的复选框元素:' + element);
+      throw new Error(
+        t('formActions.errorMsg.checkbox', { element: element as any })
+      );
     }
     return {
       status: 'success',
@@ -78,14 +85,16 @@ const checkbox: Action = {
 // select Action
 const select: Action = {
   name: FormActionType.SELECT,
-  description: '模拟用户选择下拉列表选项',
+  description: t('formActions.description.select'),
   execute: async (params, context) => {
     const { selector, timeout, value } = params;
     const element = await findElement(selector, timeout);
     if (element instanceof HTMLSelectElement) {
       await simulateSelectOption(element, value);
     } else {
-      throw new Error('元素不是有效的下拉列表元素:' + element);
+      throw new Error(
+        t('formActions.errorMsg.select', { element: element as any })
+      );
     }
     return {
       status: 'success',
@@ -96,14 +105,16 @@ const select: Action = {
 // submit Action
 const submit: Action = {
   name: FormActionType.SUBMIT,
-  description: '模拟用户点击提交按钮',
+  description: t('formActions.description.submit'),
   execute: async (params, context) => {
     const { selector, timeout } = params;
     const element = await findElement(selector, timeout);
     if (element instanceof HTMLInputElement && element.type === 'submit') {
       await simulateSubmitClick(element);
     } else {
-      throw new Error('元素不是有效的提交按钮元素:' + element);
+      throw new Error(
+        t('formActions.errorMsg.submit', { element: element as any })
+      );
     }
     return {
       status: 'success',
@@ -111,4 +122,4 @@ const submit: Action = {
   },
 };
 
-export default [input, radio, checkbox, select, submit];
+export const FormActions = [input, radio, checkbox, select, submit];

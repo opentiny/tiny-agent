@@ -1,4 +1,5 @@
 import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import { t } from '../locale/i18n';
 
 // 定义路由操作类型的枚举，添加 vue_ 前缀区分
 enum RouterActionType {
@@ -18,19 +19,23 @@ const push: Action = {
     if (!$router) {
       return {
         status: 'error',
-        error: { message: '未找到 Vue Router 实例' },
+        error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
       await $router.push(to);
       return {
         status: 'success',
-        result: { message: `成功跳转到 ${to}` },
+        result: { message: t('vueRouterActions.successMsg.push', { to }) },
       };
     } catch (error) {
       return {
         status: 'error',
-        error: { message: `路由跳转失败: ${error}` },
+        error: {
+          message: t('vueRouterActions.errorMsg.push', {
+            error: JSON.stringify(error),
+          }),
+        },
       };
     }
   },
@@ -45,19 +50,23 @@ const replace: Action = {
     if (!$router) {
       return {
         status: 'error',
-        error: { message: '未找到 Vue Router 实例' },
+        error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
       await $router.replace(to);
       return {
         status: 'success',
-        result: { message: `成功替换路由到 ${to}` },
+        result: { message: t('vueRouterActions.successMsg.replace', { to }) },
       };
     } catch (error) {
       return {
         status: 'error',
-        error: { message: `路由替换失败: ${error}` },
+        error: {
+          message: t('vueRouterActions.errorMsg.replace', {
+            error: JSON.stringify(error),
+          }),
+        },
       };
     }
   },
@@ -71,19 +80,23 @@ const goBack: Action = {
     if (!$router) {
       return {
         status: 'error',
-        error: { message: '未找到 Vue Router 实例' },
+        error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
       $router.back();
       return {
         status: 'success',
-        result: { message: '成功后退' },
+        result: { message: t('vueRouterActions.successMsg.goBack') },
       };
     } catch (error) {
       return {
         status: 'error',
-        error: { message: `后退失败: ${error}` },
+        error: {
+          message: t('vueRouterActions.errorMsg.goBack', {
+            error: JSON.stringify(error),
+          }),
+        },
       };
     }
   },
@@ -97,19 +110,23 @@ const goForward: Action = {
     if (!$router) {
       return {
         status: 'error',
-        error: { message: '未找到 Vue Router 实例' },
+        error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
       $router.forward();
       return {
         status: 'success',
-        result: { message: '成功前进' },
+        result: { message: t('vueRouterActions.successMsg.goForward') },
       };
     } catch (error) {
       return {
         status: 'error',
-        error: { message: `前进失败: ${error}` },
+        error: {
+          message: t('vueRouterActions.errorMsg.goForward', {
+            error: JSON.stringify(error),
+          }),
+        },
       };
     }
   },
@@ -124,22 +141,26 @@ const go: Action = {
     if (!$router) {
       return {
         status: 'error',
-        error: { message: '未找到 Vue Router 实例' },
+        error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
       $router.go(steps);
       return {
         status: 'success',
-        result: { message: `成功前进或后退 ${steps} 步` },
+        result: { message: t('vueRouterActions.successMsg.go', { steps }) },
       };
     } catch (error) {
       return {
         status: 'error',
-        error: { message: `前进或后退失败: ${error}` },
+        error: {
+          message: t('vueRouterActions.errorMsg.go', {
+            error: JSON.stringify(error),
+          }),
+        },
       };
     }
   },
 };
 
-export default [push, replace, goBack, goForward, go];
+export const VueRouterActions = [push, replace, goBack, goForward, go];

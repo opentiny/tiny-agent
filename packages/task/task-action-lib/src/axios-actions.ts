@@ -1,7 +1,10 @@
+import { t } from './locale/i18n';
+
 interface IParams {
   url: string;
   timeout?: number;
   method?: string;
+  query: Record<string, string>;
 }
 
 interface IResult {
@@ -15,6 +18,7 @@ interface IContext {
     timeout?: number;
     valid?: (result: IResult) => boolean;
   };
+  $task?: any;
 }
 
 interface MatchInfo {
@@ -42,7 +46,7 @@ const parsePath = (path: string): string[] => {
 
 // 提取查询参数
 const getQueryParams = (url: string) => {
-  const params = {};
+  const params: any = {};
   const regex = /[?&]([^&=]+)=([^&]*)/g;
   let match;
 
@@ -93,7 +97,7 @@ function pathToRegex(path: string): RegExp {
   return new RegExp(regex);
 }
 
-const isMatchQuery = (query, resQuery) => {
+const isMatchQuery = (query: any, resQuery: any) => {
   if (!query) {
     return true;
   }
@@ -112,7 +116,7 @@ const isMatchQuery = (query, resQuery) => {
   return isMatch;
 };
 
-const matchUrl = (params: IParams, response: AxiosResponse): MatchInfo => {
+const matchUrl = (params: IParams, response: any): MatchInfo => {
   const { url, method, query } = params;
   const { method: reqMethod, url: resUrl } = response?.config || {};
   const trimQueryUrl = resUrl.split('?')[0];
@@ -143,11 +147,11 @@ const matchUrl = (params: IParams, response: AxiosResponse): MatchInfo => {
 
 const start = {
   name: 'apiConfirmStart',
-  description: '确认接口返回成功',
+  description: t('axiosActions.description.startEnd'),
   execute: async (
     params: IParams,
     context: IContext
-  ): Promise<{ status: string }> => {
+  ): Promise<{ status: string } | undefined> => {
     const { $axiosConfig, $task } = context;
     const { axios, timeout: globalTimeout } = $axiosConfig || {};
     if (!axios) {
@@ -173,10 +177,9 @@ const start = {
     });
 
     const responseInterceptor = axios.interceptors.response.use(
-      (response) => {
+      (response: any) => {
         try {
           const matchInfo = matchUrl(params, response);
-          // console.log('success matchInfo', matchInfo);
           if (!matchInfo.matched) {
             return response;
           }
@@ -192,7 +195,7 @@ const start = {
           return Promise.reject(err);
         }
       },
-      (error) => {
+      (error: any) => {
         try {
           const matchInfo = matchUrl(params, error);
           if (!matchInfo.matched) {
@@ -214,7 +217,7 @@ const start = {
 
 const end = {
   name: 'apiConfirmEnd',
-  description: '确认接口返回成功',
+  description: t('axiosActions.description.startEnd'),
   execute: async (
     params: IParams,
     context: IContext
@@ -249,10 +252,10 @@ const end = {
       }
       reject({
         status: 'error',
-        error: { message: '接口请求超时' },
+        error: { message: t('axiosActions.timeout') },
       });
     });
   },
 };
 
-export default [start, end];
+export const AxiosActions = [start, end];
