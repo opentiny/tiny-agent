@@ -1,5 +1,5 @@
 import { McpService } from '@opentiny/tiny-agent-mcp-service'
-import { Client } from './type'
+import { Client, Server, MessageType } from './type'
 
 interface SocketMessage {
   type: string
@@ -80,7 +80,7 @@ class WebSocketClient implements Client {
 
 let client: WebSocketClient
 
-export function startClient(
+function startClient(
   onTask: (arg: any) => any,
   mcpService: McpService,
   url: string
@@ -142,3 +142,5 @@ export function startClient(
 
   return client
 }
+
+export { Client, Server, MessageType, startClient }
