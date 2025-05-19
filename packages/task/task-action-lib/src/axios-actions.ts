@@ -201,7 +201,7 @@ const start = {
           if (!matchInfo.matched) {
             return Promise.reject(error);
           }
-          resultMap[url].push({ response: error, matchInfo });
+          resultMap[url].push({ response: error.response, matchInfo });
           remove();
           return Promise.reject(error);
         } catch (err) {
@@ -232,7 +232,7 @@ const end = {
       while (Date.now() - startTIme < timeout) {
         const result = resultMap[url]?.shift();
         if (result) {
-          const { response } = result?.response;
+          const { response } = result;
           if (valid(result)) {
             resolve({
               status: 'success',
