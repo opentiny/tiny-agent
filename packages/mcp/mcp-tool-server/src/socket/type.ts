@@ -9,7 +9,7 @@ enum MessageType {
   QueryTools = 'queryTools',
 }
 
-type ClientMessgae = {
+type ClientMessage = {
   id: string // client id
   type: MessageType // message type
   data: {
@@ -27,7 +27,7 @@ interface Client {
 
   disconnect(): void
 
-  sendMessage(type: string, data: ClientMessgae): void
+  sendMessage(type: string, data: ClientMessage): void
 
   onMessage?: (type: string, handler: () => {}) => void
 

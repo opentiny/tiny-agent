@@ -14,10 +14,10 @@ export class SocketServer implements Server {
 
   private handleClientMessage(ws: WebSocket, message: string) {
     try {
-      const parsedMessgae = JSON.parse(String(message))
+      const parsedMessage = JSON.parse(String(message))
       let responseMessage: any = null
 
-      if (parsedMessgae.type === MessageType.Connection) {
+      if (parsedMessage.type === MessageType.Connection) {
         const clientId = genClientId()
 
         this.clientMap.set(clientId, ws)
@@ -26,12 +26,12 @@ export class SocketServer implements Server {
           clientId,
         }
       } else {
-        const clientId = parsedMessgae.id
+        const clientId = parsedMessage.id
 
-        if (!parsedMessgae.id || !this.clientMap.get(clientId)) {
-          throw new Error(`invalid client: ${JSON.stringify(parsedMessgae)}`)
+        if (!parsedMessage.id || !this.clientMap.get(clientId)) {
+          throw new Error(`invalid client: ${JSON.stringify(parsedMessage)}`)
         } else {
-          console.log(`from ${clientId}: `, parsedMessgae)
+          console.log(`from ${clientId}: `, parsedMessage)
 
           responseMessage = 'Hello! Message from server...'
         }
@@ -74,7 +74,7 @@ export class SocketServer implements Server {
         .then((ws: WebSocket) => {
           ws.on('message', (message) => {
             try {
-              const parsedMessgae = JSON.parse(String(message))
+              const parsedMessage = JSON.parse(String(message))
               const messageTypes = [
                 MessageType.TaskSuccess,
                 MessageType.TaskFail,
@@ -82,10 +82,10 @@ export class SocketServer implements Server {
 
               if (
                 (responseMessageTypes || messageTypes).includes(
-                  parsedMessgae.type
+                  parsedMessage.type
                 )
               ) {
-                resolve(parsedMessgae)
+                resolve(parsedMessage)
               }
             } catch (e) {
               reject(e)

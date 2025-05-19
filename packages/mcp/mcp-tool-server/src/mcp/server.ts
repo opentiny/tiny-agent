@@ -14,7 +14,7 @@ import { MessageType, Server as SocketServer } from '../socket/type'
 export default class TinyAgentMcpServer {
   private socketServer: SocketServer
   private transports: any
-  private sessionConntionMap: Map<string, string>
+  private sessionConnectMap: Map<string, string>
   private app: Express
   private serverMap: Map<string, Server>
   private mcpToolFilePath!: string
@@ -26,7 +26,7 @@ export default class TinyAgentMcpServer {
       streamable: {} as Record<string, StreamableHTTPServerTransport>,
       sse: {} as Record<string, SSEServerTransport>,
     }
-    this.sessionConntionMap = new Map()
+    this.sessionConnectMap = new Map()
     this.serverMap = new Map()
     this.tools = []
     this.app = express()
@@ -86,7 +86,7 @@ export default class TinyAgentMcpServer {
 
   private async mergeMcpTools(sessionId: string) {
     // 从websocket client查找tools
-    const clientId = this.sessionConntionMap.get(sessionId)
+    const clientId = this.sessionConnectMap.get(sessionId)
     let tools = []
 
     if (clientId) {
@@ -135,7 +135,7 @@ export default class TinyAgentMcpServer {
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params
       const targetTool = this.tools.find((tool) => name === tool.name)
-      const clientId = this.sessionConntionMap.get(sessionId)
+      const clientId = this.sessionConnectMap.get(sessionId)
       let response
 
       if (targetTool) {
@@ -218,7 +218,7 @@ export default class TinyAgentMcpServer {
 
         const sessionId = transport.sessionId || ''
 
-        this.sessionConntionMap.set(sessionId, String(client))
+        this.sessionConnectMap.set(sessionId, String(client))
 
         transport.onclose = () => {
           if (sessionId) {
@@ -257,7 +257,7 @@ export default class TinyAgentMcpServer {
       const transport = new SSEServerTransport('/messages', res)
 
       this.transports.sse[transport.sessionId] = transport
-      this.sessionConntionMap.set(transport.sessionId, String(client))
+      this.sessionConnectMap.set(transport.sessionId, String(client))
 
       res.on('close', () => {
         delete this.transports.sse[transport.sessionId]
