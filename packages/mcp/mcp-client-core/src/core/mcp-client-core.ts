@@ -18,24 +18,18 @@ import type {
 dotenv.config();
 
 export class McpClient {
-  private llmConfig;
-  private mcpServersConfig: McpServersConfig;
-  private iterationSteps = 1;
+  private options: MCPClientOptions;
+  private iterationSteps;
   private clientsMap: Map<string, Client> = new Map();
-  private toolsMap: Map<string, AvailableTool[]> = new Map();
-  private availableTools: AvailableTool[] = [];
   private toolClientMap: Map<string, Client> = new Map();
 
   constructor(options: MCPClientOptions) {
-    const { llmConfig, mcpServersConfig, maxIterationSteps } = options;
-
-    this.llmConfig = llmConfig;
-    this.iterationSteps = maxIterationSteps || 1;
-    this.mcpServersConfig = mcpServersConfig;
+    this.options = options;
+    this.iterationSteps = options.maxIterationSteps || 1;
   }
 
   async init() {
-    const { mcpServers = {} } = this.mcpServersConfig;
+    const { mcpServers = {} } = this.options.mcpServersConfig;
 
     for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
       const client = await this.initClients(serverName, serverConfig as McpServer);
@@ -65,6 +59,9 @@ export class McpClient {
   }
 
   private async fetchToolsList() {
+    const availableTools = [];
+    const toolClientMap = new Map();
+
     for (const [serverName, client] of this.clientsMap) {
       const tools = (await client.listTools()).tools as unknown as Tool[];
       const openaiTools = tools.map((tool) => ({
@@ -80,13 +77,16 @@ export class McpClient {
         },
       }));
 
-      this.toolsMap.set(serverName, openaiTools);
-      this.availableTools.push(...openaiTools);
+      availableTools.push(...openaiTools);
 
       tools.forEach((tool) => {
-        this.toolClientMap.set(tool.name, client);
+        toolClientMap.set(tool.name, client);
       });
     }
+
+    this.toolClientMap = toolClientMap;
+
+    return availableTools;
   }
 
   async chat(query: string) {
@@ -97,9 +97,10 @@ export class McpClient {
       },
     ];
     const finalTextList: string[] = [];
+    this.iterationSteps = this.options.maxIterationSteps || 1;
 
     try {
-      await this.fetchToolsList();
+      const availableTools = await this.fetchToolsList();
       const toolsCallResults: ToolResults = [];
 
       while (this.iterationSteps > 0) {
@@ -107,11 +108,11 @@ export class McpClient {
           messages: [
             {
               role: 'system',
-              content: this.llmConfig.systemPrompt,
+              content: this.options.llmConfig.systemPrompt,
             },
             ...messages,
           ],
-          tools: this.iterationSteps > 1 ? this.availableTools : [],
+          tools: this.iterationSteps > 1 ? availableTools : [],
         });
         const message = response?.choices?.[0]?.message;
 
@@ -139,7 +140,7 @@ export class McpClient {
         toolResults: toolsCallResults,
       };
     } catch (error) {
-      console.error(error);
+      console.error("调用工具失败：", error);
       // TODO: 调用失败返回的文本
       return {
         text: '调用失败',
@@ -149,12 +150,6 @@ export class McpClient {
 
   async callTools({ toolCalls, messages }: CallToolsParams) {
     const toolResults: ToolResults = [];
-
-    if (!toolCalls.length) {
-      return {
-        toolResults,
-      };
-    }
 
     try {
       for (const toolCall of toolCalls) {
@@ -184,7 +179,7 @@ export class McpClient {
         messages.push(chatMessage);
       }
     } catch (error) {
-      console.error(error);
+      console.error('调用工具时发生错误:', error);
     } finally {
       return { toolResults };
     }
@@ -196,7 +191,7 @@ export class McpClient {
    * @returns
    */
   async query(body: ChatBody) {
-    const { apiKey, model } = this.llmConfig;
+    const { apiKey, model } = this.options.llmConfig;
 
     try {
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -210,7 +205,8 @@ export class McpClient {
 
       return res.json();
     } catch (error) {
-      throw error;
+      console.error('调用 AI chat 接口时发生错误:', error);
+      return { error: '调用 AI chat 接口失败', detail: error instanceof Error ? error.message : String(error) };
     }
   }
 }
