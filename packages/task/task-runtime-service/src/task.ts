@@ -101,7 +101,7 @@ export class Task extends EventEmitter {
         );
 
         // 延迟等待200ms，使每个action之间有停顿
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         if (status === 'success') {
           this.finalResult = result;
           this.resultStatus = 'partial completed';
