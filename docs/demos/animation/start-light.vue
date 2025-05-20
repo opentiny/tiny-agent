@@ -12,7 +12,6 @@
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount } from 'vue';
 
-const container = ref(null);
 const particles = reactive([]);
 const particleCount = 100;
 
