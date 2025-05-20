@@ -2,7 +2,7 @@
   "name": "@opentiny/tiny-agent-mcp-client-core",
   "version": "1.0.0",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "index.ts",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc && chmod 755 dist/index.js",

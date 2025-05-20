@@ -271,6 +271,6 @@ export default class TinyAgentMcpServer {
       }
     });
 
-    this.app.listen(3005, '0.0.0.0');
+    this.app.listen(3077, '0.0.0.0');
   }
 }
