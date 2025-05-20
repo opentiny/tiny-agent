@@ -26,7 +26,7 @@ export default defineConfig({
     nav: [
       { text: '指引', link: '/guide/write-docs-guide' },
       { text: '配置', link: '/config/config' },
-      { text: '扩展', link: '/plugins/simulate-lib' },
+      { text: '扩展', link: '/extensions/simulate-lib' },
       { text: '演示', link: '/examples/demo' },
       { text: '1.0.0', link: '/releases/releases', },
     ],
@@ -53,10 +53,10 @@ export default defineConfig({
           ],
         },
       ],
-      '/plugins/': [
+      '/extensions/': [
         {
           text: '扩展',
-          base: '/plugins/',
+          base: '/extensions/',
           items: [
             { text: '模拟dom操作库', link: 'simulate-lib' },
           ],

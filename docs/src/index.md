@@ -15,7 +15,7 @@ hero:
       link: /guide/write-docs-guide
     - theme: alt
       text: 扩展
-      link: /plugins/simulate-lib.md
+      link: /extensions/simulate-lib.md
 
 features:
   - title: 支持MCP协议

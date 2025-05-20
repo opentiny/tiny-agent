@@ -42,7 +42,7 @@ console.log('Hello, TinyAgent!');
 
 [跳到根目录](/) <!-- 将用户导航至根目录下的 index.html -->
 
-[跳到扩展目录](/plugins/simulate-lib) <!-- 将用户导航至目录 foo 下的 index.html -->
+[跳到扩展目录](/extensions/simulate-lib) <!-- 将用户导航至目录 foo 下的 index.html -->
 
 [跳到指定锚点](./#_2-1-默认展开代码) <!-- 将用户锚定到目录 foo 下的index文件中的一个标题上 -->
 
