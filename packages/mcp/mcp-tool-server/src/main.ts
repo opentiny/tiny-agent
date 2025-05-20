@@ -1,6 +1,6 @@
 import { program } from 'commander'
 import path from 'node:path'
-import TinyAgentMcpServer from './mcp/server'
+import { TinyAgentMcpServer } from './mcp/server'
 import { SocketServer } from './socket/server'
 
 program

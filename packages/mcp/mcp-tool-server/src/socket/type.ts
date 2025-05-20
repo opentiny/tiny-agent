@@ -17,11 +17,6 @@ type ClientMessage = {
   }
 }
 
-type ServerMessage = {
-  type: MessageType
-  message: string
-}
-
 interface Client {
   connect(): Promise<void>
 
@@ -43,9 +38,9 @@ interface Server {
     clientId: string,
     message: string,
     responseMessageTypes?: MessageType[]
-  ): Promise<ServerMessage | Error>
+  ): Promise<ClientMessage | Error>
 
   onMessage?: (message: string) => void
 }
 
-export { Client, Server, MessageType }
+export { Client, Server, MessageType, ClientMessage }

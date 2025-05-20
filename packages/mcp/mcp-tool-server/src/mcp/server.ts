@@ -9,9 +9,13 @@ import {
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { McpTool, McpToolTaskSchema } from './type'
-import { MessageType, Server as SocketServer } from '../socket/type'
+import {
+  ClientMessage,
+  MessageType,
+  Server as SocketServer,
+} from '../socket/type'
 
-export default class TinyAgentMcpServer {
+export class TinyAgentMcpServer {
   private socketServer: SocketServer
   private transports: any
   private sessionConnectMap: Map<string, string>
@@ -136,7 +140,7 @@ export default class TinyAgentMcpServer {
       const { name, arguments: args } = request.params
       const targetTool = this.tools.find((tool) => name === tool.name)
       const clientId = this.sessionConnectMap.get(sessionId)
-      let response
+      let responseText
 
       if (targetTool) {
         if (targetTool?.task) {
@@ -155,20 +159,23 @@ export default class TinyAgentMcpServer {
         }
 
         if (clientId) {
-          response = await this.socketServer.sendAndListen(
+          const res = await this.socketServer.sendAndListen(
             clientId,
             JSON.stringify(message)
           )
+
+          responseText =
+            (res as ClientMessage)?.data.text || (res as Error)?.message
         }
       } else {
-        response = 'invalid tool'
+        responseText = 'invalid tool'
       }
 
       return {
         content: [
           {
             type: 'text',
-            text: response,
+            text: responseText,
           },
         ],
       }

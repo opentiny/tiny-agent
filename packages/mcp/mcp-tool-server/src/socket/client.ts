@@ -117,7 +117,7 @@ function startClient(
           })
         })
         .catch((err: Error) => {
-          client.sendMessage('taskFail', { text: err })
+          client.sendMessage('taskFail', { text: err.message })
         })
     })
 
