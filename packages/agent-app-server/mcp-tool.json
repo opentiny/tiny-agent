@@ -1,0 +1,64 @@
+[
+  {
+    "name": "addUserByUI",
+    "description": "界面新增用户",
+    "inputSchema": {
+      "name": {
+        "type": "string",
+        "description": "用户名"
+      },
+      "sex": {
+        "type": "string",
+        "description": "性别"
+      },
+      "date": {
+        "type": "string",
+        "description": "出生日期"
+      }
+    },
+    "task": {
+      "id": "123",
+      "instructions": [
+        {
+          "action": "input",
+          "params": {
+            "selector": ".user-input input",
+            "value": "{{name}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".user-sex input"
+          }
+        },
+        {
+          "action": "clickByText",
+          "params": {
+            "selector": ".user-sex-popper",
+            "text": "{{sex}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".user-date input"
+          }
+        },
+        {
+          "action": "selectDate",
+          "params": {
+            "selector": ".user-date-popper",
+            "date": "{{date}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".user-submit"
+          }
+        }
+      ]
+    }
+  }
+]

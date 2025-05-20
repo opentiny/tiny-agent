@@ -1,0 +1,12 @@
+{
+  "port": 3001,
+  "apiKey": "{{apiKey}}",
+  "model": "mistralai/mistral-small-3.1-24b-instruct:free",
+  "mcpTools": [
+    {
+      "name": "mcpTools",
+      "description": "mcpTools",
+      "parameters": {}
+    }
+  ]
+}

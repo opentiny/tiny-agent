@@ -160,7 +160,7 @@ export default class TinyAgentMcpServer {
         content: [
           {
             type: 'text',
-            text: res,
+            text: JSON.stringify(res),
           },
         ],
       };
@@ -224,6 +224,22 @@ export default class TinyAgentMcpServer {
       await transport.handleRequest(req, res, req.body);
     });
 
+    this.app.get('/sse', async (req: Request, res: Response) => {
+      const { client } = req.query;
+      const transport = new SSEServerTransport('/messages', res);
+
+      this.transports.sse[transport.sessionId] = transport;
+      this.sessionConntionMap.set(transport.sessionId, String(client));
+
+      res.on('close', () => {
+        delete this.transports.sse[transport.sessionId];
+      });
+
+      const server = this.initServer(transport.sessionId);
+
+      await server.connect(transport);
+    });
+
     const handleSessionRequest = async (
       req: express.Request,
       res: express.Response
@@ -242,22 +258,6 @@ export default class TinyAgentMcpServer {
 
     this.app.delete('/mcp', handleSessionRequest);
 
-    this.app.get('/sse', async (req: Request, res: Response) => {
-      const { client } = req.query;
-      const transport = new SSEServerTransport('/messages', res);
-
-      this.transports.sse[transport.sessionId] = transport;
-      this.sessionConntionMap.set(transport.sessionId, String(client));
-
-      res.on('close', () => {
-        delete this.transports.sse[transport.sessionId];
-      });
-
-      const server = this.initServer(transport.sessionId);
-
-      await server.connect(transport);
-    });
-
     this.app.post('/messages', async (req: Request, res: Response) => {
       const sessionId = req.query.sessionId as string;
 
@@ -271,6 +271,6 @@ export default class TinyAgentMcpServer {
       }
     });
 
-    this.app.listen(3005, '0.0.0.0');
+    this.app.listen(3077, '0.0.0.0');
   }
 }

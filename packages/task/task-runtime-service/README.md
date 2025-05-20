@@ -61,6 +61,7 @@ window.sendMessage({
       params: {
         selector: '.user-add-btn > button',
       },
+      catch: ['pause()', 'goto(7)'],
     },
     {
       action: 'input',

@@ -8,6 +8,9 @@
     "build": "tsc && chmod 755 dist/index.js",
     "test": "node test.js scripts/server.js"
   },
+  "exports": {
+    ".": "./index.ts"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.41.0",
     "@modelcontextprotocol/sdk": "^1.11.1",
