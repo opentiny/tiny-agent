@@ -9,6 +9,12 @@ export enum ExecutorStatus {
   Paused = 'paused',
 }
 
+export enum ActionResultStatus {
+  Success = 'success',
+  Error = 'error',
+  PartialCompleted = 'partial completed',
+}
+
 export class Task extends EventEmitter {
   private actionManager: ActionManager;
   private context: ISchedulerContext;
@@ -17,7 +23,7 @@ export class Task extends EventEmitter {
   private status: ExecutorStatus = ExecutorStatus.Idle; // 执行器状态
   private resolve: ((value: ActionsResult) => void) | null = null; // 成功回调
   private reject: ((value: ActionsResult) => void) | null = null; // 失败回调
-  private resultStatus: ActionsResult['status'] = 'error'; // 结果状态
+  private resultStatus: ActionResultStatus = ActionResultStatus.Error; // 结果状态
   private finalResult: ActionsResult['result']; // 最后结果
   private pauseResolve: (() => void) | null = null;
   private waitPromise: Promise<void> | null = null;
@@ -70,7 +76,7 @@ export class Task extends EventEmitter {
     this.status = ExecutorStatus.Idle;
     this.resolve = null;
     this.reject = null;
-    this.resultStatus = 'error';
+    this.resultStatus = ActionResultStatus.Error;
     this.finalResult = undefined;
     this.pauseResolve = null;
     this.waitPromise = null;
@@ -91,7 +97,7 @@ export class Task extends EventEmitter {
       const actionExecutor = this.actionManager.findAction(action)?.execute;
       if (!actionExecutor) {
         this.finalResult = { message: t('task.actionNotFound', { action }) };
-        this.resultStatus = 'error';
+        this.resultStatus = ActionResultStatus.Error;
         return this.finish();
       }
       try {
@@ -102,9 +108,9 @@ export class Task extends EventEmitter {
 
         // 延迟等待200ms，使每个action之间有停顿
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        if (status === 'success') {
+        if (status === ActionResultStatus.Success) {
           this.finalResult = result;
-          this.resultStatus = 'partial completed';
+          this.resultStatus = ActionResultStatus.PartialCompleted;
 
           // 暂停执行，并使暂停方法返回
           if (this.status === (ExecutorStatus.Paused as ExecutorStatus)) {
@@ -114,7 +120,7 @@ export class Task extends EventEmitter {
           }
 
           if (this.currentIndex === this.instructions.length - 1) {
-            this.resultStatus = status;
+            this.resultStatus = ActionResultStatus.Success;
             // 最后一步点了暂停，等待恢复
             if (this.status !== (ExecutorStatus.Paused as ExecutorStatus)) {
               return this.finish();
@@ -124,12 +130,12 @@ export class Task extends EventEmitter {
           this.currentIndex++;
         } else {
           this.finalResult = error;
-          this.resultStatus = 'error';
+          this.resultStatus = ActionResultStatus.Error;
           return this.finish();
         }
       } catch (error) {
         this.finalResult = error as { message: string; stack?: string };
-        this.resultStatus = 'error';
+        this.resultStatus = ActionResultStatus.Error;
         return this.finish();
       }
     }
@@ -140,12 +146,12 @@ export class Task extends EventEmitter {
       status: this.resultStatus,
       index: this.currentIndex,
       instruction: this.instructions[this.currentIndex],
-      ...(this.resultStatus === 'error'
+      ...(this.resultStatus === ActionResultStatus.Error
         ? { error: this.finalResult as { message: string; stack?: string } }
         : { result: this.finalResult }),
     };
 
-    if (this.resultStatus === 'error') {
+    if (this.resultStatus === ActionResultStatus.Error) {
       this.reject?.(result);
     } else {
       this.resolve?.(result);
