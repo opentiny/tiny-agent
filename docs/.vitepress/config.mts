@@ -1,10 +1,10 @@
-import { defineConfig } from 'vitepress'
-import { vitepressDemoPlugin } from 'vitepress-demo-plugin'
+import { defineConfig } from 'vitepress';
+import { vitepressDemoPlugin } from 'vitepress-demo-plugin';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "TinyAgent",
-  description: "A VitePress Site",
+  title: 'TinyAgent',
+  description: 'A VitePress Site',
   srcDir: 'src',
   outDir: 'dist',
   base: '/docs/tiny-agent/',
@@ -17,7 +17,7 @@ export default defineConfig({
   vite: {
     server: {
       host: '0.0.0.0', // 允许外部访问
-      open: true,      // 开发时自动打开浏览器
+      open: true, // 开发时自动打开浏览器
     },
   },
   themeConfig: {
@@ -26,9 +26,10 @@ export default defineConfig({
     nav: [
       { text: '指引', link: '/guide/write-docs-guide' },
       { text: '配置', link: '/config/config' },
+      { text: 'API', link: '/api/api' },
       { text: '扩展', link: '/extensions/simulate-lib' },
       { text: '演示', link: '/examples/demo' },
-      { text: '1.0.0', link: '/releases/releases', },
+      { text: '1.0.0', link: '/releases/releases' },
     ],
 
     sidebar: {
@@ -44,30 +45,38 @@ export default defineConfig({
           ],
         },
       ],
+      '/api/': [
+        {
+          text: 'API',
+          base: '/api/',
+          items: [
+            { text: 'API', link: 'config' },
+            { text: 'API', link: 'config' },
+            { text: 'API', link: 'config' },
+            { text: 'API', link: 'config' },
+          ],
+        },
+      ],
       '/config/': [
         {
           text: '配置',
           base: '/config/',
-          items: [
-            { text: '配置方案', link: 'config' },
-          ],
+          items: [{ text: '配置方案', link: 'config' }],
         },
       ],
       '/extensions/': [
         {
           text: '扩展',
           base: '/extensions/',
-          items: [
-            { text: '模拟dom操作库', link: 'simulate-lib' },
-          ],
+          items: [{ text: '模拟dom操作库', link: 'simulate-lib' }],
         },
       ],
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/opentiny/tiny-agent' }
+      { icon: 'github', link: 'https://github.com/opentiny/tiny-agent' },
     ],
     search: {
       provider: 'local',
     },
-  }
-})
+  },
+});
