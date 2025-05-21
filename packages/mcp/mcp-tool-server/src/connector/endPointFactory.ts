@@ -1,10 +1,10 @@
 import { WebSocketConnectorEndpoint } from './WebSocketConnectorEndpoint'
 import { EndpointOptions, Endpoint, IConnectorEndpoint } from './type'
 
-type FactorConstructor<T> = new (options: EndpointOptions) => T
+type FactoryConstructor<T> = new (options: EndpointOptions) => T
 
 export class EndpointFactory {
-  private endPointMap: { [k: string]: FactorConstructor<IConnectorEndpoint> }
+  private endPointMap: { [k: string]: FactoryConstructor<IConnectorEndpoint> }
 
   private options: EndpointOptions
 

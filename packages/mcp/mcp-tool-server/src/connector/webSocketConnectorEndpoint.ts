@@ -86,11 +86,13 @@ export class WebSocketConnectorEndpoint implements IConnectorEndpoint {
   }
 
   onmessage(message: JSONRPCMessage) {
-    console.log('Client receive msg: ', message)
-    const msg = message as JSONRPCResponse
-    if (msg.result?.method === 'initialize') {
-      this.clientId = msg.result?.clientId as string
+    const resp = message as JSONRPCResponse
+
+    if (resp.result?.method === 'initialize') {
+      this.clientId = resp.result?.clientId as string
     }
+
+    console.log('Client receive msg: ', message)
   }
 
   onclose() {

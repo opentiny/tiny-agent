@@ -21,8 +21,4 @@ export class WebSocketConnectorTransport implements Transport {
   async close(): Promise<void> {
     this.connectorEndpoint?.close()
   }
-
-  onmessage() {}
-  onclose() {}
-  onerror() {}
 }
