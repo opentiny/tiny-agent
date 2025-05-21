@@ -1,6 +1,5 @@
+import { McpServer, RegisteredTool, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ZodRawShape } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-
 export interface ITool {
   name: string;
   description: string;
@@ -15,38 +14,38 @@ export interface IResource {
 export interface IUIResource extends IResource { }
 
 export const MCP_SERVICE = Symbol('MCP_SERVICE');
-
 export class McpService {
-  static toolToJson(tool: ITool): any {
-    return {
-      name: tool.name,
-      description: tool.description,
-      inputSchema: Object.fromEntries(
-        Object.entries(tool.inputSchema)
-          .map(([key, value]) => [key, zodToJsonSchema(value)]
-          )
-      )
-    };
-  }
-  private tools = new Map<string, ITool>();
+  private _mcpServer: McpServer;
   private uiResources = new Map<string, IUIResource>();
+  public get mcpServer() {
+    return this._mcpServer;
+  }
+  constructor(mcpServer?: McpServer) {
+    this._mcpServer = mcpServer || new McpServer({
+      name: 'MCP Service',
+      version: '1.0.0',
+    });
+  }
 
   registerTool(tool: ITool) {
-    if (this.tools.has(tool.name)) {
-      return;
-    }
-    this.tools.set(tool.name, tool);
+    const { name, description, inputSchema, handler } = tool;
+    return this.mcpServer.tool(name, description, inputSchema, handler);
   }
 
   unregisterTool(name: string) {
-    if (!this.tools.has(name)) {
-      return;
+    const tool = this.getTool(name);
+    if (!tool) {
+      throw new Error(`Tool with name ${name} does not exist`);
     }
-    this.tools.delete(name);
+    tool.remove();
+    return tool;
   }
 
-  getTool(name: string): ITool | undefined {
-    return this.tools.get(name);
+  getTool(name: string): RegisteredTool & { name: string } | undefined {
+    return {
+      ...this.mcpServer["_registeredTools"][name],
+      name
+    };
   }
 
   registerUIResource(resource: IUIResource) {
@@ -66,8 +65,14 @@ export class McpService {
     return this.uiResources.get(name);
   }
 
-  getAllTools(): ITool[] {
-    return Array.from(this.tools.values());
+  getAllTools(): (RegisteredTool & { name: string })[] {
+    return Object.keys(this.mcpServer["_registeredTools"]).map(name => {
+      const tool = this.mcpServer["_registeredTools"][name] as RegisteredTool;
+      return {
+        name,
+        ...tool
+      };
+    });
   }
 
   getAllUIResources(): IUIResource[] {
@@ -76,7 +81,7 @@ export class McpService {
 
   getContext() {
     return {
-      tools: Object.fromEntries(this.getAllTools().map(tool => [tool.name, tool.handler])),
+      tools: Object.fromEntries(this.getAllTools().map(tool => [tool.name, tool.callback])),
       resources: {
         ui: Object.fromEntries(this.getAllUIResources().map(resource => [resource.name, resource.element]))
       },
