@@ -9,7 +9,7 @@
         "restart": "pm2 restart dist/index.js"
     },
     "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.9.0",
+        "@modelcontextprotocol/sdk": "^1.11.4",
         "express": "^5.1.0",
         "pm2": "^6.0.5",
         "zod": "^3.24.2"

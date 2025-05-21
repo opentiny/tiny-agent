@@ -1,35 +1,10 @@
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import express, { Request, Response } from "express";
-import { z } from "zod";
+import { ProxyServer } from './proxy-server';
 
-// Create an MCP server
-const server = new McpServer({
-  name: "mcp-tool-server",
-  version: "1.0.0"
-});
-
-// Add an addition tool
-server.tool("add",
-  "加法",
-  { a: z.number(), b: z.number() },
-  async ({ a, b }) => ({
-    content: [{ type: "text", text: String(a + b ) }]
-  })
-);
-
-// Add a dynamic greeting resource
-server.resource(
-  "greeting",
-  new ResourceTemplate("greeting://{name}", { list: undefined }),
-  async (uri, { name }) => ({
-    contents: [{
-      uri: uri.href,
-      text: `Hello, ${name}!`
-    }]
-  })
-);
-
+function getProxyServer() {
+  return new ProxyServer();
+}
 const app = express();
 
 // to support multiple simultaneous connections we have a lookup object from
@@ -37,6 +12,9 @@ const app = express();
 const transports: {[sessionId: string]: SSEServerTransport} = {};
 
 app.get("/sse", async (_: Request, res: Response) => {
+  const server = getProxyServer();
+  // TODO:
+  // server.setEndPoint(connectorCenter.getClient(res.query.client));
   const transport = new SSEServerTransport('/messages', res);
   transports[transport.sessionId] = transport;
   res.on("close", () => {
