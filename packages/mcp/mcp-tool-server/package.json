@@ -1,22 +1,28 @@
 {
-    "name": "@opentiny/tiny-agent-mcp-tool-server",
-    "version": "0.0.1",
-    "scripts": {
-        "dev": "ts-node src/index.ts",
-        "build": "tsc -p tsconfig.json",
-        "start": "pm2 start dist/index.js",
-        "stop": "pm2 stop dist/index.js",
-        "restart": "pm2 restart dist/index.js"
-    },
-    "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.11.4",
-        "express": "^5.1.0",
-        "pm2": "^6.0.5",
-        "zod": "^3.24.2"
-    },
-    "devDependencies": {
-        "@types/express": "^5.0.1",
-        "ts-node": "^10.9.2",
-        "typescript": "^5.8.3"
-    }
+  "name": "@opentiny/tiny-agent-mcp-tool-server",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "test": "ts-node src/test.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "pm2 start dist/index.js",
+    "stop": "pm2 stop dist/index.js",
+    "restart": "pm2 restart dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.4",
+    "commander": "^13.1.0",
+    "express": "^5.1.0",
+    "pm2": "^6.0.5",
+    "zod": "^3.24.2",
+    "ws": "^8.18.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/ws": "^8.18.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
 }
