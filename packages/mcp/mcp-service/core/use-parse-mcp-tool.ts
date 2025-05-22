@@ -21,11 +21,12 @@ type McpTool = {
     type: string
     properties: any
   }
-  task?: McpToolTaskSchema
-  args?: Record<string, any>
+  task: McpToolTaskSchema
 }
 
-export function useParseMcpTool(doTask) {
+type TaskExec = (task: McpToolTaskSchema) => Promise<any>
+
+export function useParseMcpTool(doTask: TaskExec) {
   function replaceArgs(
     task: McpToolTaskSchema,
     inputSchema: any,
@@ -36,10 +37,10 @@ export function useParseMcpTool(doTask) {
 
     // 替换实参
     if (actualArgs) {
-      Object.keys(inputSchema.properties)?.forEach((param, index) => {
+      Object.keys(inputSchema.properties)?.forEach((param) => {
         schemaStr = schemaStr
           .split(`{{${param}}}`)
-          .join(actualArgs[index]?.toString())
+          .join(actualArgs[param]?.toString())
       })
     }
 
@@ -54,8 +55,9 @@ export function useParseMcpTool(doTask) {
 
   function parseTool(tool: McpTool) {
     const { name, description, inputSchema, task } = tool
-    const handle = (...args) => {
-      const pendingTask = task ? replaceArgs(task, inputSchema, args) : args
+    const handle = (args) => {
+      const pendingTask = replaceArgs(task, inputSchema, args)
+
       doTask(pendingTask)
     }
 
