@@ -22,6 +22,10 @@ export default defineConfig({
   },
   themeConfig: {
     logo: '/logo.svg',
+    outline: {
+      level: [2, 3], // 显示 <h2> 和 <h3> 标题
+      label: '目录', // 可选，自定义目录标题
+    },
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: '指引', link: '/guide/write-docs-guide' },
@@ -47,13 +51,21 @@ export default defineConfig({
       ],
       '/api/': [
         {
-          text: 'API',
-          base: '/api/',
+          text: '调度器',
+          base: '/api/schedular/',
           items: [
-            { text: 'API', link: 'config' },
-            { text: 'API', link: 'config' },
-            { text: 'API', link: 'config' },
-            { text: 'API', link: 'config' },
+            { text: 'Task', link: 'task' },
+            { text: 'ActionManager', link: 'action-manager' },
+            { text: 'TaskScheduler', link: 'task-scheduler' },
+            { text: 'TaskUI', link: 'task-ui' },
+          ],
+        },
+        {
+          text: '基础UI库',
+          base: '/api/ui/',
+          items: [
+            { text: 'Tooltip', link: 'tooltip' },
+            { text: 'Popup', link: 'popup' },
           ],
         },
       ],
