@@ -1,20 +1,18 @@
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import express, { Request, Response } from "express";
 import { ProxyServer } from './proxy-server';
+import { runServer } from './test';
 
 function getProxyServer() {
   return new ProxyServer();
 }
+const { connectorCenter } = runServer();
+const transports: {[sessionId: string]: SSEServerTransport} = {};
 const app = express();
 
-// to support multiple simultaneous connections we have a lookup object from
-// sessionId to transport
-const transports: {[sessionId: string]: SSEServerTransport} = {};
-
-app.get("/sse", async (_: Request, res: Response) => {
+app.get("/sse", async (req: Request, res: Response) => {
   const server = getProxyServer();
-  // TODO:
-  // server.setEndPoint(connectorCenter.getClient(res.query.client));
+  server.setEndPoint(connectorCenter.getClient(req.query.client as string));
   const transport = new SSEServerTransport('/messages', res);
   transports[transport.sessionId] = transport;
   res.on("close", () => {

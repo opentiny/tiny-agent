@@ -34,9 +34,9 @@ export class ProxyServer {
       } else if (message.type === "close") {
         this.transport.close();
       } else if (message.type === "error") {
-        this.onError(new Error(message.data));
+        this.onError(new Error(message.data as any));
       }
-      this.transport?.send(message);
+      this.transport!.send(message.data);
     };
 
     await this.transport.start();
@@ -47,5 +47,4 @@ export class ProxyServer {
   private onError(error: Error) {
     console.error("Error in transport", error);
   }
-  
 }
