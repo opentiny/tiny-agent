@@ -8,13 +8,13 @@ export interface IEndpointMessage<T = JSONRPCMessage> {
 
 export interface IConnectorEndpoint {
   clientId: string | number;
+  clientIdResolved: Promise<string | number>;
 
   start(): Promise<void>;
   close(): Promise<void>;
 
   send(message: IEndpointMessage): Promise<void>;
-  onmessage: (message: IEndpointMessage) => void;
-
+  onmessage?: (message: IEndpointMessage) => void;
 
   onclose?: () => void;
   onerror?: (error: Error) => void;

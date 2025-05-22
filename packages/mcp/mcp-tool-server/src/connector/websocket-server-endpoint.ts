@@ -3,16 +3,18 @@ import { IConnectorEndpoint, IEndpointMessage } from './endpoint.type';
 
 export class WebSocketServerEndpoint implements IConnectorEndpoint {
   public clientId: string;
+  public clientIdResolved: Promise<string>;
   protected ws: WebSocket;
 
   constructor(clientId: string, ws: WebSocket) {
     this.clientId = clientId;
+    this.clientIdResolved = Promise.resolve(clientId);
     this.ws = ws;
   }
   async start(): Promise<void> {
-    this.ws.on('message', (message: string) => {
-      const endpointMessage = JSON.parse(message) as IEndpointMessage;
-      if (endpointMessage.type === 'initialize') {
+    this.ws.on('message', (messageStr: string) => {
+      const message: IEndpointMessage = JSON.parse(messageStr);
+      if (message.type === 'initialize') {
         this.send({
           type: 'initialize',
           data: {
@@ -21,7 +23,7 @@ export class WebSocketServerEndpoint implements IConnectorEndpoint {
         })
         return
       }
-      this.onmessage(endpointMessage)
+      this.onmessage?.(message);
     })
   }
 
@@ -34,5 +36,7 @@ export class WebSocketServerEndpoint implements IConnectorEndpoint {
   }
 
   // override by proxy server
-  onmessage = (message: IEndpointMessage) => { }
+  onmessage = null;
+  onclose = null;
+  onerror = null;
 }

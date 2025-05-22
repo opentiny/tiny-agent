@@ -1,4 +1,5 @@
-import { McpServer, RegisteredTool, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer, RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { mergeCapabilities } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { ZodRawShape } from 'zod';
 export interface ITool {
   name: string;
@@ -25,6 +26,14 @@ export class McpService {
       name: 'MCP Service',
       version: '1.0.0',
     });
+    this.override();
+  }
+
+  private override() {
+    // prevent dynamic registration tool errors after connecting to transport, version 1.11.x
+    this.mcpServer.server.registerCapabilities = (capabilities) => {
+      this.mcpServer.server['_capabilities'] = mergeCapabilities(this.mcpServer.server['_capabilities'], capabilities)
+    }
   }
 
   registerTool(tool: ITool) {

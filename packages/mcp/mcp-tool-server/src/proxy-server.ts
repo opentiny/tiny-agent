@@ -14,7 +14,7 @@ export class ProxyServer {
     }
     this.transport = transport;
     this.transport.onclose = () => {
-      // do nothing
+      this.close();
     };
 
     this.transport.onerror = (error: Error) => {
@@ -22,20 +22,14 @@ export class ProxyServer {
     };
 
     this.transport.onmessage = (message, extra) => {
-      this.endpoint?.send({
+      this.endpoint.send({
         type: "message",
         data: message,
         extra
       });
     };
-    this.endpoint!.onmessage = (message) => {
-      if (message.type === "message") {
-        this.transport.send(message.data);
-      } else if (message.type === "close") {
-        this.transport.close();
-      } else if (message.type === "error") {
-        this.onError(new Error(message.data as any));
-      }
+
+    this.endpoint.onmessage = (message) => {
       this.transport!.send(message.data);
     };
 
@@ -46,5 +40,9 @@ export class ProxyServer {
   }
   private onError(error: Error) {
     console.error("Error in transport", error);
+  }
+  private close() {
+    this.endpoint.onmessage = null;
+    this.transport = null
   }
 }

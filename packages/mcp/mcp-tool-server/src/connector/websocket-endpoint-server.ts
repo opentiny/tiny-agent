@@ -8,13 +8,18 @@ export class WebSocketEndpointServer {
 
   constructor(config: { port: number }, connectorCenter: ConnectorCenter<WebSocketServerEndpoint>) {
     this.wss = new WebSocketServer(config);
+    this.connectorCenter = connectorCenter;
   }
 
   start() {
     this.wss.on('connection', (ws: WebSocket) => {
       const clientId = genClientId();
       const endpoint = new WebSocketServerEndpoint(clientId, ws);
+      endpoint.start();
       this.connectorCenter.setClient(clientId, endpoint);
+      ws.on('close', () => {
+        this.connectorCenter.removeClient(clientId);
+      });
     })
   }
 }
