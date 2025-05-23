@@ -1,21 +1,10 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import dotenv from 'dotenv';
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
-import type {
-  MCPClientOptions,
-  ChatBody,
-  CallToolsParams,
-  AvailableTool,
-  ToolResults,
-  McpServer,
-  McpServersConfig,
-} from './mcp-client-core.type.js';
-
-dotenv.config();
+import type { MCPClientOptions, ChatBody, CallToolsParams, ToolResults, McpServer } from './mcp-client-core.type.js';
 
 export class McpClient {
   private options: MCPClientOptions;
@@ -212,7 +201,10 @@ export class McpClient {
     } catch (error) {
       console.error('调用 AI chat 接口时发生错误:', error);
 
-      return { error: '调用 AI chat 接口失败', detail: error instanceof Error ? error.message : String(error) };
+      return {
+        error: '调用 AI chat 接口失败',
+        detail: error instanceof Error ? error.message : String(error),
+      };
     }
   }
 }
