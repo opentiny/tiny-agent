@@ -1,8 +1,8 @@
-import { TaskScheduler } from './task-scheduler';
+import { TaskScheduler, type ISchedulerContext } from './task-scheduler';
 import { TaskUI } from './task-ui';
 import { ActionManager } from './action-manager';
 import { t } from './locale/i18n';
-import type { Action, ISchedulerContext } from './types';
+import type { Action } from './types';
 
 export function createScheduler(actions: Action[], context: ISchedulerContext) {
   const actionManager = new ActionManager();

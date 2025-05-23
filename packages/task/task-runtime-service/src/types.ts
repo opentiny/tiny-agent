@@ -28,19 +28,3 @@ export type ActionsResult = IActionResult & {
 };
 
 export type TaskResult = ActionsResult & { id: string };
-
-export interface ISchedulerContext {
-  $task?: {
-    pause: (...args: unknown[]) => void;
-    resume: () => Promise<void>;
-    addCleanEffect: (fn: () => void) => void;
-  };
-  [key: string]: any;
-}
-
-export interface IScheduler {
-  registerActions: (actions: Action[]) => void;
-  registerAction: (action: Action) => void;
-  provideContext: (context: ISchedulerContext) => void;
-  install: () => void;
-}

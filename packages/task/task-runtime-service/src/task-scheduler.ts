@@ -1,15 +1,21 @@
-import type { ITaskDescription, TaskResult, ISchedulerContext } from './types';
-import { Task } from './task';
+import type { ITaskDescription, TaskResult } from './types';
+import { Task, type ITask } from './task';
 import { ActionManager } from './action-manager';
 import type { ITaskUI } from './task-ui';
 import { t } from './locale/i18n';
+
+export interface ISchedulerContext {
+  $task?: ITask;
+  $taskUI?: ITaskUI;
+  [key: string]: any;
+}
 
 export class TaskScheduler {
   private tasksQueue: any = [];
   private isExecuting = false;
   private context: ISchedulerContext;
   private actionManager: ActionManager;
-  private task: Task | null = null;
+  private task: ITask | null = null;
   private taskUI: ITaskUI | undefined;
 
   constructor(actionManager: ActionManager, context?: ISchedulerContext) {
@@ -28,8 +34,11 @@ export class TaskScheduler {
   connectTaskUI(taskUI: ITaskUI) {
     this.taskUI = taskUI;
     if (this.taskUI && this.task) {
+      this.addContext({
+        $taskUI: this.taskUI,
+      });
       this.taskUI.on('pause', () => {
-        this.task!.waitPause();
+        this.task!.pause();
       });
       this.taskUI.on('skip', () => {
         this.task!.skip();
@@ -65,9 +74,6 @@ export class TaskScheduler {
     return new Promise((resolve, reject) => {
       const { instructions, id } = taskDescription;
       const taskContext = { ...this.context };
-      if (this.taskUI) {
-        taskContext.$taskUI = this.taskUI;
-      }
       this.task = new Task(this.actionManager, taskContext);
       const taskFn = () => this.task!.execute(instructions); // 执行任务
       this.tasksQueue.push({ taskFn, id, resolve, reject }); // 将任务及回调存入队列

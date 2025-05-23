@@ -1,4 +1,5 @@
-import type { ActionsResult, IInstruction, ISchedulerContext } from './types';
+import type { ActionsResult, IInstruction } from './types';
+import type { ISchedulerContext } from './task-scheduler';
 import { ActionManager } from './action-manager';
 import { EventEmitter } from './event-emitter';
 import { t } from './locale/i18n';
@@ -15,28 +16,42 @@ export enum ActionResultStatus {
   PartialCompleted = 'partial completed',
 }
 
-export class Task extends EventEmitter {
-  private actionManager: ActionManager;
-  private context: ISchedulerContext;
-  private instructions: IInstruction[] = []; // 执行中的指令集
-  private currentIndex: number = 0;
-  private status: ExecutorStatus = ExecutorStatus.Idle; // 执行器状态
-  private resolve: ((value: ActionsResult) => void) | null = null; // 成功回调
-  private reject: ((value: ActionsResult) => void) | null = null; // 失败回调
-  private resultStatus: ActionResultStatus = ActionResultStatus.Error; // 结果状态
-  private finalResult: ActionsResult['result']; // 最后结果
-  private pauseResolve: (() => void) | null = null;
-  private waitPromise: Promise<void> | null = null;
-  private cleanEffectFns: (() => void)[] = [];
+export interface ITask {
+  pause(): Promise<void>;
+  resume(): void;
+  skip(): void;
+  stop(): Promise<void>;
+  addCleanEffect(fn: () => void): void;
+  on(event: string, listener: (...args: any[]) => void): void;
+  execute(instructions: IInstruction[]): Promise<ActionsResult>;
+}
+
+export class Task extends EventEmitter implements ITask {
+  protected actionManager: ActionManager;
+  protected context: ISchedulerContext;
+  protected instructions: IInstruction[] = []; // 执行中的指令集
+  protected currentIndex: number = 0;
+  protected status: ExecutorStatus = ExecutorStatus.Idle; // 执行器状态
+  protected resolve: ((value: ActionsResult) => void) | null = null; // 成功回调
+  protected reject: ((value: ActionsResult) => void) | null = null; // 失败回调
+  protected resultStatus: ActionResultStatus = ActionResultStatus.Error; // 结果状态
+  protected finalResult: ActionsResult['result']; // 最后结果
+  protected pauseResolve: (() => void) | null = null;
+  protected waitPromise: Promise<void> | null = null;
+  protected cleanEffectFns: (() => void)[] = [];
 
   constructor(actionManager: ActionManager, context: ISchedulerContext) {
     super();
     this.context = {
       ...context,
       $task: {
-        pause: (...args: unknown[]) => this.pause(...args),
-        resume: () => this.resume(),
-        addCleanEffect: (fn: () => void) => this.addCleanEffect(fn),
+        pause: this.pause.bind(this),
+        resume: this.resume.bind(this),
+        skip: this.skip.bind(this),
+        stop: this.stop.bind(this),
+        addCleanEffect: this.addCleanEffect.bind(this),
+        on: this.on.bind(this),
+        execute: this.execute.bind(this),
       },
     };
     this.actionManager = actionManager;
@@ -70,7 +85,7 @@ export class Task extends EventEmitter {
     this.cleanEffectFns = [];
   }
 
-  initialize() {
+  protected initialize() {
     this.instructions = [];
     this.currentIndex = 0;
     this.status = ExecutorStatus.Idle;
@@ -83,7 +98,7 @@ export class Task extends EventEmitter {
     this.cleanEffectFns = [];
   }
 
-  async start(): Promise<void> {
+  protected async start(): Promise<void> {
     while (
       this.currentIndex < this.instructions.length &&
       this.status === ExecutorStatus.Running
@@ -162,24 +177,20 @@ export class Task extends EventEmitter {
     this.emit('finish');
   }
 
-  pause(...args: unknown[]): void {
+  pause(): Promise<void> {
     this.emit('pause');
     this.status = ExecutorStatus.Paused;
-  }
-
-  // 单个action执行无法中断，需要一个promise来等待
-  waitPause(): Promise<void> {
+    // 单个action执行无法中断，需要一个promise来等待
     if (this.waitPromise) {
       return this.waitPromise;
     }
-    this.pause();
     this.waitPromise = new Promise<void>((resolve) => {
       this.pauseResolve = resolve;
     });
     return this.waitPromise;
   }
 
-  async resume(): Promise<void> {
+  resume() {
     this.emit('resume');
     if (this.currentIndex > this.instructions.length - 1) {
       this.finish();
@@ -202,7 +213,7 @@ export class Task extends EventEmitter {
   // 停止执行并返回结果
   async stop(): Promise<void> {
     if (this.status === ExecutorStatus.Running) {
-      await this.waitPause();
+      await this.pause();
     }
     this.finish();
   }
