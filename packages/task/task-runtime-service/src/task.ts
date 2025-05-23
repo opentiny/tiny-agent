@@ -121,8 +121,8 @@ export class Task extends EventEmitter implements ITask {
           this.context
         );
 
-        // 延迟等待200ms，使每个action之间有停顿
         await new Promise((resolve) => setTimeout(resolve, 1000));
+
         if (status === ActionResultStatus.Success) {
           this.finalResult = result;
           this.resultStatus = ActionResultStatus.PartialCompleted;
@@ -210,7 +210,6 @@ export class Task extends EventEmitter implements ITask {
     this.currentIndex = Math.min(index, this.instructions.length - 1);
   }
 
-  // 停止执行并返回结果
   async stop(): Promise<void> {
     if (this.status === ExecutorStatus.Running) {
       await this.pause();
