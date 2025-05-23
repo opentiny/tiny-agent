@@ -1,6 +1,6 @@
 import { t } from './locale/i18n';
 
-interface IParams {
+interface IRequestParams {
   url: string;
   timeout?: number;
   method?: string;
@@ -116,7 +116,7 @@ const isMatchQuery = (query: any, resQuery: any) => {
   return isMatch;
 };
 
-const matchUrl = (params: IParams, response: any): MatchInfo => {
+const matchUrl = (params: IRequestParams, response: any): MatchInfo => {
   const { url, method, query } = params;
   const { method: reqMethod, url: resUrl } = response?.config || {};
   const trimQueryUrl = resUrl.split('?')[0];
@@ -149,7 +149,7 @@ const start = {
   name: 'apiConfirmStart',
   description: t('axiosActions.description.startEnd'),
   execute: async (
-    params: IParams,
+    params: IRequestParams,
     context: IContext
   ): Promise<{ status: string } | undefined> => {
     const { $axiosConfig, $task } = context;
@@ -219,7 +219,7 @@ const end = {
   name: 'apiConfirmEnd',
   description: t('axiosActions.description.startEnd'),
   execute: async (
-    params: IParams,
+    params: IRequestParams,
     context: IContext
   ): Promise<{ status: string; result?: any; error?: any }> => {
     const { url, timeout: actionTime } = params;

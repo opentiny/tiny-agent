@@ -3,27 +3,27 @@ import { t } from '../locale/i18n';
 
 // 定义路由操作类型的枚举，添加 vue_ 前缀区分
 enum RouterActionType {
-  VUE_PUSH = 'vue_push',
-  VUE_REPLACE = 'vue_replace',
-  VUE_GO_BACK = 'vue_goBack',
-  VUE_GO_FORWARD = 'vue_goForward',
-  VUE_GO = 'vue_go',
+  VUE_ROUTER_PUSH = 'vueRouterPush',
+  VUE_ROUTER_REPLACE = 'vueRouterReplace',
+  VUE_ROUTER_GO_BACK = 'vueRouterGoBack',
+  VUE_ROUTER_GO_FORWARD = 'vueRouterGoForward',
+  VUE_ROUTER_GO = 'vueRouterGo',
 }
 
 // 路由跳转操作
 const push: Action = {
-  name: RouterActionType.VUE_PUSH,
+  name: RouterActionType.VUE_ROUTER_PUSH,
   execute: async (params, context) => {
-    const { $router } = context;
+    const { vueRouter } = context;
     const { to } = params;
-    if (!$router) {
+    if (!vueRouter) {
       return {
         status: 'error',
         error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
-      await $router.push(to);
+      await vueRouter.push(to);
       return {
         status: 'success',
         result: { message: t('vueRouterActions.successMsg.push', { to }) },
@@ -43,18 +43,18 @@ const push: Action = {
 
 // 路由替换操作
 const replace: Action = {
-  name: RouterActionType.VUE_REPLACE,
+  name: RouterActionType.VUE_ROUTER_REPLACE,
   execute: async (params, context) => {
-    const { $router } = context;
+    const { vueRouter } = context;
     const { to } = params;
-    if (!$router) {
+    if (!vueRouter) {
       return {
         status: 'error',
         error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
-      await $router.replace(to);
+      await vueRouter.replace(to);
       return {
         status: 'success',
         result: { message: t('vueRouterActions.successMsg.replace', { to }) },
@@ -74,17 +74,17 @@ const replace: Action = {
 
 // 后退操作
 const goBack: Action = {
-  name: RouterActionType.VUE_GO_BACK,
+  name: RouterActionType.VUE_ROUTER_GO_BACK,
   execute: (params, context) => {
-    const { $router } = context;
-    if (!$router) {
+    const { vueRouter } = context;
+    if (!vueRouter) {
       return {
         status: 'error',
         error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
-      $router.back();
+      vueRouter.back();
       return {
         status: 'success',
         result: { message: t('vueRouterActions.successMsg.goBack') },
@@ -104,17 +104,17 @@ const goBack: Action = {
 
 // 前进操作
 const goForward: Action = {
-  name: RouterActionType.VUE_GO_FORWARD,
+  name: RouterActionType.VUE_ROUTER_GO_FORWARD,
   execute: (params, context) => {
-    const { $router } = context;
-    if (!$router) {
+    const { vueRouter } = context;
+    if (!vueRouter) {
       return {
         status: 'error',
         error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
-      $router.forward();
+      vueRouter.forward();
       return {
         status: 'success',
         result: { message: t('vueRouterActions.successMsg.goForward') },
@@ -134,18 +134,18 @@ const goForward: Action = {
 
 // 前进或后退指定步数操作
 const go: Action = {
-  name: RouterActionType.VUE_GO,
+  name: RouterActionType.VUE_ROUTER_GO,
   execute: (params, context) => {
-    const { $router } = context;
+    const { vueRouter } = context;
     const { steps } = params;
-    if (!$router) {
+    if (!vueRouter) {
       return {
         status: 'error',
         error: { message: t('vueRouterActions.errorMsg.instance') },
       };
     }
     try {
-      $router.go(steps);
+      vueRouter.go(steps);
       return {
         status: 'success',
         result: { message: t('vueRouterActions.successMsg.go', { steps }) },
