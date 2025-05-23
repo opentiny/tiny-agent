@@ -9,7 +9,8 @@ export function createScheduler(actions: Action[], context: ISchedulerContext) {
   const taskUI = new TaskUI({
     title: t('scheduler.startDesc'),
   });
-  const taskScheduler = new TaskScheduler(actionManager, context, taskUI);
+  const taskScheduler = new TaskScheduler(actionManager, context);
+  taskScheduler.connectTaskUI(taskUI);
   actionManager.registerActions(actions);
 
   return { taskScheduler, actionManager };

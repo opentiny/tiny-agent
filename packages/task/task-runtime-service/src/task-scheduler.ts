@@ -12,15 +12,10 @@ export class TaskScheduler {
   private task: Task | null = null;
   private taskUI: ITaskUI | undefined;
 
-  constructor(
-    actionManager: ActionManager,
-    context?: ISchedulerContext,
-    taskUI?: ITaskUI
-  ) {
+  constructor(actionManager: ActionManager, context?: ISchedulerContext) {
     // 注册所有的ACTION并且提供上下文
     this.context = context || {};
     this.actionManager = actionManager;
-    this.taskUI = taskUI;
   }
 
   addContext(context: ISchedulerContext) {
@@ -30,7 +25,8 @@ export class TaskScheduler {
     };
   }
 
-  connectTaskUI() {
+  connectTaskUI(taskUI: ITaskUI) {
+    this.taskUI = taskUI;
     if (this.taskUI && this.task) {
       this.taskUI.on('pause', () => {
         this.task!.waitPause();
@@ -73,7 +69,6 @@ export class TaskScheduler {
         taskContext.$taskUI = this.taskUI;
       }
       this.task = new Task(this.actionManager, taskContext);
-      this.connectTaskUI();
       const taskFn = () => this.task!.execute(instructions); // 执行任务
       this.tasksQueue.push({ taskFn, id, resolve, reject }); // 将任务及回调存入队列
       this.execute(); // 尝试执行下一个任务
