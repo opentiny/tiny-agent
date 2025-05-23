@@ -1,4 +1,4 @@
-import type { Tool } from '@modelcontextprotocol/typescript-sdk';
+import type { Tool } from '@modelcontextprotocol/sdk/type.js';
 import { v4 as uuidv4 } from 'uuid'
 export const genTaskId = () => uuidv4()
 
