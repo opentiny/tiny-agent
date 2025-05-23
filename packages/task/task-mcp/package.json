@@ -1,0 +1,18 @@
+{
+  "name": "@opentiny/tiny-agent-mcp-task",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "pm2 start dist/index.js",
+    "stop": "pm2 stop dist/index.js",
+    "restart": "pm2 restart dist/index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.4"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
