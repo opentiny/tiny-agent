@@ -1,7 +1,6 @@
 import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
 import { t } from '../locale/i18n';
 
-// 定义路由操作类型的枚举，添加 vue_ 前缀区分
 enum RouterActionType {
   VUE_ROUTER_PUSH = 'vueRouterPush',
   VUE_ROUTER_REPLACE = 'vueRouterReplace',
@@ -13,7 +12,7 @@ enum RouterActionType {
 // 路由跳转操作
 const push: Action = {
   name: RouterActionType.VUE_ROUTER_PUSH,
-  execute: async (params, context) => {
+  execute: async (params: { to: string }, context: any) => {
     const { vueRouter } = context;
     const { to } = params;
     if (!vueRouter) {
@@ -44,7 +43,7 @@ const push: Action = {
 // 路由替换操作
 const replace: Action = {
   name: RouterActionType.VUE_ROUTER_REPLACE,
-  execute: async (params, context) => {
+  execute: async (params: { to: string }, context: any) => {
     const { vueRouter } = context;
     const { to } = params;
     if (!vueRouter) {
@@ -75,7 +74,7 @@ const replace: Action = {
 // 后退操作
 const goBack: Action = {
   name: RouterActionType.VUE_ROUTER_GO_BACK,
-  execute: (params, context) => {
+  execute: (params: any, context: any) => {
     const { vueRouter } = context;
     if (!vueRouter) {
       return {
@@ -105,7 +104,7 @@ const goBack: Action = {
 // 前进操作
 const goForward: Action = {
   name: RouterActionType.VUE_ROUTER_GO_FORWARD,
-  execute: (params, context) => {
+  execute: (params: any, context: any) => {
     const { vueRouter } = context;
     if (!vueRouter) {
       return {
@@ -135,7 +134,7 @@ const goForward: Action = {
 // 前进或后退指定步数操作
 const go: Action = {
   name: RouterActionType.VUE_ROUTER_GO,
-  execute: (params, context) => {
+  execute: (params: { steps: string }, context: any) => {
     const { vueRouter } = context;
     const { steps } = params;
     if (!vueRouter) {

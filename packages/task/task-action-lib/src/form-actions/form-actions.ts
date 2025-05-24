@@ -1,5 +1,5 @@
 import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
-import { findElement } from '../dom-actions/dom';
+import { findElement } from '../base-actions';
 import {
   simulateCheckboxSelection,
   simulateRadioSelection,
@@ -22,7 +22,10 @@ enum FormActionType {
 const input: Action = {
   name: FormActionType.INPUT,
   description: t('formActions.description.input'),
-  execute: async (params, context) => {
+  execute: async (
+    params: { selector: string; timeout?: number; value: any },
+    context: any
+  ) => {
     const { selector, timeout, value } = params;
     const element = await findElement(selector, timeout);
     if (
@@ -46,7 +49,10 @@ const input: Action = {
 const radio: Action = {
   name: FormActionType.RADIO,
   description: t('formActions.description.radio'),
-  execute: async (params, context) => {
+  execute: async (
+    params: { selector: string; timeout?: number },
+    context: any
+  ) => {
     const { selector, timeout } = params;
     const element = await findElement(selector, timeout);
     if (element instanceof HTMLInputElement && element.type === 'radio') {
@@ -66,7 +72,10 @@ const radio: Action = {
 const checkbox: Action = {
   name: FormActionType.CHECKBOX,
   description: t('formActions.description.checkbox'),
-  execute: async (params, context) => {
+  execute: async (
+    params: { selector: string; timeout?: number; checked: any },
+    context: any
+  ) => {
     const { selector, timeout, checked } = params;
     const element = await findElement(selector, timeout);
     if (element instanceof HTMLInputElement && element.type === 'checkbox') {
@@ -86,7 +95,10 @@ const checkbox: Action = {
 const select: Action = {
   name: FormActionType.SELECT,
   description: t('formActions.description.select'),
-  execute: async (params, context) => {
+  execute: async (
+    params: { selector: string; timeout?: number; value: any },
+    context: any
+  ) => {
     const { selector, timeout, value } = params;
     const element = await findElement(selector, timeout);
     if (element instanceof HTMLSelectElement) {
@@ -106,7 +118,10 @@ const select: Action = {
 const submit: Action = {
   name: FormActionType.SUBMIT,
   description: t('formActions.description.submit'),
-  execute: async (params, context) => {
+  execute: async (
+    params: { selector: string; timeout?: number },
+    context: any
+  ) => {
     const { selector, timeout } = params;
     const element = await findElement(selector, timeout);
     if (element instanceof HTMLInputElement && element.type === 'submit') {

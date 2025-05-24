@@ -1,5 +1,5 @@
-import { dispatchEvent } from '../dom-actions/dom';
-import { inputEvents, selectEvents } from './form-events';
+import { dispatchEvent } from '../base-actions';
+import { inputEvents, selectEvents } from '../form-actions';
 
 /**
  * 模拟用户在输入框中的操作

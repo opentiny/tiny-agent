@@ -25,7 +25,8 @@
     }
   },
   "userGuideActions": {
-    "tip": "完成操作后继续"
+    "tip": "完成操作后继续",
+    "knowBtn": "知道啦"
   },
   "vueRouterActions": {
     "errorMsg": {
