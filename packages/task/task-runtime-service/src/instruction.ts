@@ -1,6 +1,5 @@
-import { IActionResult } from './action.type';
+import { IActionResult, ActionResultStatus } from './action.type';
 import { IInstructionSchema } from './schema.type';
-import { ActionResultStatus } from './task';
 import { ActionManager } from './action-manager';
 import { t } from './locale/i18n';
 import type { ISchedulerContext } from './task-scheduler';

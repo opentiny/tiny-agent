@@ -1,27 +1,30 @@
-import type { IActionResult } from './action.type';
 import type { IInstructionSchema } from './schema.type';
 import type { ISchedulerContext } from './task-scheduler';
+import { ActionResultStatus } from './action.type';
 import { ActionManager } from './action-manager';
 import { EventEmitter } from './event-emitter';
 import { Instruction } from './instruction';
 import { t } from './locale/i18n';
 
-export type ITaskResult = IActionResult & {
+export enum TaskResultStatus {
+  Success = 'success',
+  Error = 'error',
+  PartialCompleted = 'partial completed',
+}
+
+export interface ITaskResult {
+  status: TaskResultStatus;
   index: number;
   instruction?: IInstructionSchema;
-};
+  result?: { [key: string]: any };
+  error?: { message: string; stack?: string };
+}
 
 // 执行器状态枚举
 export enum ExecutorStatus {
   Idle = 'idle',
   Running = 'running',
   Paused = 'paused',
-}
-
-export enum ActionResultStatus {
-  Success = 'success',
-  Error = 'error',
-  PartialCompleted = 'partial completed',
 }
 
 export type ITaskExecutorEvent =
@@ -54,31 +57,39 @@ export class Task implements ITaskExecutor {
   protected actionManager: ActionManager;
   protected context: ISchedulerContext;
   protected emitter: EventEmitter;
-  protected executorInfo: IExecutorInfo = {
-    instructions: [],
-    currentIndex: 0,
-    status: ExecutorStatus.Idle,
-    resolve: null,
-    reject: null,
-    pauseResolve: null,
-    waitPromise: null,
-  };
+  protected executorInfo!: IExecutorInfo;
 
-  protected taskResult: ITaskResult = {
-    status: ActionResultStatus.Error,
-    index: -1,
-    error: { message: t('task.emptyInstructions') },
-  };
+  protected taskResult!: ITaskResult;
 
-  protected cleanEffectFns: (() => void)[] = [];
+  protected cleanEffectFns!: (() => void)[];
 
   constructor(actionManager: ActionManager, context: ISchedulerContext) {
     this.emitter = new EventEmitter();
+    this.initialize();
+
     this.context = {
       ...context,
       $task: this.initProvideTask(),
     };
     this.actionManager = actionManager;
+  }
+
+  protected initialize() {
+    this.executorInfo = {
+      instructions: [],
+      currentIndex: 0,
+      status: ExecutorStatus.Idle,
+      resolve: null,
+      reject: null,
+      pauseResolve: null,
+      waitPromise: null,
+    };
+    this.taskResult = {
+      status: TaskResultStatus.Error,
+      index: -1,
+      error: { message: t('task.emptyInstructions') },
+    };
+    this.cleanEffectFns = [];
   }
 
   on(event: ITaskExecutorEvent, callback: (...args: any[]) => void): void {
@@ -133,24 +144,6 @@ export class Task implements ITaskExecutor {
     this.cleanEffectFns = [];
   }
 
-  protected initialize() {
-    this.executorInfo = {
-      instructions: [],
-      currentIndex: 0,
-      status: ExecutorStatus.Idle,
-      resolve: null,
-      reject: null,
-      pauseResolve: null,
-      waitPromise: null,
-    };
-    this.taskResult = {
-      status: ActionResultStatus.Error,
-      index: -1,
-      error: { message: t('task.emptyInstructions') },
-    };
-    this.cleanEffectFns = [];
-  }
-
   protected async start(): Promise<void> {
     while (
       this.executorInfo.currentIndex < this.executorInfo.instructions.length &&
@@ -180,7 +173,7 @@ export class Task implements ITaskExecutor {
 
       if (status === ActionResultStatus.Success) {
         this.taskResult.result = result;
-        this.taskResult.status = ActionResultStatus.PartialCompleted;
+        this.taskResult.status = TaskResultStatus.PartialCompleted;
 
         // 暂停执行，并使暂停方法返回
         if (executorStatus === (ExecutorStatus.Paused as ExecutorStatus)) {
@@ -190,7 +183,7 @@ export class Task implements ITaskExecutor {
         }
 
         if (currentIndex === instructions.length - 1) {
-          this.taskResult.status = ActionResultStatus.Success;
+          this.taskResult.status = TaskResultStatus.Success;
           // 最后一步点了暂停，等待恢复
           if (executorStatus !== (ExecutorStatus.Paused as ExecutorStatus)) {
             return this.finish();
@@ -200,7 +193,7 @@ export class Task implements ITaskExecutor {
         this.executorInfo.currentIndex++;
       } else {
         this.taskResult.error = error;
-        this.taskResult.status = ActionResultStatus.Error;
+        this.taskResult.status = TaskResultStatus.Error;
         return this.finish();
       }
     }
@@ -212,14 +205,14 @@ export class Task implements ITaskExecutor {
       status: this.taskResult.status,
       index: currentIndex,
       instruction: instructions[currentIndex],
-      ...(this.taskResult.status === ActionResultStatus.Error
+      ...(this.taskResult.status === TaskResultStatus.Error
         ? {
             error: this.taskResult.error as { message: string; stack?: string },
           }
         : { result: this.taskResult.result }),
     };
 
-    if (this.taskResult.status === ActionResultStatus.Error) {
+    if (this.taskResult.status === TaskResultStatus.Error) {
       reject?.(result);
     } else {
       resolve?.(result);

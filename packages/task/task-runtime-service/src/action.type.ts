@@ -2,6 +2,11 @@ export interface IActionContext {
   [key: string]: any;
 }
 
+export enum ActionResultStatus {
+  Success = 'success',
+  Error = 'error',
+}
+
 export interface IAction {
   name: string;
   execute: (
@@ -11,12 +16,7 @@ export interface IAction {
 }
 
 export interface IActionResult {
-  status: 'success' | 'error' | 'partial completed';
-  result?: { [key: string]: any };
-  error?: { message: string; stack?: string };
-}
-export interface IActionResult {
-  status: 'success' | 'error' | 'partial completed';
+  status: ActionResultStatus;
   result?: { [key: string]: any };
   error?: { message: string; stack?: string };
 }
