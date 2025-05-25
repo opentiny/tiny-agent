@@ -1,5 +1,5 @@
 import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
-import { findElement } from '../dom-actions/dom';
+import { findElement } from '../base-actions';
 import { GuideModal } from './guide-modal';
 import { t } from '../locale/i18n';
 
@@ -9,9 +9,18 @@ enum UserGuideActionType {
 }
 
 // 危险操作
-const UserGuide: Action = {
+const userGuide: Action = {
   name: UserGuideActionType.USER_GUIDE,
-  execute: async (params, context) => {
+  execute: async (
+    params: {
+      selector: string;
+      timeout?: number;
+      title: string;
+      text: string;
+      tip: string;
+    },
+    context: any
+  ) => {
     const { selector, timeout, title, text, tip } = params;
     const element = await findElement(selector, timeout);
     const guideModal = new GuideModal(element);
@@ -28,4 +37,4 @@ const UserGuide: Action = {
     return { status: 'success' };
   },
 };
-export const GuideActions = [UserGuide];
+export const GuideActions = [userGuide];

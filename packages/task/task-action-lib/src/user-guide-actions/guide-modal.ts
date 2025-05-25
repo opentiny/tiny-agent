@@ -4,8 +4,9 @@ import {
   addPopup,
   Popup,
 } from '@opentiny/tiny-agent-ui-components';
-import '../assets/styles/guide.css';
+import { t } from '../locale/i18n';
 import closeSvg from '../assets/images/close.svg?raw';
+import '../assets/styles/guide.css';
 
 export const GuideModal = class {
   private targetDom: HTMLElement;
@@ -38,7 +39,7 @@ export const GuideModal = class {
     this.btnContainer = document.createElement('div');
     this.btnContainer.className = 'ta-user-guide-btn-container';
     this.nextButton = document.createElement('button');
-    this.nextButton.textContent = '知道啦';
+    this.nextButton.textContent = t('userGuideActions.knowBtn');
     this.nextButton.className = 'ta-user-guide-button';
 
     this.btnContainer.appendChild(this.nextButton);
