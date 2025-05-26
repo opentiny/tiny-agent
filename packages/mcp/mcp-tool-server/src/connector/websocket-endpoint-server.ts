@@ -1,21 +1,22 @@
-import { WebSocket, WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer, ServerOptions } from 'ws';
+import type { IncomingMessage } from 'node:http';
 import { ConnectorCenter } from './connector-center';
 import { WebSocketServerEndpoint } from './websocket-server-endpoint';
 import { genClientId } from '../utils/genClientId';
-import { IEndpointMessage } from './endpoint.type';
+
 export class WebSocketEndpointServer {
-  protected wss: WebSocketServer;
+  public wss: WebSocketServer;
   protected connectorCenter: ConnectorCenter<WebSocketServerEndpoint>;
   protected shareConnection: boolean;
 
-  constructor(config: { port: number, share?: boolean }, connectorCenter: ConnectorCenter<WebSocketServerEndpoint>) {
+  constructor(config: ServerOptions<any, any> & {share?: boolean }, connectorCenter: ConnectorCenter<WebSocketServerEndpoint>) {
     this.wss = new WebSocketServer(config);
     this.connectorCenter = connectorCenter;
     this.shareConnection = config.share;
   }
 
   start() {
-    this.wss.on('connection', (ws: WebSocket) => {
+    this.wss.on('connection', (ws: WebSocket, _req: IncomingMessage) => {
       const clientId = genClientId();
       const endpointFactory = (serverId?: string) => {
         const endpoint = new WebSocketServerEndpoint(ws, clientId, serverId);

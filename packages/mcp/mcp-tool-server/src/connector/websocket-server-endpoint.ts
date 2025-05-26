@@ -37,18 +37,18 @@ export class WebSocketServerEndpoint implements IConnectorEndpoint {
     this.ws.send(JSON.stringify(message));
   }
 
-  private replaceMessageId(message: IEndpointMessage): void {
+  protected replaceMessageId(message: IEndpointMessage): void {
     if (this.serverId && message.type !== 'initialize' && isJSONRPCRequest(message.data)) {
       message.data.id = `${this.serverId}_${message.data.id}`;
     }
   }
-  private isCurrentServerMessage(message: IEndpointMessage): boolean {
+  protected isCurrentServerMessage(message: IEndpointMessage): boolean {
     if (this.serverId && message.type !== 'initialize' && isJSONRPCResponse(message.data) && typeof message.data.id === 'string') {
       return (message.data.id as string).startsWith(`${this.serverId}_`);
     }
     return true;
   }
-  private restoreMessageId(message: IEndpointMessage): void {
+  protected restoreMessageId(message: IEndpointMessage): void {
     if (this.serverId && message.type !== 'initialize' && isJSONRPCResponse(message.data)) {
       message.data.id = Number((message.data.id as string).replace(`${this.serverId}_`, ''));
     }
