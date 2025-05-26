@@ -9,18 +9,12 @@ export class EndpointTransport implements Transport {
   get clientIdResolved(): Promise<string | number> {
     return this.connectorEndpoint.clientIdResolved;
   }
-  private connectorEndpoint: IConnectorEndpoint;
+  protected connectorEndpoint: IConnectorEndpoint;
 
   constructor(endpointFactory: () => IConnectorEndpoint) {
     this.connectorEndpoint = endpointFactory()
     this.connectorEndpoint.onmessage = (msg: IEndpointMessage) => {
-      if (msg.type === 'message') {
-        this.onmessage?.(msg.data, msg.extra)
-      } else if (msg.type === 'close') {
-        this.onclose?.();
-      } else if (msg.type === 'error') {
-        this.onerror?.(new Error(msg.data as any))
-      }
+      this.onmessage?.(msg.data, msg.extra)
     }
   }
   // override by mcp-server

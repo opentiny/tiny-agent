@@ -3,7 +3,7 @@ import { IConnectorEndpoint, IEndpointMessage } from './endpoint.type';
 export class WebSocketClientEndpoint implements IConnectorEndpoint {
   public clientId: string | number;
   public clientIdResolved: Promise<string | number>;
-  private clientIdResolver: (id: string | number) => void;
+  protected clientIdResolver: (id: string | number) => void;
   protected ws: WebSocket;
   protected url: string;
 

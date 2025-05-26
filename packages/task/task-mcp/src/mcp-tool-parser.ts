@@ -33,7 +33,7 @@ export type McpTool = {
 
 export class McpToolParser {
   public placeholder = (key) => `{{${key}}}`
-  protected doTask: (task: executableTaskSchema) => Promise<any> = async (task: executableTaskSchema) => { }
+  protected doTask: (task: executableTaskSchema) => Promise<any>;
   constructor(doTask: (task: executableTaskSchema) => Promise<any>, placeholderFn?: (key) => string) {
     this.doTask = doTask;
     if (placeholderFn) {
@@ -62,7 +62,7 @@ export class McpToolParser {
         instructions: task.instructions
       })
 
-      this.doTask(realTask)
+      await this.doTask(realTask)
     }
     return {
       name,

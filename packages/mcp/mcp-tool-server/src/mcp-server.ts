@@ -12,9 +12,9 @@ const app = express();
 
 app.get("/sse", async (req: Request, res: Response) => {
   const server = getProxyServer();
-  server.setEndPoint(connectorCenter.getClient(req.query.client as string));
   const transport = new SSEServerTransport('/messages', res);
   transports[transport.sessionId] = transport;
+  server.setEndPoint(connectorCenter.getClient(req.query.client as string, transport.sessionId));
   res.on("close", () => {
     delete transports[transport.sessionId];
   });

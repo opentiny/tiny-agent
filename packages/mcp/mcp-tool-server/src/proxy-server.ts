@@ -15,6 +15,7 @@ export class ProxyServer {
     this.transport = transport;
     this.transport.onclose = () => {
       this.close();
+      this.transport = null;
     };
 
     this.transport.onerror = (error: Error) => {
