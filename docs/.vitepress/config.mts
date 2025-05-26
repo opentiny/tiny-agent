@@ -80,7 +80,14 @@ export default defineConfig({
         {
           text: '扩展',
           base: '/extensions/',
-          items: [{ text: '模拟dom操作库', link: 'simulate-lib' }],
+          items: [
+            { text: 'Actions概述', link: 'simulate-lib' },
+            { text: 'BaseActions', link: 'base-actions' },
+            { text: 'FormActions', link: 'form-actions' },
+            { text: 'TinyVueActions', link: 'tiny-vue-actions' },
+            { text: 'VueRouterActions', link: 'vue-router-actions' },
+            { text: 'UserGuideActions', link: 'user-guide-actions' },
+          ],
         },
       ],
     },
