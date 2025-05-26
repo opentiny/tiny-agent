@@ -1,11 +1,11 @@
-import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import type { IAction } from '@opentiny/tiny-agent-task-runtime-service';
 import { findElement, getElementByText, simulateClick } from '../base-actions';
 
 enum TinyVueActionType {
   SELECT_DATE = 'selectDate',
 }
 
-const selectDate: Action = {
+const selectDate: IAction = {
   name: TinyVueActionType.SELECT_DATE,
   execute: async (params: { selector: string; date: string }, context: any) => {
     const { selector, date } = params;

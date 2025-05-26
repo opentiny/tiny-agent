@@ -1,5 +1,5 @@
 // dom_operation_lib.ts
-import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import type { IAction } from '@opentiny/tiny-agent-task-runtime-service';
 import { findElement, getElementByText, simulateClick } from '../base-actions';
 import { t } from '../locale/i18n';
 
@@ -25,7 +25,7 @@ const ActionType = {
   ...ScanDomActionType,
 };
 
-const clickByText: Action = {
+const clickByText: IAction = {
   name: ActionType.CLICK_BY_TEXT,
   execute: async (
     params: { selector: string; timeout?: number; text: string },
@@ -47,7 +47,7 @@ const clickByText: Action = {
 };
 
 // 高亮插件
-const highlight: Action = {
+const highlight: IAction = {
   name: ActionType.HIGHLIGHT,
   execute: async (
     params: { selector: string; timeout?: number },
@@ -62,7 +62,7 @@ const highlight: Action = {
 };
 
 // 插入前置元素插件
-const insertBefore: Action = {
+const insertBefore: IAction = {
   name: ActionType.INSERT_BEFORE,
   execute: async (
     params: { content: string; selector: string; timeout?: number },
@@ -84,7 +84,7 @@ const insertBefore: Action = {
 };
 
 // 滚动到元素插件
-const scrollTo: Action = {
+const scrollTo: IAction = {
   name: ActionType.SCROLL_TO,
   execute: async (
     params: { selector: string; timeout?: number },
@@ -99,7 +99,7 @@ const scrollTo: Action = {
 };
 
 // 点击插件
-const click: Action = {
+const click: IAction = {
   name: ActionType.CLICK,
   execute: async (
     params: { selector: string; timeout: number },
@@ -114,7 +114,7 @@ const click: Action = {
 };
 
 // 双击插件
-const doubleClick: Action = {
+const doubleClick: IAction = {
   name: ActionType.DOUBLE_CLICK,
   execute: async (
     params: { selector: string; timeout: number },
@@ -131,7 +131,7 @@ const doubleClick: Action = {
 };
 
 // 右键点击插件
-const rightClick: Action = {
+const rightClick: IAction = {
   name: ActionType.RIGHT_CLICK,
   execute: async (
     params: { selector: string; timeout: number },
@@ -152,7 +152,7 @@ const rightClick: Action = {
 };
 
 // 查找 DOM 元素插件
-const findDom: Action = {
+const findDom: IAction = {
   name: ActionType.FIND_DOM,
   execute: async (
     params: { selector: string; timeout: number },

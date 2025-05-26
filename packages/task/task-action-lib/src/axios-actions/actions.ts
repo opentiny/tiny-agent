@@ -1,3 +1,4 @@
+import type { IActionResult } from '@opentiny/tiny-agent-task-runtime-service';
 import { t } from '../locale/i18n';
 import { matchUrl } from './url-utils';
 
@@ -19,6 +20,7 @@ export interface IAxiosConfig {
   axios: any;
   timeout?: number;
   valid?: (result: IRequestResult) => boolean;
+  resultMap?: Record<string, IRequestResult[]>;
 }
 
 export interface IAxiosActionContext {
@@ -32,8 +34,6 @@ export interface MatchInfo {
   query: Record<string, string>;
   resUrl: string;
 }
-
-const resultMap: Record<string, IRequestResult[]> = {};
 
 const defaultValid = (result: IRequestResult): boolean => {
   const { response } = result || {};
@@ -50,17 +50,22 @@ const start = {
   execute: async (
     params: IAxiosActionParams,
     context: IAxiosActionContext
-  ): Promise<{ status: string } | undefined> => {
+  ): Promise<IActionResult | undefined> => {
     const { $task } = context;
     const axiosConfig = context[AXIOS_CONTEXT_KEY];
     const { axios, timeout: globalTimeout } = axiosConfig || {};
-    if (!axios) {
+    if (!axiosConfig || !axios) {
       return;
     }
     const { url, timeout: actionTime } = params;
     const timeout = actionTime || globalTimeout || 20000;
 
-    if (!resultMap[url]) {
+    if (!axiosConfig.resultMap) {
+      axiosConfig.resultMap = {};
+    }
+    const resultMap = axiosConfig.resultMap;
+
+    if (!resultMap?.[url]) {
       resultMap[url] = [];
     }
 
@@ -121,11 +126,19 @@ const end = {
   execute: async (
     params: IAxiosActionParams,
     context: IAxiosActionContext
-  ): Promise<{ status: string; result?: any; error?: any }> => {
+  ): Promise<IActionResult | undefined> => {
     const { url, timeout: actionTime } = params;
     const axiosConfig = context[AXIOS_CONTEXT_KEY];
-    const { valid = defaultValid, timeout: globalTimeout } = axiosConfig || {};
+    const {
+      valid = defaultValid,
+      timeout: globalTimeout,
+      resultMap,
+    } = axiosConfig || {};
     const timeout = actionTime || globalTimeout || 20000;
+
+    if (!axiosConfig || !resultMap) {
+      return;
+    }
 
     return new Promise(async (resolve, reject) => {
       const startTIme = Date.now();

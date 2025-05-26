@@ -1,4 +1,4 @@
-import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import type { IAction } from '@opentiny/tiny-agent-task-runtime-service';
 import { findElement } from '../base-actions';
 import {
   simulateCheckboxSelection,
@@ -19,7 +19,7 @@ enum FormActionType {
 }
 
 // input Action
-const input: Action = {
+const input: IAction = {
   name: FormActionType.INPUT,
   description: t('formActions.description.input'),
   execute: async (
@@ -46,7 +46,7 @@ const input: Action = {
 };
 
 // radio Action
-const radio: Action = {
+const radio: IAction = {
   name: FormActionType.RADIO,
   description: t('formActions.description.radio'),
   execute: async (
@@ -69,7 +69,7 @@ const radio: Action = {
 };
 
 // checkbox Action
-const checkbox: Action = {
+const checkbox: IAction = {
   name: FormActionType.CHECKBOX,
   description: t('formActions.description.checkbox'),
   execute: async (
@@ -92,7 +92,7 @@ const checkbox: Action = {
 };
 
 // select Action
-const select: Action = {
+const select: IAction = {
   name: FormActionType.SELECT,
   description: t('formActions.description.select'),
   execute: async (
@@ -115,7 +115,7 @@ const select: Action = {
 };
 
 // submit Action
-const submit: Action = {
+const submit: IAction = {
   name: FormActionType.SUBMIT,
   description: t('formActions.description.submit'),
   execute: async (

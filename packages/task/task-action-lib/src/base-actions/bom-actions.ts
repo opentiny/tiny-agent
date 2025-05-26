@@ -1,11 +1,11 @@
-import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import type { IAction } from '@opentiny/tiny-agent-task-runtime-service';
 
 enum BrowserActionType {
   GO_BACK = 'goBack',
   GO_FORWARD = 'goForward',
 }
 
-const goBack: Action = {
+const goBack: IAction = {
   name: BrowserActionType.GO_BACK,
   execute: () => {
     window.history.back();
@@ -15,7 +15,7 @@ const goBack: Action = {
   },
 };
 
-const goForward: Action = {
+const goForward: IAction = {
   name: BrowserActionType.GO_FORWARD,
   execute: () => {
     window.history.forward();

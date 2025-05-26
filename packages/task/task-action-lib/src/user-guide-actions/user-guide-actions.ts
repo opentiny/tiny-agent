@@ -1,4 +1,4 @@
-import { Action } from '@opentiny/tiny-agent-task-runtime-service/types';
+import type { IAction } from '@opentiny/tiny-agent-task-runtime-service';
 import { findElement } from '../base-actions';
 import { GuideModal } from './guide-modal';
 import { t } from '../locale/i18n';
@@ -9,7 +9,7 @@ enum UserGuideActionType {
 }
 
 // 危险操作
-const userGuide: Action = {
+const userGuide: IAction = {
   name: UserGuideActionType.USER_GUIDE,
   execute: async (
     params: {
