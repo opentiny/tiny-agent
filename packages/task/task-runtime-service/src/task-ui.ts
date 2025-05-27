@@ -40,6 +40,8 @@ const createImg = (src: string) => {
   });
   return img;
 };
+
+export type ITaskUIEvent = 'skip' | 'pause' | 'resume' | 'stop';
 export interface ITaskUI {
   show(): void;
   hide(): void;
@@ -47,31 +49,47 @@ export interface ITaskUI {
   pause(isEmit?: boolean): void;
   skip(isEmit?: boolean): void;
   resume(isEmit?: boolean): void;
-  on(event: string, callback: (...args: any[]) => void): void;
-  setTitle(title: string): void;
+  destroy(): void;
+  on(event: ITaskUIEvent, callback: (...args: any[]) => void): void;
+  off(event: ITaskUIEvent, callback: (...args: any[]) => void): void;
+  setTitle?: (title: string) => void;
+  tipToResume?: (tip: string) => void;
 }
 
-export class TaskUI extends EventEmitter implements ITaskUI {
-  messageBox: HTMLDivElement;
-  titleElm!: HTMLDivElement;
-  pauseBtn!: HTMLImageElement;
-  skipBtn!: HTMLImageElement;
-  skipDisabledBtn!: HTMLImageElement;
-  stopBtn!: HTMLImageElement;
-  stopDisabledBtn!: HTMLImageElement;
-  resumeBtn!: HTMLImageElement;
-  light: HTMLDivElement;
-  titleTooltip: { destroy: () => void } | null = null;
-  pauseTooltip: { destroy: () => void } | null = null;
+export class TaskUI implements ITaskUI {
+  protected messageBox: HTMLDivElement;
+  protected titleElm!: HTMLDivElement;
+  protected pauseBtn!: HTMLImageElement;
+  protected skipBtn!: HTMLImageElement;
+  protected skipDisabledBtn!: HTMLImageElement;
+  protected stopBtn!: HTMLImageElement;
+  protected stopDisabledBtn!: HTMLImageElement;
+  protected resumeBtn!: HTMLImageElement;
+  protected light: HTMLDivElement;
+  protected titleTooltip: { destroy: () => void } | null = null;
+  protected pauseTooltip: { destroy: () => void } | null = null;
+  protected emitter: EventEmitter;
 
   constructor({ title }: { title: string }) {
-    super();
     this.light = this.createBreathingLight();
     this.messageBox = this.createMessageBox();
     this.init({ title });
+    this.emitter = new EventEmitter();
   }
 
-  private createMessageBox() {
+  on(event: ITaskUIEvent, callback: (...args: any[]) => void): void {
+    this.emitter.on(event, callback);
+  }
+
+  off(event: ITaskUIEvent, callback?: (...args: any[]) => void): void {
+    this.emitter.off(event, callback);
+  }
+
+  protected emit(event: ITaskUIEvent, ...args: any[]): void {
+    this.emitter.emit(event, ...args);
+  }
+
+  protected createMessageBox() {
     const box = document.createElement('div');
     const boxStyles = {
       position: 'fixed',
@@ -91,7 +109,7 @@ export class TaskUI extends EventEmitter implements ITaskUI {
     return box;
   }
 
-  private init({ title }: { title: string }) {
+  protected init({ title }: { title: string }) {
     this.titleElm = document.createElement('div');
     Object.assign(this.titleElm.style, titleStyles);
     this.setTitle(title);
@@ -211,7 +229,7 @@ export class TaskUI extends EventEmitter implements ITaskUI {
     this.hide();
   }
 
-  private createBreathingLight() {
+  protected createBreathingLight() {
     const light = document.createElement('div');
     light.classList.add('task-run-shadow');
     light.style.display = 'block';
@@ -255,11 +273,11 @@ export class TaskUI extends EventEmitter implements ITaskUI {
     }
   }
 
-  private pauseLight() {
+  protected pauseLight() {
     this.light.style.animationPlayState = 'paused';
   }
 
-  private continueLight() {
+  protected continueLight() {
     this.light.style.animationPlayState = 'running';
   }
 

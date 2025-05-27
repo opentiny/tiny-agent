@@ -1,22 +1,23 @@
-import type { ITaskDescription, TaskResult } from './types';
-import { Task, type ITask } from './task';
+import type { ITaskResult, ITaskExecutor } from './task';
+import type { ITaskSchema } from './schema.type';
+import { Task } from './task';
 import { ActionManager } from './action-manager';
 import type { ITaskUI } from './task-ui';
 import { t } from './locale/i18n';
+import type { IActionContext } from './action.type';
 
-export interface ISchedulerContext {
-  $task?: ITask;
+export interface ISchedulerContext extends IActionContext {
+  $task?: ITaskExecutor;
   $taskUI?: ITaskUI;
-  [key: string]: any;
 }
 
 export class TaskScheduler {
-  private tasksQueue: any = [];
-  private isExecuting = false;
-  private context: ISchedulerContext;
-  private actionManager: ActionManager;
-  private task: ITask | null = null;
-  private taskUI: ITaskUI | undefined;
+  protected tasksQueue: any = [];
+  protected isExecuting = false;
+  protected context: ISchedulerContext;
+  protected actionManager: ActionManager;
+  protected task: ITaskExecutor | null = null;
+  protected taskUI: ITaskUI | undefined;
 
   constructor(actionManager: ActionManager, context?: ISchedulerContext) {
     // 注册所有的ACTION并且提供上下文
@@ -33,7 +34,7 @@ export class TaskScheduler {
 
   connectTaskUI(taskUI: ITaskUI) {
     this.taskUI = taskUI;
-    if (this.taskUI && this.task) {
+    if (this.taskUI) {
       this.addContext({
         $taskUI: this.taskUI,
       });
@@ -49,6 +50,12 @@ export class TaskScheduler {
       this.taskUI.on('stop', () => {
         this.task!.stop();
       });
+    }
+  }
+
+  connectTask(task: ITaskExecutor) {
+    this.task = task;
+    if (this.task) {
       this.task.on('start', () => {
         this.taskUI!.show();
       });
@@ -64,20 +71,21 @@ export class TaskScheduler {
       this.task.on(
         'beforeStep',
         ({ index, instruction }: { index: number; instruction: any }) => {
-          this.taskUI!.setTitle(`${t('scheduler.executingStep')} ${index}`);
+          this.taskUI!.setTitle?.(`${t('scheduler.executingStep')} ${index}`);
         }
       );
     }
   }
 
-  pushTask(taskDescription: ITaskDescription): Promise<TaskResult> {
+  pushTask(taskDescription: ITaskSchema): Promise<ITaskResult> {
     return new Promise((resolve, reject) => {
       const { instructions, id } = taskDescription;
       const taskContext = { ...this.context };
-      this.task = new Task(this.actionManager, taskContext);
-      const taskFn = () => this.task!.execute(instructions); // 执行任务
-      this.tasksQueue.push({ taskFn, id, resolve, reject }); // 将任务及回调存入队列
-      this.execute(); // 尝试执行下一个任务
+      const task = new Task(this.actionManager, taskContext);
+      this.connectTask(task);
+      const taskFn = () => this.task!.execute(instructions);
+      this.tasksQueue.push({ taskFn, id, resolve, reject });
+      this.execute();
     });
   }
 
@@ -86,18 +94,16 @@ export class TaskScheduler {
     if (this.isExecuting || this.tasksQueue.length === 0) {
       return;
     }
-    this.isExecuting = true; // 标记为正在执行
-    const { taskFn, id, resolve, reject } = this.tasksQueue.shift(); // 取出第一个任务
+    this.isExecuting = true;
+    const { taskFn, id, resolve, reject } = this.tasksQueue.shift();
     try {
       const result = await taskFn();
-      result.id = id;
-      resolve(result); // 返回成功结果
+      resolve(result);
     } catch (error: any) {
-      error.id = id;
-      reject(error); // 返回失败结果
+      reject(error);
     } finally {
-      this.isExecuting = false; // 重置执行状态
-      this.execute(); // 继续执行下一个任务
+      this.isExecuting = false;
+      this.execute();
     }
   }
 }

@@ -1,8 +1,25 @@
-import type { ActionsResult, IInstruction } from './types';
+import type { IInstructionSchema } from './schema.type';
 import type { ISchedulerContext } from './task-scheduler';
+import { ActionResultStatus } from './action.type';
 import { ActionManager } from './action-manager';
 import { EventEmitter } from './event-emitter';
+import { Instruction } from './instruction';
 import { t } from './locale/i18n';
+
+export enum TaskResultStatus {
+  Success = 'success',
+  Error = 'error',
+  PartialCompleted = 'partial completed',
+}
+
+export interface ITaskResult {
+  status: TaskResultStatus;
+  index: number;
+  instruction?: IInstructionSchema;
+  result?: { [key: string]: any };
+  error?: { message: string; stack?: string };
+}
+
 // 执行器状态枚举
 export enum ExecutorStatus {
   Idle = 'idle',
@@ -10,54 +27,96 @@ export enum ExecutorStatus {
   Paused = 'paused',
 }
 
-export enum ActionResultStatus {
-  Success = 'success',
-  Error = 'error',
-  PartialCompleted = 'partial completed',
-}
-
-export interface ITask {
+export type ITaskExecutorEvent =
+  | 'start'
+  | 'beforeStep'
+  | 'pause'
+  | 'resume'
+  | 'finish';
+export interface ITaskExecutor {
   pause(): Promise<void>;
   resume(): void;
   skip(): void;
   stop(): Promise<void>;
   addCleanEffect(fn: () => void): void;
-  on(event: string, listener: (...args: any[]) => void): void;
-  execute(instructions: IInstruction[]): Promise<ActionsResult>;
+  on(event: ITaskExecutorEvent, listener: (...args: any[]) => void): void;
+  execute(instructions: IInstructionSchema[]): Promise<ITaskResult>;
 }
 
-export class Task extends EventEmitter implements ITask {
+export interface IExecutorInfo {
+  instructions: IInstructionSchema[];
+  currentIndex: number;
+  status: ExecutorStatus;
+  resolve: ((value: ITaskResult) => void) | null;
+  reject: ((value: ITaskResult) => void) | null;
+  pauseResolve: (() => void) | null;
+  waitPromise: Promise<void> | null;
+}
+
+export class Task implements ITaskExecutor {
   protected actionManager: ActionManager;
   protected context: ISchedulerContext;
-  protected instructions: IInstruction[] = []; // 执行中的指令集
-  protected currentIndex: number = 0;
-  protected status: ExecutorStatus = ExecutorStatus.Idle; // 执行器状态
-  protected resolve: ((value: ActionsResult) => void) | null = null; // 成功回调
-  protected reject: ((value: ActionsResult) => void) | null = null; // 失败回调
-  protected resultStatus: ActionResultStatus = ActionResultStatus.Error; // 结果状态
-  protected finalResult: ActionsResult['result']; // 最后结果
-  protected pauseResolve: (() => void) | null = null;
-  protected waitPromise: Promise<void> | null = null;
-  protected cleanEffectFns: (() => void)[] = [];
+  protected emitter: EventEmitter;
+  protected executorInfo!: IExecutorInfo;
+
+  protected taskResult!: ITaskResult;
+
+  protected cleanEffectFns!: (() => void)[];
 
   constructor(actionManager: ActionManager, context: ISchedulerContext) {
-    super();
+    this.emitter = new EventEmitter();
+    this.initialize();
+
     this.context = {
       ...context,
-      $task: {
-        pause: this.pause.bind(this),
-        resume: this.resume.bind(this),
-        skip: this.skip.bind(this),
-        stop: this.stop.bind(this),
-        addCleanEffect: this.addCleanEffect.bind(this),
-        on: this.on.bind(this),
-        execute: this.execute.bind(this),
-      },
+      $task: this.initProvideTask(),
     };
     this.actionManager = actionManager;
   }
 
-  execute(instructions: IInstruction[]): Promise<ActionsResult> {
+  protected initialize() {
+    this.executorInfo = {
+      instructions: [],
+      currentIndex: 0,
+      status: ExecutorStatus.Idle,
+      resolve: null,
+      reject: null,
+      pauseResolve: null,
+      waitPromise: null,
+    };
+    this.taskResult = {
+      status: TaskResultStatus.Error,
+      index: -1,
+      error: { message: t('task.emptyInstructions') },
+    };
+    this.cleanEffectFns = [];
+  }
+
+  on(event: ITaskExecutorEvent, callback: (...args: any[]) => void): void {
+    this.emitter.on(event, callback);
+  }
+
+  off(event: ITaskExecutorEvent, callback?: (...args: any[]) => void): void {
+    this.emitter.off(event, callback);
+  }
+
+  protected emit(event: ITaskExecutorEvent, ...args: any[]): void {
+    this.emitter.emit(event, ...args);
+  }
+
+  protected initProvideTask(): ITaskExecutor {
+    return {
+      pause: this.pause.bind(this),
+      resume: this.resume.bind(this),
+      skip: this.skip.bind(this),
+      stop: this.stop.bind(this),
+      addCleanEffect: this.addCleanEffect.bind(this),
+      on: this.on.bind(this),
+      execute: this.execute.bind(this),
+    };
+  }
+
+  execute(instructions: IInstructionSchema[]): Promise<ITaskResult> {
     if (!instructions.length) {
       return Promise.reject({
         status: 'error',
@@ -67,11 +126,11 @@ export class Task extends EventEmitter implements ITask {
     }
 
     return new Promise(async (resolve, reject) => {
-      this.instructions = instructions;
-      this.currentIndex = 0;
-      this.status = ExecutorStatus.Running;
-      this.resolve = resolve;
-      this.reject = reject;
+      this.executorInfo.instructions = instructions;
+      this.executorInfo.currentIndex = 0;
+      this.executorInfo.status = ExecutorStatus.Running;
+      this.executorInfo.resolve = resolve;
+      this.executorInfo.reject = reject;
       this.emit('start');
       await this.start();
     });
@@ -85,91 +144,78 @@ export class Task extends EventEmitter implements ITask {
     this.cleanEffectFns = [];
   }
 
-  protected initialize() {
-    this.instructions = [];
-    this.currentIndex = 0;
-    this.status = ExecutorStatus.Idle;
-    this.resolve = null;
-    this.reject = null;
-    this.resultStatus = ActionResultStatus.Error;
-    this.finalResult = undefined;
-    this.pauseResolve = null;
-    this.waitPromise = null;
-    this.cleanEffectFns = [];
-  }
-
   protected async start(): Promise<void> {
     while (
-      this.currentIndex < this.instructions.length &&
-      this.status === ExecutorStatus.Running
+      this.executorInfo.currentIndex < this.executorInfo.instructions.length &&
+      this.executorInfo.status === ExecutorStatus.Running
     ) {
-      const instruction = this.instructions[this.currentIndex];
-      const { action, params } = instruction;
+      const {
+        instructions,
+        currentIndex,
+        status: executorStatus,
+      } = this.executorInfo;
+      const instruction = instructions[currentIndex];
+
       this.emit('beforeStep', {
-        index: this.currentIndex,
+        index: currentIndex,
         instruction,
       });
-      const actionExecutor = this.actionManager.findAction(action)?.execute;
-      if (!actionExecutor) {
-        this.finalResult = { message: t('task.actionNotFound', { action }) };
-        this.resultStatus = ActionResultStatus.Error;
-        return this.finish();
-      }
-      try {
-        const { status, result, error } = await actionExecutor(
-          params,
-          this.context
-        );
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+      const instructionExecutor = new Instruction(
+        instruction,
+        this.actionManager,
+        this.context
+      );
 
-        if (status === ActionResultStatus.Success) {
-          this.finalResult = result;
-          this.resultStatus = ActionResultStatus.PartialCompleted;
+      const { status, result, error } = await instructionExecutor.execute();
 
-          // 暂停执行，并使暂停方法返回
-          if (this.status === (ExecutorStatus.Paused as ExecutorStatus)) {
-            this.pauseResolve?.();
-            this.pauseResolve = null;
-            this.waitPromise = null;
-          }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          if (this.currentIndex === this.instructions.length - 1) {
-            this.resultStatus = ActionResultStatus.Success;
-            // 最后一步点了暂停，等待恢复
-            if (this.status !== (ExecutorStatus.Paused as ExecutorStatus)) {
-              return this.finish();
-            }
-          }
+      if (status === ActionResultStatus.Success) {
+        this.taskResult.result = result;
+        this.taskResult.status = TaskResultStatus.PartialCompleted;
 
-          this.currentIndex++;
-        } else {
-          this.finalResult = error;
-          this.resultStatus = ActionResultStatus.Error;
-          return this.finish();
+        // 暂停执行，并使暂停方法返回
+        if (executorStatus === (ExecutorStatus.Paused as ExecutorStatus)) {
+          this.executorInfo.pauseResolve?.();
+          this.executorInfo.pauseResolve = null;
+          this.executorInfo.waitPromise = null;
         }
-      } catch (error) {
-        this.finalResult = error as { message: string; stack?: string };
-        this.resultStatus = ActionResultStatus.Error;
+
+        if (currentIndex === instructions.length - 1) {
+          this.taskResult.status = TaskResultStatus.Success;
+          // 最后一步点了暂停，等待恢复
+          if (executorStatus !== (ExecutorStatus.Paused as ExecutorStatus)) {
+            return this.finish();
+          }
+        }
+
+        this.executorInfo.currentIndex++;
+      } else {
+        this.taskResult.error = error;
+        this.taskResult.status = TaskResultStatus.Error;
         return this.finish();
       }
     }
   }
 
   finish(): void {
-    const result: ActionsResult = {
-      status: this.resultStatus,
-      index: this.currentIndex,
-      instruction: this.instructions[this.currentIndex],
-      ...(this.resultStatus === ActionResultStatus.Error
-        ? { error: this.finalResult as { message: string; stack?: string } }
-        : { result: this.finalResult }),
+    const { instructions, currentIndex, resolve, reject } = this.executorInfo;
+    const result: ITaskResult = {
+      status: this.taskResult.status,
+      index: currentIndex,
+      instruction: instructions[currentIndex],
+      ...(this.taskResult.status === TaskResultStatus.Error
+        ? {
+            error: this.taskResult.error as { message: string; stack?: string },
+          }
+        : { result: this.taskResult.result }),
     };
 
-    if (this.resultStatus === ActionResultStatus.Error) {
-      this.reject?.(result);
+    if (this.taskResult.status === TaskResultStatus.Error) {
+      reject?.(result);
     } else {
-      this.resolve?.(result);
+      resolve?.(result);
     }
 
     this.clearCleanEffect();
@@ -179,39 +225,41 @@ export class Task extends EventEmitter implements ITask {
 
   pause(): Promise<void> {
     this.emit('pause');
-    this.status = ExecutorStatus.Paused;
+    this.executorInfo.status = ExecutorStatus.Paused;
     // 单个action执行无法中断，需要一个promise来等待
-    if (this.waitPromise) {
-      return this.waitPromise;
+    if (this.executorInfo.waitPromise) {
+      return this.executorInfo.waitPromise;
     }
-    this.waitPromise = new Promise<void>((resolve) => {
-      this.pauseResolve = resolve;
+    this.executorInfo.waitPromise = new Promise<void>((resolve) => {
+      this.executorInfo.pauseResolve = resolve;
     });
-    return this.waitPromise;
+    return this.executorInfo.waitPromise;
   }
 
   resume() {
     this.emit('resume');
-    if (this.currentIndex > this.instructions.length - 1) {
+    const { instructions, currentIndex } = this.executorInfo;
+    if (currentIndex > instructions.length - 1) {
       this.finish();
     }
-    this.status = ExecutorStatus.Running;
+    this.executorInfo.status = ExecutorStatus.Running;
     this.start();
   }
 
   skip(): void {
-    return this.startStep(this.currentIndex + 1);
+    return this.startStep(this.executorInfo.currentIndex + 1);
   }
 
   startStep(index: number): void {
-    if (this.status !== ExecutorStatus.Paused) {
+    const { status: executorStatus, instructions } = this.executorInfo;
+    if (executorStatus !== ExecutorStatus.Paused) {
       return;
     }
-    this.currentIndex = Math.min(index, this.instructions.length - 1);
+    this.executorInfo.currentIndex = Math.min(index, instructions.length - 1);
   }
 
   async stop(): Promise<void> {
-    if (this.status === ExecutorStatus.Running) {
+    if (this.executorInfo.status === ExecutorStatus.Running) {
       await this.pause();
     }
     this.finish();

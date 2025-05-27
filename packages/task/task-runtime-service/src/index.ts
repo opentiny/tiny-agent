@@ -4,3 +4,6 @@ export * from './task-ui';
 export * from './action-manager';
 export * from './task';
 export * from './locale/i18n';
+export * from './action.type';
+export * from './instruction';
+export * from './schema.type';

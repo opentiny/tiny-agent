@@ -1,11 +1,11 @@
-import { Action } from './types';
+import { IAction } from './action.type';
 
 // ACTION管理类
 export class ActionManager {
-  private actions: { [name: string]: Action } = {};
+  protected actions: { [name: string]: IAction } = {};
 
   // 注册ACTION
-  registerAction(action: Action): void {
+  registerAction(action: IAction): void {
     if (this.actions[action.name]) {
       throw new Error(action.name + 'action name already exists');
     }
@@ -13,7 +13,7 @@ export class ActionManager {
   }
 
   // 批量注册ACTION
-  registerActions(actions: Action[]): void {
+  registerActions(actions: IAction[]): void {
     actions.forEach((action) => this.registerAction(action));
   }
 
@@ -34,16 +34,16 @@ export class ActionManager {
   }
 
   // 获取ACTION列表
-  getActionList(): Action[] {
+  getActionList(): IAction[] {
     return Object.values(this.actions);
   }
 
   // 覆盖原有ACTION
-  overrideAction(action: Action): void {
+  overrideAction(action: IAction): void {
     this.actions[action.name] = action;
   }
 
-  findAction(name: string): Action | undefined {
+  findAction(name: string): IAction | undefined {
     return this.actions[name];
   }
 }
