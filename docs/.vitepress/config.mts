@@ -68,6 +68,13 @@ export default defineConfig({
             { text: 'Popup', link: 'popup' },
           ],
         },
+        {
+          text: 'MCP客户端',
+          base: '/api/mcp/',
+          items: [
+            { text: 'MCPClientChat', link: 'mcp-client-chat' },
+          ],
+        },
       ],
       '/config/': [
         {
