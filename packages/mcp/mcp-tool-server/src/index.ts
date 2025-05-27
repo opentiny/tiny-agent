@@ -1,1 +1,1 @@
-import './mcp-server';
+export * from './socket/client'

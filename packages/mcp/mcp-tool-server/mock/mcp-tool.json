@@ -1,0 +1,446 @@
+[
+  {
+    "name": "addUser",
+    "description": "新增员工；录入员工",
+    "inputSchema": {
+      "name": {
+        "type": "string",
+        "description": "员工姓名"
+      },
+      "sex": {
+        "type": "string",
+        "description": "员工性别"
+      },
+      "department": {
+        "type": "string",
+        "description": "员工部门"
+      },
+      "protocolStart": {
+        "type": "string",
+        "description": "入职时间"
+      },
+      "email": {
+        "type": "string",
+        "description": "员工邮箱"
+      }
+    },
+    "task": {
+      "id": "123",
+      "instructions": [
+        {
+          "action": "vue_push",
+          "params": {
+            "to": "/vue-pro/userManager/allInfo"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".user-add-btn > button"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".ta-mark__user-add-modal .ta-mark__name-input input",
+            "value": "{{name}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__user-add-modal .ta-mark__sex-select input"
+          }
+        },
+        {
+          "action": "clickByText",
+          "params": {
+            "selector": ".ta-mark__sex-select-panel",
+            "text": "{{sex}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__user-add-modal .ta-mark__department-select input"
+          }
+        },
+        {
+          "action": "clickByText",
+          "params": {
+            "selector": ".ta-mark__department-select-panel",
+            "text": "{{department}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__user-add-modal .ta-mark__protocol-start-select input"
+          }
+        },
+        {
+          "action": "selectDate",
+          "params": {
+            "selector": ".ta-mark__protocol-start-select-panel",
+            "date": "{{protocolStart}}"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".ta-mark__user-add-modal .ta-mark__email-input input",
+            "value": "{{email}}"
+          }
+        },
+        {
+          "action": "apiConfirmStart",
+          "params": {
+            "url": "/api/user/reg"
+          }
+        },
+        {
+          "action": "userGuide",
+          "params": {
+            "selector": ".ta-mark__user-add-modal .general-btn > button",
+            "type": "click",
+            "title": "高危操作",
+            "text": "请自行提交新增员工操作！"
+          }
+        },
+        {
+          "action": "apiConfirmEnd",
+          "params": {
+            "url": "/api/user/reg"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "deleteUser",
+    "description": "删除员工；",
+    "inputSchema": {
+      "name": {
+        "type": "string",
+        "description": "员工姓名"
+      }
+    },
+    "task": {
+      "id": "124",
+      "instructions": [
+        {
+          "action": "vue_push",
+          "params": {
+            "to": "/vue-pro/userManager/allInfo"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".ta-mark__search-input input",
+            "value": "{{name}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__search-btn"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".tiny-grid-body__row .operation-delete"
+          }
+        },
+        {
+          "action": "apiConfirmStart",
+          "params": {
+            "url": "/api/user/:id",
+            "method": "DElETE"
+          }
+        },
+        {
+          "action": "userGuide",
+          "params": {
+            "selector": ".ta-mark__del-modal .tiny-button--primary",
+            "type": "click",
+            "title": "高危操作",
+            "text": "请您确认是否删除该员工！"
+          }
+        },
+        {
+          "action": "apiConfirmEnd",
+          "params": {
+            "url": "/api/user/:id",
+            "method": "DElETE"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "selectUser",
+    "description": "查询员工；",
+    "inputSchema": {
+      "name": {
+        "type": "string",
+        "description": "员工姓名"
+      },
+      "department": {
+        "type": "string",
+        "description": "员工部门"
+      }
+    },
+    "task": {
+      "id": "123",
+      "instructions": [
+        {
+          "action": "vue_push",
+          "params": { "to": "/vue-pro/userManager/allInfo" }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__employee-name .tiny-grid-filter__btn"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".filter__active .filter-option__input input",
+            "value": "{{name}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--primary"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__employee-department .tiny-grid-filter__btn"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".filter__active .filter-option__input input",
+            "value": "{{department}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--primary"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__employee-email .tiny-grid-filter__btn"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--default"
+          }
+        },
+        {
+          "action": "apiConfirmStart",
+          "params": {
+            "url": "/api/user",
+            "method": "GET",
+            "query": {
+              "page": "1"
+            }
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--primary"
+          }
+        },
+        {
+          "action": "apiConfirmEnd",
+          "params": {
+            "url": "/api/user",
+            "method": "GET",
+            "query": {
+              "page": "1"
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "updateUser",
+    "description": "更新员工信息；修改员工信息",
+    "inputSchema": {
+      "name": {
+        "type": "string",
+        "description": "员工姓名"
+      },
+      "department": {
+        "type": "string",
+        "description": "根据部门查找；查找所用部门信息"
+      },
+      "requireDepartment": {
+        "type": "string",
+        "description": "修改后的部门；更新后的部门"
+      },
+      "protocolStart": {
+        "type": "string",
+        "description": "修改后的入职时间；更新后的入职时间"
+      }
+    },
+    "task": {
+      "id": "123",
+      "instructions": [
+        {
+          "action": "vue_push",
+          "params": { "to": "/vue-pro/userManager/allInfo" }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__employee-name .tiny-grid-filter__btn"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".filter__active .filter-option__input input",
+            "value": "{{name}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--primary"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__employee-department .tiny-grid-filter__btn"
+          }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".filter__active .filter-option__input input",
+            "value": "{{department}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--primary"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__employee-email .tiny-grid-filter__btn"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--default"
+          }
+        },
+        {
+          "action": "apiConfirmStart",
+          "params": {
+            "url": "/api/user",
+            "method": "GET",
+            "query": {
+              "page": "1"
+            }
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".filter__active .tiny-button--primary"
+          }
+        },
+        {
+          "action": "apiConfirmEnd",
+          "params": {
+            "url": "/api/user",
+            "method": "GET",
+            "query": {
+              "page": "1"
+            }
+          }
+        },
+        {
+          "action": "click",
+          "params": { "selector": ".tiny-grid-body__row .operation-update" }
+        },
+        {
+          "action": "input",
+          "params": {
+            "selector": ".ta-mark__user-update-modal .ta-mark__update-name-input input",
+            "value": "{{name}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__user-update-modal .ta-mark__update-department-select input"
+          }
+        },
+        {
+          "action": "clickByText",
+          "params": {
+            "selector": ".ta-mark__update-department-select-panel",
+            "text": "{{requireDepartment}}"
+          }
+        },
+        {
+          "action": "click",
+          "params": {
+            "selector": ".ta-mark__user-update-modal .ta-mark__update-protocol-start-select input"
+          }
+        },
+        {
+          "action": "selectDate",
+          "params": {
+            "selector": ".ta-mark__update-protocol-start-select-panel",
+            "date": "{{protocolStart}}"
+          }
+        },
+        {
+          "action": "apiConfirmStart",
+          "params": {
+            "url": "/api/user/update"
+          }
+        },
+        {
+          "action": "userGuide",
+          "params": {
+            "selector": ".ta-mark__user-update-modal .general-btn > button",
+            "type": "click",
+            "title": "高危操作",
+            "text": "请自行提交新增员工操作！"
+          }
+        },
+        {
+          "action": "apiConfirmEnd",
+          "params": {
+            "url": "/api/user/update"
+          }
+        }
+      ]
+    }
+  }
+]

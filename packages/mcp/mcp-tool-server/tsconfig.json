@@ -1,10 +1,22 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
     "target": "ES6",
+    "lib": [
+      "es2017",
+      "DOM"
+    ],
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "outDir": "./dist",
+    "strict": true,
+    "sourceMap": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
-  "files": ["src/index.ts"],
+  "include": [
+    "src"
+  ]
 }
