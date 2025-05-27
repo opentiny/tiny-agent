@@ -56,7 +56,7 @@ export class WebSocketServerEndpoint implements IConnectorEndpoint {
   }
 
   // override by proxy server
-  onmessage = null;
-  onclose = null;
-  onerror = null;
+  onmessage: IConnectorEndpoint['onmessage'] = null;
+  onclose: IConnectorEndpoint['onclose']  = null;
+  onerror: IConnectorEndpoint['onerror']  = null;
 }

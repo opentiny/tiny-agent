@@ -23,7 +23,7 @@ export class ProxyServer {
     };
 
     this.transport.onmessage = (message, extra) => {
-      this.endpoint.send({
+      this.endpoint!.send({
         type: "message",
         data: message,
         extra
@@ -31,7 +31,7 @@ export class ProxyServer {
     };
 
     this.endpoint.onmessage = (message) => {
-      this.transport!.send(message.data);
+      this.transport!.send(message.data!);
     };
 
     await this.transport.start();
@@ -43,7 +43,7 @@ export class ProxyServer {
     console.error("Error in transport", error);
   }
   private close() {
-    this.endpoint.onmessage = null;
+    this.endpoint!.onmessage = null;
     this.transport = null
   }
 }

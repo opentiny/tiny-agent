@@ -14,13 +14,13 @@ export class EndpointTransport implements Transport {
   constructor(endpointFactory: () => IConnectorEndpoint) {
     this.connectorEndpoint = endpointFactory()
     this.connectorEndpoint.onmessage = (msg: IEndpointMessage) => {
-      this.onmessage?.(msg.data, msg.extra)
+      this.onmessage?.(msg.data!, msg.extra)
     }
   }
   // override by mcp-server
-  onmessage = null;
-  onclose = null;
-  onerror = null;
+  onmessage: Transport['onmessage'] = undefined;
+  onclose: Transport['onclose'] = undefined;
+  onerror: Transport['onerror'] = undefined;
 
   async start(): Promise<void> {
     await this.connectorEndpoint.start()

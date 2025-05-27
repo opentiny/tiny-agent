@@ -1,4 +1,4 @@
-import type { Tool } from '@modelcontextprotocol/sdk/type.js';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { v4 as uuidv4 } from 'uuid'
 export const genTaskId = () => uuidv4()
 
@@ -10,7 +10,7 @@ export type InstructionSchema = {
   }
 }
 export type McpToolsSchema = {
-  tools: Array<McpToolTaskSchema>;
+  tools: Array<McpToolSchema>;
 }
 
 export type McpToolTaskSchema = {
@@ -32,9 +32,9 @@ export type McpTool = {
 }
 
 export class McpToolParser {
-  public placeholder = (key) => `{{${key}}}`
+  public placeholder = (key: string) => `{{${key}}}`
   protected doTask: (task: executableTaskSchema) => Promise<any>;
-  constructor(doTask: (task: executableTaskSchema) => Promise<any>, placeholderFn?: (key) => string) {
+  constructor(doTask: (task: executableTaskSchema) => Promise<any>, placeholderFn?: (key: string) => string) {
     this.doTask = doTask;
     if (placeholderFn) {
       this.placeholder = placeholderFn;
@@ -43,7 +43,7 @@ export class McpToolParser {
   replaceInstructionParamValue(instruction: InstructionSchema, paramsKey: string, paramsValue: any): void {
     Object.keys(instruction.params).forEach((key) => {
       if (typeof instruction.params[key] === 'string') {
-        instruction.params[key] = instruction.params[key].replaceAll(this.placeholder(paramsKey), paramsValue);
+        instruction.params[key] = instruction.params[key].replace(this.placeholder(paramsKey), paramsValue);
       }
     });
   }
@@ -51,8 +51,8 @@ export class McpToolParser {
   extractTool(mcpToolSchema: McpToolSchema): McpTool {
     const { name, task, ...tool } = structuredClone(mcpToolSchema)
     const handler = async (args: any) => {
-      const variables = Object.keys(tool.inputSchema.properties);
-      const realTask = variables.reduce((accTask, cur) => {
+      const variables = Object.keys(tool.inputSchema.properties || {});
+      const realTask = variables.reduce((accTask: executableTaskSchema, cur) => {
         accTask.instructions.forEach(instruction => {
           this.replaceInstructionParamValue(instruction, cur, args[cur])
         });
@@ -60,7 +60,7 @@ export class McpToolParser {
       }, {
         id: genTaskId(),
         instructions: task.instructions
-      })
+      });
 
       return this.doTask(realTask)
     }
@@ -72,6 +72,6 @@ export class McpToolParser {
   }
 
   extractAllTools(mcpToolsSchema: McpToolsSchema): Array<McpTool> {
-    return mcpToolsSchema.tools.map((tool) => this.extractTool((tool)));
+    return mcpToolsSchema.tools.map((tool) => this.extractTool(tool));
   }
 }

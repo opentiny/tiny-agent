@@ -1,9 +1,9 @@
 import { IConnectorEndpoint, IEndpointMessage } from '../endpoint.type';
 
 export class WebSocketClientEndpoint implements IConnectorEndpoint {
-  public clientId?: string | number;
+  public clientId!: string | number;
   public clientIdResolved: Promise<string | number>;
-  protected clientIdResolver: (id: string | number) => void;
+  protected clientIdResolver!: (id: string | number) => void;
   protected ws!: WebSocket;
   protected url: string;
 
@@ -41,7 +41,7 @@ export class WebSocketClientEndpoint implements IConnectorEndpoint {
           this.clientIdResolver(this.clientId);
           return;
         }
-        this.onmessage(message);
+        this.onmessage?.(message);
       };
     
     });
@@ -58,7 +58,7 @@ export class WebSocketClientEndpoint implements IConnectorEndpoint {
   }
 
   // override by transport
-  onmessage = null
-  onclose = null;
-  onerror = null;
+  onmessage: IConnectorEndpoint['onmessage'] = null
+  onclose: IConnectorEndpoint['onclose'] = null;
+  onerror: IConnectorEndpoint['onerror'] = null;
 }

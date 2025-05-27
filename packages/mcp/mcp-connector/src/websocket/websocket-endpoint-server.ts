@@ -13,7 +13,7 @@ export class WebSocketEndpointServer {
   constructor(config: ServerOptions<any, any> & {share?: boolean }, connectorCenter: ConnectorCenter<WebSocketServerEndpoint>) {
     this.wss = new WebSocketServer(config);
     this.connectorCenter = connectorCenter;
-    this.shareConnection = config.share;
+    this.shareConnection = config.share || false;
   }
 
   start() {
