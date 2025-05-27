@@ -3,9 +3,21 @@
   "version": "1.0.0",
   "description": "mcp service",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",
     "zod": "^3.24.2",
     "zod-to-json-schema": "^3.24.5"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.0.0"
   }
 }

@@ -1,8 +1,14 @@
 {
   "name": "@opentiny/tiny-agent-mcp-connector",
   "version": "0.0.1",
+  "description": "",
   "main": "dist/index.js",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "vite build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",
@@ -12,7 +18,7 @@
   "devDependencies": {
     "@types/express": "^5.0.1",
     "@types/ws": "^8.18.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.0.0"
   }
 }

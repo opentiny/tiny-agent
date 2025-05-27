@@ -1,10 +1,10 @@
 import { IConnectorEndpoint, IEndpointMessage } from '../endpoint.type';
 
 export class WebSocketClientEndpoint implements IConnectorEndpoint {
-  public clientId: string | number;
+  public clientId?: string | number;
   public clientIdResolved: Promise<string | number>;
   protected clientIdResolver: (id: string | number) => void;
-  protected ws: WebSocket;
+  protected ws!: WebSocket;
   protected url: string;
 
   constructor(options: { url: string }) {

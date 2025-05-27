@@ -1,10 +1,10 @@
 import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { IConnectorEndpoint } from '../../mcp-connector/src';
+import { IConnectorEndpoint } from '@opentiny/tiny-agent-mcp-connector';
 
 export class ProxyServer {
   private endpoint?: IConnectorEndpoint;
 
-  protected transport?: Transport;
+  protected transport?: Transport | null;
   async connect(transport: Transport): Promise<void> {
     if (this.transport) {
       throw new Error("Already connected");

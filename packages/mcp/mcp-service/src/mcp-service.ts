@@ -16,8 +16,8 @@ export interface IUIResource extends IResource { }
 
 export const MCP_SERVICE = Symbol('MCP_SERVICE');
 export class McpService {
-  private _mcpServer: McpServer;
-  private uiResources = new Map<string, IUIResource>();
+  protected _mcpServer: McpServer;
+  protected uiResources = new Map<string, IUIResource>();
   public get mcpServer() {
     return this._mcpServer;
   }
