@@ -1,21 +1,18 @@
 export const rawEvents = {
-  pointerrawupdate: () =>
-    new PointerEvent('pointerrawupdate', { bubbles: true }),
-  pointerover: () => new PointerEvent('pointerover', { bubbles: true }),
-  pointerenter: () => new PointerEvent('pointerenter', { bubbles: true }),
-  mouseover: () => new MouseEvent('mouseover', { bubbles: true }),
-  mouseenter: () => new MouseEvent('mouseenter', { bubbles: true }),
-  pointermove: () => new PointerEvent('pointermove', { bubbles: true }),
-  mousemove: () => new MouseEvent('mousemove', { bubbles: true }),
-  pointerdown: () => new PointerEvent('pointerdown', { bubbles: true }),
-  mousedown: () => new MouseEvent('mousedown', { bubbles: true }),
-  pointerup: () => new PointerEvent('pointerup', { bubbles: true }),
-  mouseup: () => new MouseEvent('mouseup', { bubbles: true }),
-  click: () => new MouseEvent('click', { bubbles: true }),
-  keydown: (char: string) =>
-    new KeyboardEvent('keydown', { key: char, bubbles: true }),
-  keypress: (char: string) =>
-    new KeyboardEvent('keypress', { key: char, bubbles: true }),
+  pointerrawupdate: () => new PointerEvent('pointerrawupdate'),
+  pointerover: () => new PointerEvent('pointerover'),
+  pointerenter: () => new PointerEvent('pointerenter'),
+  mouseover: () => new MouseEvent('mouseover'),
+  mouseenter: () => new MouseEvent('mouseenter'),
+  pointermove: () => new PointerEvent('pointermove'),
+  mousemove: () => new MouseEvent('mousemove'),
+  pointerdown: () => new PointerEvent('pointerdown'),
+  mousedown: () => new MouseEvent('mousedown'),
+  pointerup: () => new PointerEvent('pointerup'),
+  mouseup: () => new MouseEvent('mouseup'),
+  click: () => new MouseEvent('click'),
+  keydown: (char: string) => new KeyboardEvent('keydown', { key: char }),
+  keypress: (char: string) => new KeyboardEvent('keypress', { key: char }),
   beforeinput: (char: string) =>
     new InputEvent('beforeinput', {
       inputType: 'insertText',
@@ -28,16 +25,15 @@ export const rawEvents = {
       data: char,
       bubbles: true,
     }),
-  selectionchange: () => new Event('selectionchange', { bubbles: true }),
-  keyup: (char: string) =>
-    new KeyboardEvent('keyup', { key: char, bubbles: true }),
-  pointerout: () => new PointerEvent('pointerout', { bubbles: true }),
-  pointerleave: () => new PointerEvent('pointerleave', { bubbles: true }),
-  mouseout: () => new MouseEvent('mouseout', { bubbles: true }),
-  mouseleave: () => new MouseEvent('mouseleave', { bubbles: true }),
-  change: () => new Event('change', { bubbles: true }),
-  focus: () => new FocusEvent('focus', { bubbles: true }),
-  blur: () => new FocusEvent('blur', { bubbles: true }),
+  selectionchange: () => new Event('selectionchange'),
+  keyup: (char: string) => new KeyboardEvent('keyup', { key: char }),
+  pointerout: () => new PointerEvent('pointerout'),
+  pointerleave: () => new PointerEvent('pointerleave'),
+  mouseout: () => new MouseEvent('mouseout'),
+  mouseleave: () => new MouseEvent('mouseleave'),
+  change: () => new Event('change'),
+  focus: () => new FocusEvent('focus'),
+  blur: () => new FocusEvent('blur'),
 };
 
 export const commonEvents = {

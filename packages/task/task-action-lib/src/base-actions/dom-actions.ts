@@ -102,7 +102,7 @@ const scrollTo: IAction = {
 const click: IAction = {
   name: ActionType.CLICK,
   execute: async (
-    params: { selector: string; timeout: number },
+    params: { selector: string; timeout?: number },
     context: any
   ) => {
     const element = await findElement(params.selector, params.timeout);
@@ -117,7 +117,7 @@ const click: IAction = {
 const doubleClick: IAction = {
   name: ActionType.DOUBLE_CLICK,
   execute: async (
-    params: { selector: string; timeout: number },
+    params: { selector: string; timeout?: number },
     context: { result: any }
   ) => {
     const element = await findElement(params.selector, params.timeout);
@@ -134,7 +134,7 @@ const doubleClick: IAction = {
 const rightClick: IAction = {
   name: ActionType.RIGHT_CLICK,
   execute: async (
-    params: { selector: string; timeout: number },
+    params: { selector: string; timeout?: number },
     context: any
   ) => {
     const element = await findElement(params.selector, params.timeout);
@@ -155,7 +155,7 @@ const rightClick: IAction = {
 const findDom: IAction = {
   name: ActionType.FIND_DOM,
   execute: async (
-    params: { selector: string; timeout: number },
+    params: { selector: string; timeout?: number },
     context: any
   ) => {
     const element = await findElement(params.selector, params.timeout);
