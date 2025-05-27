@@ -67,18 +67,26 @@ function addUser({ name, sex, date }) {
 const { tool } = useMcpService();
 
 // 注册一个 MCP 工具
-tool({
-  name: 'addUser',
-  description: '新增用户',
-  inputSchema: {
+tool(
+  'addUser',
+  '新增用户',
+  {
     name: z.string().describe('姓名'),
     sex: z.string().describe('性别'),
     date: z.string().describe('出生日期'),
   },
-  handler: async ({ name, sex, date }) => {
+  async ({ name, sex, date }) => {
     addUser({ name, sex, date });
-  },
-});
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `新增用户:${name} 成功`
+        }
+      ]
+    };
+  }
+);
 </script>
 
 <style scoped>
