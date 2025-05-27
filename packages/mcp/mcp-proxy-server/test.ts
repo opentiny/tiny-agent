@@ -1,5 +1,7 @@
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
-import express, { Request, Response } from "express";
+import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import express, { Request, Response } from 'express';
 import { runServer } from '@opentiny/tiny-agent-mcp-connector/test';
 import { ProxyServer } from './src/proxy-server';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,21 +11,67 @@ function getProxyServer() {
   return new ProxyServer();
 }
 const { connectorCenter } = runServer();
-const transports: {[sessionId: string]: SSEServerTransport} = {};
+const transports: { [sessionId: string]: Transport } = {};
 const app = express();
 
-app.get("/sse", async (req: Request, res: Response) => {
+const handleSessionRequest = async (
+  req: express.Request,
+  res: express.Response
+) => {
+  const sessionId = req.headers['mcp-session-id'] as string | undefined;
+  if (!sessionId || !transports[sessionId]) {
+    res.status(400).send('Invalid or missing session ID');
+    return;
+  }
+
+  const transport = transports[sessionId];
+  await (transport as StreamableHTTPServerTransport).handleRequest(req, res);
+};
+
+app.get('/mcp', handleSessionRequest);
+
+app.delete('/mcp', handleSessionRequest);
+
+app.post('/mcp', async (req: Request, res: Response) => {
+  const server = getProxyServer();
+  const sessionId = req.headers['mcp-session-id'] as string | undefined;
+  let transport: StreamableHTTPServerTransport;
+
+  if (sessionId && transports[sessionId]) {
+    transport = transports[sessionId] as StreamableHTTPServerTransport;
+  } else {
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => genId(),
+      onsessioninitialized: (sessionId) => {
+        transports[sessionId] = transport;
+      },
+      enableJsonResponse: true,
+    });
+
+    transport.onclose = () => {
+      if (sessionId) {
+        delete transports[sessionId];
+      }
+    };
+    await server.connect(transport);
+  }
+  await transport.handleRequest(req, res, req.body);
+});
+
+app.get('/sse', async (req: Request, res: Response) => {
   const server = getProxyServer();
   const transport = new SSEServerTransport('/messages', res);
   transports[transport.sessionId] = transport;
-  server.setEndPoint(connectorCenter.getClient(req.query.client as string, transport.sessionId)!);
-  res.on("close", () => {
+  server.setEndPoint(
+    connectorCenter.getClient(req.query.client as string, transport.sessionId)!
+  );
+  res.on('close', () => {
     delete transports[transport.sessionId];
   });
   await server.connect(transport);
 });
 
-app.post("/messages", async (req: Request, res: Response) => {
+app.post('/messages', async (req: Request, res: Response) => {
   const sessionId = req.query.sessionId as string;
   const transport = transports[sessionId];
   if (transport) {
