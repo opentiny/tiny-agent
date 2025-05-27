@@ -2,7 +2,7 @@
   "name": "@opentiny/tiny-agent-mcp-client-chat",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc && chmod 755 dist/index.js"
