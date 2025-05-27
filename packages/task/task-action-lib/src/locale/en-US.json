@@ -1,0 +1,54 @@
+{
+  "domActions": {
+    "errorMsg": {
+      "clickByText": "No matching element found",
+      "insertBefore": "The content parameter is missing when performing the insertBefore operation",
+      "selector": "The selector must be a string or HTMLElement",
+      "textNotFound": "Element with text content '{{text}}' not found",
+      "findElement": "No element matching the selector {{selector}} found within {{timeout}} seconds"
+    }
+  },
+  "formActions": {
+    "description": {
+      "input": "Simulate user input",
+      "radio": "Simulate user selection of a radio button",
+      "checkbox": "Simulate user selection of a checkbox",
+      "select": "Simulate user selection of a dropdown list option",
+      "submit": "Simulate user clicking a submit button"
+    },
+    "errorMsg": {
+      "input": "Element is not a valid input or text area element: {{element}}",
+      "radio": "Element is not a valid radio button element: {{element}}",
+      "checkbox": "Element is not a valid checkbox element: {{element}}",
+      "select": "Element is not a valid dropdown list element: {{element}}",
+      "submit": "Element is not a valid submit button element: {{element}}"
+    }
+  },
+  "userGuideActions": {
+    "tip": "Continue after completing the operation",
+    "knowBtn": "Understood"
+  },
+  "vueRouterActions": {
+    "errorMsg": {
+      "instance": "Vue Router instance not found",
+      "push": "Route navigation failed: {{error}}",
+      "replace": "Route replacement failed: {{error}}",
+      "goBack": "Back navigation failed",
+      "goForward": "Forward navigation failed",
+      "go": "Forward or back navigation failed: {{error}}"
+    },
+    "successMsg": {
+      "push": "Successfully navigated to {{to}}",
+      "replace": "Successfully replaced route to {{to}}",
+      "goBack": "Successfully navigated back",
+      "goForward": "Successfully navigated forward",
+      "go": "Successfully navigated {{steps}} steps forward or back"
+    }
+  },
+  "axiosActions": {
+    "description": {
+      "startEnd": "Confirm successful interface response"
+    },
+    "timeout": "Interface request timed out"
+  }
+}

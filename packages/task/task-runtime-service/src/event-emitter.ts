@@ -1,7 +1,7 @@
 export type EventCallback<T = any> = (...args: T[]) => void;
 
 export class EventEmitter {
-  private listeners: Map<string, Set<EventCallback>>;
+  protected listeners: Map<string, Set<EventCallback>>;
 
   constructor() {
     this.listeners = new Map();
