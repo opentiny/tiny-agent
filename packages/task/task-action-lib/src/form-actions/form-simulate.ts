@@ -28,7 +28,7 @@ export async function simulateUserInput(
       if (event.type === 'input') {
         target.value += char;
       }
-      // target.dispatchEvent(event);
+
       await dispatchEvent(target, event);
       // 滚动到最右下边
       target.scrollLeft = target.scrollWidth;
