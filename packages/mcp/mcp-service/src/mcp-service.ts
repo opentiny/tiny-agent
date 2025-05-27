@@ -36,9 +36,8 @@ export class McpService {
     }
   }
 
-  registerTool(tool: ITool) {
-    const { name, description, inputSchema, handler } = tool;
-    return this.mcpServer.tool(name, description, inputSchema, handler);
+  registerTool(...args : Parameters<McpServer['tool']>): RegisteredTool {
+    return this.mcpServer.tool(...args);
   }
 
   unregisterTool(name: string) {
@@ -70,6 +69,7 @@ export class McpService {
     }
     this.uiResources.delete(name);
   }
+
   getUIResource(name: string): IUIResource | undefined {
     return this.uiResources.get(name);
   }

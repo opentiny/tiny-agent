@@ -34,4 +34,3 @@ export function runInBrowser() {
   }
   mcpServer.connect(new EndpointTransport(getWebSocketClientEndpoint));
 }
-import '../mcp-proxy-server/test';

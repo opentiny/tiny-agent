@@ -1,5 +1,7 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+
 import { v4 as uuidv4 } from 'uuid'
+import { getZodRawShape } from './utils';
 export const genTaskId = () => uuidv4()
 
 export type SerializableType = string | number | boolean | null | undefined | Array<SerializableType> | { [key: string]: SerializableType }
@@ -27,8 +29,8 @@ export type McpToolSchema = {
 
 export type McpTool = {
   name: string;
-} & Tool & {
-  handler: (args: any) => Promise<any>
+  config: Omit<Tool, 'name'>;
+  cb: (args: any) => Promise<any>;
 }
 
 export class McpToolParser {
@@ -49,9 +51,11 @@ export class McpToolParser {
   }
 
   extractTool(mcpToolSchema: McpToolSchema): McpTool {
-    const { name, task, ...tool } = structuredClone(mcpToolSchema)
-    const handler = async (args: any) => {
-      const variables = Object.keys(tool.inputSchema.properties || {});
+    const { name, task, inputSchema, outputSchema, ...config } = structuredClone(mcpToolSchema)
+    const zodInputSchema = getZodRawShape(inputSchema as McpToolSchema['inputSchema']);
+    const zodOutputSchema = outputSchema? getZodRawShape(outputSchema as McpToolSchema['inputSchema']): undefined;
+    const cb = async (args: any) => {
+      const variables = Object.keys(inputSchema.properties || {});
       const realTask = variables.reduce((accTask: executableTaskSchema, cur) => {
         accTask.instructions.forEach(instruction => {
           this.replaceInstructionParamValue(instruction, cur, args[cur])
@@ -61,13 +65,17 @@ export class McpToolParser {
         id: genTaskId(),
         instructions: task.instructions
       });
-
+      console.log(realTask)
       return this.doTask(realTask)
     }
     return {
       name,
-      ...tool,
-      handler
+      config: {
+        inputSchema: zodInputSchema,
+        outputSchema: zodOutputSchema,
+        ...config,
+      },
+      cb
     }
   }
 

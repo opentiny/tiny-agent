@@ -4,6 +4,7 @@ import {
   VueRouterActions,
   GuideActions,
   AxiosActions,
+  TinyVueActions
 } from '@opentiny/tiny-agent-task-action-lib';
 import { createScheduler } from '@opentiny/tiny-agent-task-runtime-service';
 
@@ -15,6 +16,7 @@ export const { taskScheduler, actionManager } = createScheduler(
     ...VueRouterActions,
     ...GuideActions,
     ...AxiosActions,
+    ...TinyVueActions,
   ],
   {}
 );

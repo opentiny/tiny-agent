@@ -1,7 +1,7 @@
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import express, { Request, Response } from "express";
+import { runServer } from '@opentiny/tiny-agent-mcp-connector/test';
 import { ProxyServer } from './src/proxy-server';
-import { runServer } from '../mcp-connector/test';
 import { v4 as uuidv4 } from 'uuid';
 
 export const genId = () => uuidv4();

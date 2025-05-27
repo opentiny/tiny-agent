@@ -21,7 +21,6 @@
         }
       },
       "task": {
-        "id": "123",
         "instructions": [
           {
             "action": "input",

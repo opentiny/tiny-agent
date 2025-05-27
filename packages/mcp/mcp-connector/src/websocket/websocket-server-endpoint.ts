@@ -2,7 +2,6 @@ import { WebSocket } from 'ws';
 import { isJSONRPCRequest, isJSONRPCResponse } from '@modelcontextprotocol/sdk/types.js';
 import { IConnectorEndpoint, IEndpointMessage } from '../endpoint.type';
 
-
 export class WebSocketServerEndpoint implements IConnectorEndpoint {
   public clientId: string;
   public clientIdResolved: Promise<string>;
