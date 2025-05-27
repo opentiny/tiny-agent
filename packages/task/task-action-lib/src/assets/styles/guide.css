@@ -1,0 +1,52 @@
+.ta-user-guide {
+  padding: 8px 0;
+  min-width: 240px;
+  max-width: 600px;
+}
+
+.ta-user-guide .close-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 16px;
+}
+
+.ta-user-guide-title {
+  font-size: 14px;
+  line-height: 22px;
+  color: #191919;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.ta-user-guide-content {
+  font-size: 14px;
+  line-height: 22px;
+  color: #595959;
+  margin-bottom: 12px;
+}
+
+.ta-user-guide-btn-container {
+  text-align: right;
+}
+
+.ta-user-guide-button {
+  cursor: pointer;
+  padding: 4px 16px;
+  background: #191919;
+  color: #fff;
+  border-radius: 999px;
+  border: none;
+}
+
+.ta-user-guide .close-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: #808080;
+  transition: all 0.3s ease-in-out;
+}
+
+.ta-user-guide .close-icon:hover svg {
+  cursor: pointer;
+  fill: #191919;
+}
