@@ -1,8 +1,9 @@
 import { WebSocket, WebSocketServer, ServerOptions } from 'ws';
 import type { IncomingMessage } from 'node:http';
-import { ConnectorCenter } from './connector-center';
+import { ConnectorCenter } from '../connector-center';
+import { genId } from '../utils';
+
 import { WebSocketServerEndpoint } from './websocket-server-endpoint';
-import { genClientId } from '../utils/genClientId';
 
 export class WebSocketEndpointServer {
   public wss: WebSocketServer;
@@ -17,7 +18,7 @@ export class WebSocketEndpointServer {
 
   start() {
     this.wss.on('connection', (ws: WebSocket, _req: IncomingMessage) => {
-      const clientId = genClientId();
+      const clientId = genId();
       const endpointFactory = (serverId?: string) => {
         const endpoint = new WebSocketServerEndpoint(ws, clientId, serverId);
         endpoint.start();

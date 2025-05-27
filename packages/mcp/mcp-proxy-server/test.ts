@@ -1,8 +1,10 @@
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import express, { Request, Response } from "express";
-import { ProxyServer } from './proxy-server';
-import { runServer } from './test';
+import { ProxyServer } from './src/proxy-server';
+import { runServer } from '../mcp-connector/test';
+import { v4 as uuidv4 } from 'uuid';
 
+export const genId = () => uuidv4();
 function getProxyServer() {
   return new ProxyServer();
 }
@@ -14,7 +16,7 @@ app.get("/sse", async (req: Request, res: Response) => {
   const server = getProxyServer();
   const transport = new SSEServerTransport('/messages', res);
   transports[transport.sessionId] = transport;
-  server.setEndPoint(connectorCenter.getClient(req.query.client as string, transport.sessionId));
+  server.setEndPoint(connectorCenter.getClient(req.query.client as string, transport.sessionId)!);
   res.on("close", () => {
     delete transports[transport.sessionId];
   });

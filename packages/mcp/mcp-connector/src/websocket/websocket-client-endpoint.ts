@@ -1,4 +1,4 @@
-import { IConnectorEndpoint, IEndpointMessage } from './endpoint.type';
+import { IConnectorEndpoint, IEndpointMessage } from '../endpoint.type';
 
 export class WebSocketClientEndpoint implements IConnectorEndpoint {
   public clientId: string | number;

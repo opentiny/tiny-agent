@@ -62,7 +62,7 @@ export class McpToolParser {
         instructions: task.instructions
       })
 
-      await this.doTask(realTask)
+      return this.doTask(realTask)
     }
     return {
       name,
@@ -70,6 +70,7 @@ export class McpToolParser {
       handler
     }
   }
+
   extractAllTools(mcpToolsSchema: McpToolsSchema): Array<McpTool> {
     return mcpToolsSchema.tools.map((tool) => this.extractTool((tool)));
   }

@@ -14,9 +14,9 @@ export interface IConnectorEndpoint {
   close(): Promise<void>;
 
   send(message: IEndpointMessage): Promise<void>;
-  onmessage?: (message: IEndpointMessage) => void;
+  onmessage?: ((message: IEndpointMessage) => void) | null;
 
-  onclose?: () => void;
-  onerror?: (error: Error) => void;
+  onclose?: (() => void) | null;
+  onerror?: ((error: Error) => void) | null;
 }
 

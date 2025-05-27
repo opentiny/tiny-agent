@@ -1,4 +1,5 @@
 import { IConnectorEndpoint } from "./endpoint.type";
+import { genId } from "./utils";
 
 export class ConnectorCenter<T extends IConnectorEndpoint>{
   protected clientMap = new Map<string, T | ((id: string) => T)>();
@@ -6,7 +7,7 @@ export class ConnectorCenter<T extends IConnectorEndpoint>{
   getClient(clientId: string, serverId?: string) {
     const client = this.clientMap.get(clientId);
     if (typeof client === 'function') {
-      return client(serverId);
+      return client(serverId || genId());
     }
     return client;
   }

@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { WebSocketServerEndpoint, ConnectorCenter, WebSocketEndpointServer, WebSocketClientEndpoint, EndpointTransport } from './connector';
+import { WebSocketServerEndpoint, ConnectorCenter, WebSocketEndpointServer, WebSocketClientEndpoint, EndpointTransport } from './src';
 
 export function runServer() {
   const connectorCenter = new ConnectorCenter<WebSocketServerEndpoint>();
@@ -34,3 +34,4 @@ export function runInBrowser() {
   }
   mcpServer.connect(new EndpointTransport(getWebSocketClientEndpoint));
 }
+import '../mcp-proxy-server/test';

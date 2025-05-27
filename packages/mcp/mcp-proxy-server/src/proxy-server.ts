@@ -1,5 +1,5 @@
 import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { IConnectorEndpoint } from './connector';
+import { IConnectorEndpoint } from '../../mcp-connector/src';
 
 export class ProxyServer {
   private endpoint?: IConnectorEndpoint;
