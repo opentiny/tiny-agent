@@ -33,7 +33,7 @@
 <script setup>
 import { reactive } from 'vue';
 import { z } from 'zod';
-import { useMcpService } from '@opentiny/tiny-agent-mcp-service/vue/use-mcp-service';
+import { useMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
 import {
   TinyForm,
   TinyFormItem,

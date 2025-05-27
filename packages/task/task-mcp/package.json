@@ -1,5 +1,5 @@
 {
-  "name": "@opentiny/tiny-agent-mcp-task",
+  "name": "@opentiny/tiny-agent-task-mcp",
   "version": "0.0.1",
   "description": "Tiny Agent MCP Task",
   "main": "dist/index.js",

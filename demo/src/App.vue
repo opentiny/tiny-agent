@@ -1,25 +1,29 @@
 <script setup>
 import ChatDialog from './components/ChatDialog.vue';
 import AddUser from './components/AddUser.vue';
-import { setupMcpService } from '@opentiny/tiny-agent-mcp-service/vue/use-mcp-service';
-import { startClient } from '@opentiny/tiny-agent-mcp-tool-server/src/socket/client';
+import { setupMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
+import { EndpointTransport, WebSocketClientEndpoint } from '@opentiny/tiny-agent-mcp-connector';
 import { ref } from 'vue';
-import { taskScheduler } from './scheduler';
+import { McpToolParser} from '@opentiny/tiny-agent-task-mcp';
+import mcpToolJson from './mcp-tool.json';
 
 const mcp = setupMcpService();
+function getWebSocketClientEndpoint() {
+  return new WebSocketClientEndpoint({url: 'ws://localhost:8082'});
+}
+const endpointTransport = new EndpointTransport(getWebSocketClientEndpoint)
+mcp.mcpServer.connect(endpointTransport);
+new McpToolParser().extractAllTools(mcpToolJson).forEach((tool) => {
+  mcp.mcpServer.tool(tool);
+});
 
-const client = startClient(
-  (task) => taskScheduler.pushTask(task),
-  mcp,
-  'ws://127.0.0.1:3001'
-);
 
-// 需要唯一标识，区分与服务端链接的每个对话框
-const clientId = ref(client.clientId);
-
-setTimeout(() => {
-  clientId.value = client.clientId;
-}, 1000);
+const clientId = ref(endpointTransport.clientId);
+if (endpointTransport.clientId) {
+  endpointTransport.clientResolved.then((id) => {
+    clientId.value = id;
+  });
+}
 </script>
 
 <template>

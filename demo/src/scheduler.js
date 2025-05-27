@@ -1,5 +1,5 @@
 import {
-  DomActions,
+  BaseActions,
   FormActions,
   VueRouterActions,
   GuideActions,
@@ -10,7 +10,7 @@ import { createScheduler } from '@opentiny/tiny-agent-task-runtime-service';
 // 创建调取器以及接入操作库
 export const { taskScheduler, actionManager } = createScheduler(
   [
-    ...DomActions,
+    ...BaseActions,
     ...FormActions,
     ...VueRouterActions,
     ...GuideActions,
