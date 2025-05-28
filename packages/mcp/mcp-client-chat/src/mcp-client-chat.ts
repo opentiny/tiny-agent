@@ -149,8 +149,11 @@ export class McpClientChat {
           tools: this.iterationSteps > 1 ? availableTools : [],
         });
 
-        if ('error' in response && response.choices[0].error) {
-          this.organizePromptMessages({ role: 'assistant', content: response.choices[0].error.message });
+        if (response.choices?.[0]?.error) {
+          this.organizePromptMessages({
+            role: 'assistant',
+            content: response.choices[0].error.message,
+          });
           this.iterationSteps = 0;
 
           continue;
@@ -161,7 +164,10 @@ export class McpClientChat {
 
         // 工具调用
         if (tool_calls) {
-          this.organizePromptMessages({ role: 'assistant', content: JSON.stringify({ tool_calls }) });
+          this.organizePromptMessages({
+            role: 'assistant',
+            content: JSON.stringify({ tool_calls }),
+          });
 
           try {
             const { toolResults, toolCallMessages } = await this.callTools({
@@ -176,7 +182,10 @@ export class McpClientChat {
             throw error;
           }
         } else {
-          this.organizePromptMessages({ role: 'assistant', content: JSON.stringify(message) });
+          this.organizePromptMessages({
+            role: 'assistant',
+            content: message.content ?? '',
+          });
 
           this.iterationSteps = 0;
         }
@@ -269,7 +278,11 @@ export class McpClientChat {
         body: JSON.stringify({ model, ...body }),
       });
 
-      return response.json();
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}: ${await response.text()}`);
+      }
+
+      return (await response.json()) as ChatCompleteResponse;
     } catch (error) {
       console.error('调用 chat/complete 报错：', error);
 

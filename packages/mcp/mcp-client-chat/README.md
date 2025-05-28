@@ -73,7 +73,7 @@ async function main() {
       // 流式数据返回
       const streamResponse = await mcpClientChat.chat("your question...");
 
-      response.pipe(res);
+      streamResponse.pipe(res);
     } catch (error) {
       // 错误处理
     }
