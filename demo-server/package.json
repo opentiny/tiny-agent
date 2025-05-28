@@ -13,6 +13,7 @@
     "@opentiny/tiny-agent-mcp-client-chat": "workspace:*",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "raw-body": "^3.0.0",
     "uuid": "^11.1.0",
     "ws": "^8.18.1"
   },
