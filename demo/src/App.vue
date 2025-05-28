@@ -30,12 +30,14 @@ new McpToolParser(doTask).extractAllTools(mcpToolJson).forEach((tool) => {
 });
 
 const clientId = ref(endpointTransport.clientId);
-console.log('Initial Client ID:', clientId.value);
+
 if (!endpointTransport.clientId) {
   endpointTransport.clientIdResolved.then((id) => {
     clientId.value = id;
     console.log('Client ID:', clientId.value);
   });
+} else {
+  console.log('Client ID:', clientId.value);
 }
 </script>
 

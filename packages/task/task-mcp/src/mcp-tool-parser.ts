@@ -2,6 +2,7 @@ import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
 import { v4 as uuidv4 } from 'uuid'
 import { getZodRawShape } from './utils';
+import { z, ZodRawShape } from 'zod';
 export const genTaskId = () => uuidv4()
 
 export type SerializableType = string | number | boolean | null | undefined | Array<SerializableType> | { [key: string]: SerializableType }
@@ -53,7 +54,7 @@ export class McpToolParser {
   extractTool(mcpToolSchema: McpToolSchema): McpTool {
     const { name, task, inputSchema, outputSchema, ...config } = structuredClone(mcpToolSchema)
     const zodInputSchema = getZodRawShape(inputSchema as McpToolSchema['inputSchema']);
-    const zodOutputSchema = outputSchema? getZodRawShape(outputSchema as McpToolSchema['inputSchema']): undefined;
+    const taskOutputSchema = this.getTaskOutputSchema()
     const cb = async (args: any) => {
       const variables = Object.keys(inputSchema.properties || {});
       const realTask = variables.reduce((accTask: executableTaskSchema, cur) => {
@@ -65,21 +66,43 @@ export class McpToolParser {
         id: genTaskId(),
         instructions: task.instructions
       });
-      console.log(realTask)
-      return this.doTask(realTask)
+      const result = await this.doTask(realTask)
+      return {
+        structuredContent: result,
+        content: [{
+          type: 'text',
+          text: result.status
+        }]
+      }
     }
     return {
       name,
       config: {
         inputSchema: zodInputSchema,
-        outputSchema: zodOutputSchema,
+        outputSchema: taskOutputSchema,
         ...config,
       },
-      cb
+      cb 
     }
   }
 
   extractAllTools(mcpToolsSchema: McpToolsSchema): Array<McpTool> {
     return mcpToolsSchema.tools.map((tool) => this.extractTool(tool));
+  }
+
+  getTaskOutputSchema(): ZodRawShape {
+    return {
+      status: z.enum(['success', 'error', 'partial completed']).describe('task status'),
+      index: z.number().describe('failed step'),
+      instruction: z.object({
+        action: z.string().describe('failed instruction action'),
+        params: z.object({}).passthrough().describe('failed instruction action parameters')
+      }).optional().describe('failed instruction detail'),
+      result: z.object({}).passthrough().optional().describe('task result if run task to obtain some content'),
+      error: z.object({
+        message: z.string().describe('error message'),
+        stack: z.string().optional().describe('error stack')
+      }).describe('error information if occur error')
+    }
   }
 }

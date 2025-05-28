@@ -31,7 +31,6 @@ export class WebSocketClientEndpoint implements IConnectorEndpoint {
       };
 
       this.ws.onclose = () => {
-        console.log('WebSocket closed');
         this.onclose?.()
       };
 
