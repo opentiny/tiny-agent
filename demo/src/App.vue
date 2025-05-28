@@ -41,5 +41,5 @@ if (!endpointTransport.clientId) {
 
 <template>
   <AddUser />
-  <ChatDialog :client-id="clientId" :genCode="mcpInspector.genVerifyCode" />
+  <ChatDialog :client-id="clientId" :genCode="() => mcpInspector.genVerifyCode()" />
 </template>
