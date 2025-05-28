@@ -4,14 +4,13 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import express, { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { ProxyServer } from '@opentiny/tiny-agent-mcp-proxy-server';
-import {
-  WebSocketServerEndpoint,
-  ConnectorCenter,
-  WebSocketEndpointServer,
-} from '@opentiny/tiny-agent-mcp-connector';
+import { WebSocketServerEndpoint, ConnectorCenter, WebSocketEndpointServer } from '@opentiny/tiny-agent-mcp-connector';
 import { createMCPClientChat } from '@opentiny/tiny-agent-mcp-client-chat';
 import cors from 'cors';
 import getRawBody from 'raw-body';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const genId = () => uuidv4();
 function getProxyServer() {
@@ -19,20 +18,14 @@ function getProxyServer() {
 }
 
 const connectorCenter = new ConnectorCenter<WebSocketServerEndpoint>();
-const webSocketEndpointServer = new WebSocketEndpointServer(
-  { port: 8082 },
-  connectorCenter
-);
+const webSocketEndpointServer = new WebSocketEndpointServer({ port: 8082 }, connectorCenter);
 webSocketEndpointServer.start();
 
 const transports: { [sessionId: string]: Transport } = {};
 const app = express();
 app.use(cors());
 
-const handleSessionRequest = async (
-  req: express.Request,
-  res: express.Response
-) => {
+const handleSessionRequest = async (req: express.Request, res: express.Response) => {
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
   if (!sessionId || !transports[sessionId]) {
     res.status(400).send('Invalid or missing session ID');
@@ -77,9 +70,7 @@ app.get('/sse', async (req: Request, res: Response) => {
   const server = getProxyServer();
   const transport = new SSEServerTransport('/messages', res);
   transports[transport.sessionId] = transport;
-  server.setEndPoint(
-    connectorCenter.getClient(req.query.client as string, transport.sessionId)!
-  );
+  server.setEndPoint(connectorCenter.getClient(req.query.client as string, transport.sessionId)!);
   res.on('close', () => {
     delete transports[transport.sessionId];
   });
@@ -96,15 +87,14 @@ app.post('/messages', async (req: Request, res: Response) => {
   }
 });
 
-
-app.post('/chat', async (req, res) => {
+app.post('/chat', async (req: Request, res) => {
   const mcpClientChat = await createMCPClientChat({
     clientId: null,
     llmConfig: {
-      url: 'https://openrouter.ai/api/v1/chat/completions',
-      apiKey: '',
-      model: 'mistralai/mistral-7b-instruct:free',
-      systemPrompt: 'You are a helpful assistant with access to tools.',
+      url: process.env.url,
+      apiKey: process.env.apiKey,
+      model: process.env.model,
+      systemPrompt: process.env.systemPrompt,
     },
     maxIterationSteps: 3,
     mcpServersConfig: {
@@ -129,8 +119,8 @@ app.post('/chat', async (req, res) => {
     streamResponse.pipe(res);
   } catch (error) {
     // 错误处理
-    console.log(error)
+    console.log(error);
   }
 });
 
-app.listen(3001, '0.0.0.0');
+app.listen(4001, '0.0.0.0');
