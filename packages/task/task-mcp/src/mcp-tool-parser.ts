@@ -91,13 +91,19 @@ export class McpToolParser {
   }
 
   getTaskOutputSchema(): ZodRawShape {
+    const instructionZod = z.object({
+        action: z.string().describe('failed instruction action'),
+        params: z.object({}).passthrough().describe('failed instruction action parameters'),
+        // only zod 4 support declaration below, mcp now use zod 3
+        // get catchInstruction() {
+        //   return instructionZod.optional()
+        // }
+        catchInstruction: z.object({}).optional().describe('fall back instruction if occur error')
+    });
     return {
       status: z.enum(['success', 'error', 'partial completed']).describe('task status'),
       index: z.number().describe('failed step'),
-      instruction: z.object({
-        action: z.string().describe('failed instruction action'),
-        params: z.object({}).passthrough().describe('failed instruction action parameters')
-      }).optional().describe('failed instruction detail'),
+      instruction: instructionZod.optional().describe('failed instruction detail'),
       result: z.object({}).passthrough().optional().describe('task result if run task to obtain some content'),
       error: z.object({
         message: z.string().describe('error message'),
