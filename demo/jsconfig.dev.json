@@ -1,0 +1,34 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@opentiny/tiny-agent-mcp-connector": [
+        "../packages/mcp/mcp-connector/src/index.ts"
+      ],
+      "@opentiny/tiny-agent-mcp-proxy-server": [
+        "../packages/mcp/mcp-proxy-server/src/index.ts"
+      ],
+      "@opentiny/tiny-agent-mcp-service": [
+        "../packages/mcp/mcp-service/src/index.ts"
+      ],
+      "@opentiny/tiny-agent-mcp-service-vue": [
+        "../packages/mcp/mcp-service/vue/src/index.ts"
+      ],
+      "@opentiny/tiny-agent-task-action-lib": [
+        "../packages/task/task-action-lib/src/index.ts"
+      ],
+      "@opentiny/tiny-agent-task-mcp": [
+        "../packages/task/task-mcp/src/index.ts"
+      ],
+      "@opentiny/tiny-agent-task-runtime-service": [
+        "../packages/task/task-runtime-service/src/index.ts"
+      ],
+      "@opentiny/tiny-agent-ui-components": [
+        "../packages/ui-components/src/index.ts"
+      ],
+    },
+  },
+  "include": [
+    "src", "../packages/**"
+  ]
+}

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import ChatDialog from './components/ChatDialog.vue';
 import AddUser from './components/AddUser.vue';
 import { setupMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
