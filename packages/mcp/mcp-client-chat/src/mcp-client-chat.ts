@@ -12,7 +12,6 @@ import type {
   McpServer,
   ChatCompleteResponse,
   NonStreamingChoice,
-  ChatCompleteRequest,
   Message,
 } from './type.js';
 
@@ -191,8 +190,9 @@ export class McpClientChat {
         }
       }
 
+      const summaryPrompt = '用简短的话总结！';
       const result = await this.queryChatCompleteStreaming({
-        messages: [...this.messages, { role: 'user', content: '用简短的话总结！' }],
+        messages: [...this.messages, { role: 'user', content: summaryPrompt }],
       });
 
       return result;
