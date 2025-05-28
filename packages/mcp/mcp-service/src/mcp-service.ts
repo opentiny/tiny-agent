@@ -1,6 +1,10 @@
-import { McpServer, RegisteredTool } from '@modelcontextprotocol/sdk/server/mcp.js';
+import {
+  McpServer,
+  RegisteredTool
+} from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mergeCapabilities } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { ZodRawShape } from 'zod';
+import { McpInspector } from './mcp-inspector';
 export interface ITool {
   name: string;
   description: string;
@@ -12,31 +16,41 @@ export interface IResource {
   description: string;
   element: HTMLElement;
 }
-export interface IUIResource extends IResource { }
+export interface IUIResource extends IResource {}
 
 export const MCP_SERVICE = Symbol('MCP_SERVICE');
 export class McpService {
   protected _mcpServer: McpServer;
+  protected mcpInspector!: McpInspector;
   protected uiResources = new Map<string, IUIResource>();
   public get mcpServer() {
     return this._mcpServer;
   }
   constructor(mcpServer?: McpServer) {
-    this._mcpServer = mcpServer || new McpServer({
-      name: 'MCP Service',
-      version: '1.0.0',
-    });
+    this._mcpServer =
+      mcpServer ||
+      new McpServer({
+        name: 'MCP Service',
+        version: '1.0.0'
+      });
     this.override();
   }
 
   private override() {
     // prevent dynamic registration tool errors after connecting to transport, version 1.11.x
     this.mcpServer.server.registerCapabilities = (capabilities) => {
-      this.mcpServer.server['_capabilities'] = mergeCapabilities(this.mcpServer.server['_capabilities'], capabilities)
-    }
+      this.mcpServer.server['_capabilities'] = mergeCapabilities(
+        this.mcpServer.server['_capabilities'],
+        capabilities
+      );
+    };
   }
 
-  registerTool(...args : Parameters<McpServer['tool']>): RegisteredTool {
+  setInspector(inspector: McpInspector) {
+    this.mcpInspector = inspector;
+  }
+
+  registerTool(...args: Parameters<McpServer['tool']>): RegisteredTool {
     return this.mcpServer.tool(...args);
   }
 
@@ -49,9 +63,9 @@ export class McpService {
     return tool;
   }
 
-  getTool(name: string): RegisteredTool & { name: string } | undefined {
+  getTool(name: string): (RegisteredTool & { name: string }) | undefined {
     return {
-      ...this.mcpServer["_registeredTools"][name],
+      ...this.mcpServer['_registeredTools'][name],
       name
     };
   }
@@ -75,8 +89,8 @@ export class McpService {
   }
 
   getAllTools(): (RegisteredTool & { name: string })[] {
-    return Object.keys(this.mcpServer["_registeredTools"]).map(name => {
-      const tool = this.mcpServer["_registeredTools"][name] as RegisteredTool;
+    return Object.keys(this.mcpServer['_registeredTools']).map((name) => {
+      const tool = this.mcpServer['_registeredTools'][name] as RegisteredTool;
       return {
         name,
         ...tool
@@ -90,10 +104,17 @@ export class McpService {
 
   getContext() {
     return {
-      tools: Object.fromEntries(this.getAllTools().map(tool => [tool.name, tool.callback])),
+      tools: Object.fromEntries(
+        this.getAllTools().map((tool) => [tool.name, tool.callback])
+      ),
       resources: {
-        ui: Object.fromEntries(this.getAllUIResources().map(resource => [resource.name, resource.element]))
-      },
+        ui: Object.fromEntries(
+          this.getAllUIResources().map((resource) => [
+            resource.name,
+            resource.element
+          ])
+        )
+      }
     };
   }
 }
