@@ -211,11 +211,18 @@ export class McpClientChat {
 
       for (const toolCall of toolCalls) {
         const toolName = toolCall.function.name;
-        const toolArgs = JSON.parse(toolCall.function.arguments || '{}');
         const client = this.toolClientMap.get(toolName);
 
         if (!client) {
           continue;
+        }
+
+        let toolArgs = {};
+
+        try {
+          toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+        } catch (error) {
+          toolArgs = {};
         }
 
         // 调用工具
