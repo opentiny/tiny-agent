@@ -91,7 +91,27 @@ class CustomModelProvider extends BaseModelProvider {
         );
       }
 
-      const { text } = await response.json();
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let text = ''
+
+      // 逐块读取流数据
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log("Stream complete");
+          break;
+        }
+        const chunk = decoder.decode(value, { stream: true });
+
+        try {
+          const message = JSON.parse(chunk.slice(6))
+          console.log(message); // 输出流的每一部分
+          text += message.choices[0].delta.content
+        } catch (error) {
+          text += ''
+        }
+      }
       return { choices: [{ message: { content: text } }] };
     } catch (error) {
       console.error(error);
