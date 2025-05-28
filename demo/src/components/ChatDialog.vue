@@ -198,7 +198,6 @@ const roles = {
 watch(
   () => messages.value[messages.value.length - 1],
   () => {
-    console.log('messages', messages);
     const containerBody = document.querySelector('div.tr-bubble-list');
     if (containerBody) {
       nextTick(() => {
@@ -219,6 +218,7 @@ watch(
 }
 .tr-container__footer {
   padding: 0 16px;
+  margin-bottom: 16px;
 }
 .tr-prompts {
   padding: 0 16px;
