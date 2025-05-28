@@ -90,7 +90,7 @@ export class McpToolParser {
     return mcpToolsSchema.tools.map((tool) => this.extractTool(tool));
   }
 
-  getTaskOutputSchema(): ZodRawShape {
+  getTaskOutputSchema(outputSchema: ZodRawShape = {}): ZodRawShape {
     const instructionZod = z.object({
         action: z.string().describe('failed instruction action'),
         params: z.object({}).passthrough().describe('failed instruction action parameters'),
@@ -98,13 +98,13 @@ export class McpToolParser {
         // get catchInstruction() {
         //   return instructionZod.optional()
         // }
-        catchInstruction: z.object({}).optional().describe('fall back instruction if occur error')
+        catchInstruction: z.object({}).passthrough().optional().describe('fall back instruction if occur error')
     });
     return {
       status: z.enum(['success', 'error', 'partial completed']).describe('task status'),
       index: z.number().describe('failed step'),
       instruction: instructionZod.optional().describe('failed instruction detail'),
-      result: z.object({}).passthrough().optional().describe('task result if run task to obtain some content'),
+      result: z.object(outputSchema).passthrough().optional().describe('task result if run task to obtain some content'),
       error: z.object({
         message: z.string().describe('error message'),
         stack: z.string().optional().describe('error stack')
