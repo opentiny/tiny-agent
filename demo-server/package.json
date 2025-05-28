@@ -17,7 +17,7 @@
   "devDependencies": {
     "@types/express": "^5.0.1",
     "@types/ws": "^8.18.1",
-    "tsx":"~4.19.4",
+    "tsx":"^4.8.1",
     "typescript": "^5.8.3"
   }
 }
