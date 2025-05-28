@@ -22,9 +22,11 @@
         ></tiny-date-picker>
       </tiny-form-item>
       <tiny-form-item>
-        <tiny-button type="primary" @click="submitClick" class="user-submit">
-          提交
-        </tiny-button>
+        <div class="btn-container">
+          <tiny-button type="primary" @click="submitClick" class="user-submit">
+            提交
+          </tiny-button>
+        </div>
       </tiny-form-item>
     </tiny-form>
   </div>
@@ -81,9 +83,9 @@ tool(
       content: [
         {
           type: 'text',
-          text: `新增用户:${name} 成功`
-        }
-      ]
+          text: `新增用户:${name} 成功`,
+        },
+      ],
     };
   }
 );
@@ -92,5 +94,12 @@ tool(
 <style scoped>
 .user-form {
   width: 380px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.btn-container {
+  text-align: center;
 }
 </style>

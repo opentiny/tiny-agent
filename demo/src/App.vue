@@ -4,11 +4,11 @@ import { setupMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
 import { McpValidator } from '@opentiny/tiny-agent-mcp-service';
 import {
   EndpointTransport,
-  WebSocketClientEndpoint
+  WebSocketClientEndpoint,
 } from '@opentiny/tiny-agent-mcp-connector';
 import {
   executableTaskSchema,
-  McpToolParser
+  McpToolParser,
 } from '@opentiny/tiny-agent-task-mcp';
 import ChatDialog from './components/ChatDialog.vue';
 import AddUser from './components/AddUser.vue';
@@ -45,3 +45,10 @@ if (!endpointTransport.clientId) {
   <AddUser />
   <ChatDialog :client-id="clientId" :genCode="mcpValidator.genVerifyCode" />
 </template>
+
+<style>
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+</style>
