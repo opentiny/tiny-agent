@@ -1,19 +1,21 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export class McpValidator {
-  private codeList: string[];
+  private verifyCode!: string;
 
-  constructor() {
-    this.codeList = [];
-  }
+  constructor() {}
 
   genVerifyCode() {
-    const nonceCode = uuidv4();
-    this.codeList.push(nonceCode);
-    return nonceCode;
+    const genCode = () => {
+      const nonceCode = uuidv4();
+      this.verifyCode = nonceCode;
+      return nonceCode;
+    };
+
+    return genCode();
   }
 
   verify(code: string) {
-    return !this.codeList.includes(code);
+    return this.verifyCode === code;
   }
 }
