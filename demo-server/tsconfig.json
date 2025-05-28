@@ -11,12 +11,6 @@
       "@opentiny/tiny-agent-mcp-proxy-server": ["../packages/mcp/mcp-proxy-server/src/index.js"]
     },
   },
-  "ts-node": {
-    "esm": true,
-    "require": [
-      "tsconfig-paths/register"
-    ]
-  },
   "files": [
     "src/index.ts"
   ],

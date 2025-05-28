@@ -4,11 +4,11 @@ import AddUser from './components/AddUser.vue';
 import { setupMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
 import { EndpointTransport, WebSocketClientEndpoint } from '@opentiny/tiny-agent-mcp-connector';
 import { ref } from 'vue';
-import { McpToolParser} from '@opentiny/tiny-agent-task-mcp';
+import { executableTaskSchema, McpToolParser} from '@opentiny/tiny-agent-task-mcp';
 import mcpToolJson from './mcp-tool.json';
 import { taskScheduler } from './scheduler.js';
-const doTask = (task)=> {
-  taskScheduler.pushTask(task);
+const doTask = async (task: executableTaskSchema)=> {
+  return taskScheduler.pushTask(task);
 };
 
 const mcp = setupMcpService();
