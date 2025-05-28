@@ -123,4 +123,4 @@ app.post('/chat', async (req: Request, res) => {
   }
 });
 
-app.listen(4001, '0.0.0.0');
+app.listen(3001, '0.0.0.0');
