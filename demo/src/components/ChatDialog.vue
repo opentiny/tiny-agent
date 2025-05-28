@@ -75,8 +75,11 @@ class CustomModelProvider extends BaseModelProvider {
       const lastMessage = request.messages[request.messages.length - 1].content;
       const options = {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: lastMessage, clientId: props.clientId }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'connector-client-id': props.clientId
+        },
+        body: JSON.stringify({ query: lastMessage }),
       };
 
       const response = await fetch(`http://localhost:3001/chat`, options);

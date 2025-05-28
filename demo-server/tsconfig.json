@@ -5,11 +5,7 @@
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "outDir": "./dist",
-    "baseUrl": "./",
-     "paths": {
-      "@opentiny/tiny-agent-mcp-connector": ["../packages/mcp/mcp-connector/src/index.js"],
-      "@opentiny/tiny-agent-mcp-proxy-server": ["../packages/mcp/mcp-proxy-server/src/index.js"]
-    },
+    "baseUrl": "./"
   },
   "files": [
     "src/index.ts"

@@ -1,16 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "nodenext",
+    "target": "ES6",
+    "lib": ["es2017", "DOM"],
+    "module": "ES6",
     "outDir": "./dist",
-    "rootDir": "./",
-    "esModuleInterop": true,
     "strict": true,
+    "sourceMap": false,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "declaration": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": [ "src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src", "src/*.d.ts"]
 }

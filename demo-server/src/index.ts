@@ -9,6 +9,8 @@ import {
   ConnectorCenter,
   WebSocketEndpointServer,
 } from '@opentiny/tiny-agent-mcp-connector';
+import { createMCPClientChat } from '@opentiny/tiny-agent-mcp-client-chat';
+import cors from 'cors';
 
 export const genId = () => uuidv4();
 function getProxyServer() {
@@ -24,6 +26,8 @@ webSocketEndpointServer.start();
 
 const transports: { [sessionId: string]: Transport } = {};
 const app = express();
+app.use(cors());
+app.use(express.json());
 
 const handleSessionRequest = async (
   req: express.Request,
@@ -89,6 +93,40 @@ app.post('/messages', async (req: Request, res: Response) => {
     await transport.handlePostMessage(req, res);
   } else {
     res.status(400).send('No transport found for sessionId');
+  }
+});
+
+
+app.post('/chat', async (req, res) => {
+  const mcpClientChat = await createMCPClientChat({
+    clientId: null,
+    llmConfig: {
+      url: 'https://openrouter.ai/api/v1/chat/completions',
+      apiKey: '',
+      model: 'mistralai/mistral-7b-instruct:free',
+      systemPrompt: 'You are a helpful assistant with access to tools.',
+    },
+    maxIterationSteps: 3,
+    mcpServersConfig: {
+      mcpServers: {
+        'localhost-mcp': {
+          url: `http://127.0.0.1:8082/sse?client=${req.headers['connector-client-id'] as string}`,
+          headers: {},
+          timeout: 60,
+          sse_read_timeout: 300,
+        },
+      },
+    },
+  });
+
+  try {
+    // 流式数据返回
+    const streamResponse = await mcpClientChat.chat(JSON.parse(req.body).query);
+
+    streamResponse.pipe(res);
+  } catch (error) {
+    // 错误处理
+    console.log(error)
   }
 });
 

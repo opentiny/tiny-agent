@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && chmod 755 dist/index.js"
+    "build": "vite build"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.41.0",
@@ -17,6 +17,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.15.17",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.0.0"
   }
 }
