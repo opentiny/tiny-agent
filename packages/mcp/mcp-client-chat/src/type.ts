@@ -10,7 +10,7 @@ export interface McpServerConfig {
   mcpServers: McpServers;
 }
 
-export type McpServersConfig = Record<string, McpServerConfig>;
+export type McpServersConfig = Record<string, McpServerConfig | any>;
 
 export interface MCPClientOptions {
   clientId: string;
