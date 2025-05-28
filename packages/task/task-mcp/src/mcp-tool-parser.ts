@@ -102,7 +102,7 @@ export class McpToolParser {
       error: z.object({
         message: z.string().describe('error message'),
         stack: z.string().optional().describe('error stack')
-      }).describe('error information if occur error')
+      }).optional().describe('error information if occur error')
     }
   }
 }
