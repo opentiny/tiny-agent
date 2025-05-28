@@ -89,7 +89,6 @@ app.post('/messages', async (req: Request, res: Response) => {
 
 app.post('/chat', async (req: Request, res) => {
   const mcpClientChat = await createMCPClientChat({
-    clientId: null,
     llmConfig: {
       url: process.env.url,
       apiKey: process.env.apiKey,

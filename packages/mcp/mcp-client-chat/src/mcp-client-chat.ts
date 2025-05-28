@@ -127,6 +127,7 @@ export class McpClientChat {
       this.messages.push(message);
     }
   }
+
   protected clearPromptMessages() {
     this.messages = [];
   }
