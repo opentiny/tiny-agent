@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "pnpm --filter @opentiny/tiny-agent-* build",
     "dev:demo": "pnpm --filter agent-app dev",
-    "dev:demo-server": "pnpm --filter demo-server dev",
+    "dev:demo-server": "pnpm --filter app-server dev",
     "dev": "pnpm dev:demo-server && pnpm dev:demo",
     "docs": "pnpm --filter docs run docs:dev"
   },
