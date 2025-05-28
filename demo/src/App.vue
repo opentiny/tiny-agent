@@ -1,18 +1,22 @@
-<script setup>
-import ChatDialog from './components/ChatDialog.vue';
-import AddUser from './components/AddUser.vue';
+<script setup lang="ts">
+import { ref } from 'vue';
 import { setupMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
 import { McpInspector } from '@opentiny/tiny-agent-mcp-service';
 import {
   EndpointTransport,
   WebSocketClientEndpoint
 } from '@opentiny/tiny-agent-mcp-connector';
-import { ref } from 'vue';
 import { McpToolParser } from '@opentiny/tiny-agent-task-mcp';
+import {
+  executableTaskSchema,
+  McpToolParser
+} from '@opentiny/tiny-agent-task-mcp';
+import ChatDialog from './components/ChatDialog.vue';
+import AddUser from './components/AddUser.vue';
 import mcpToolJson from './mcp-tool.json';
 import { taskScheduler } from './scheduler.js';
-const doTask = (task) => {
-  taskScheduler.pushTask(task);
+const doTask = async (task: executableTaskSchema) => {
+  return taskScheduler.pushTask(task);
 };
 const mcpInspector = new McpInspector();
 const mcp = setupMcpService();

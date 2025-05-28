@@ -2,22 +2,24 @@
   "name": "app-server",
   "version": "0.0.1",
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "dev": "tsx watch --tsconfig ./tsconfig.dev.json src/index.ts ",
     "build": "tsc -p tsconfig.json"
   },
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.0",
-    "@opentiny/tiny-agent-mcp-proxy-server": "workspace:*",
     "@opentiny/tiny-agent-mcp-connector": "workspace:*",
+    "@opentiny/tiny-agent-mcp-proxy-server": "workspace:*",
+    "@opentiny/tiny-agent-mcp-client-chat": "workspace:*",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
-    "ws": "^8.18.1",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",
     "@types/ws": "^8.18.1",
-    "ts-node": "^10.9.2",
+    "tsx":"^4.8.1",
     "typescript": "^5.8.3"
   }
 }

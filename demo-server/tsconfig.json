@@ -5,6 +5,9 @@
     "module": "NodeNext",
     "moduleResolution": "nodenext",
     "outDir": "./dist",
+    "baseUrl": "./"
   },
-  "files": ["src/index.ts"],
+  "files": [
+    "src/index.ts"
+  ],
 }

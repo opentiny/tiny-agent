@@ -57,12 +57,12 @@ import {
   AIClient,
   useMessage,
   STATUS,
-  GeneratingStatus,
+  GeneratingStatus
 } from '@opentiny/tiny-robot-kit';
 
 const props = defineProps({
   clientId: { type: String, default: () => '' },
-  genCode: { type: Function, default: () => {} },
+  genCode: { type: Function, default: () => {} }
 });
 
 // 自定义模型提供者
@@ -79,12 +79,12 @@ class CustomModelProvider extends BaseModelProvider {
       const lastMessage = request.messages[request.messages.length - 1].content;
       const options = {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: lastMessage,
-          clientId: props.clientId,
-          verifyCode,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          'connector-client-id': props.clientId,
+          'mcp-verify-code': verifyCode
+        },
+        body: JSON.stringify({ query: lastMessage })
       };
 
       const response = await fetch(`http://localhost:3001/chat`, options);
@@ -96,7 +96,27 @@ class CustomModelProvider extends BaseModelProvider {
         );
       }
 
-      const { text } = await response.json();
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let text = '';
+
+      // 逐块读取流数据
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          console.log('Stream complete');
+          break;
+        }
+        const chunk = decoder.decode(value, { stream: true });
+
+        try {
+          const message = JSON.parse(chunk.slice(6));
+          console.log(message); // 输出流的每一部分
+          text += message.choices[0].delta.content;
+        } catch (error) {
+          text += '';
+        }
+      }
       return { choices: [{ message: { content: text } }] };
     } catch (error) {
       console.error(error);
@@ -109,7 +129,7 @@ const customModelProvider = new CustomModelProvider();
 
 const client = new AIClient({
   provider: 'custom',
-  providerImplementation: customModelProvider,
+  providerImplementation: customModelProvider
 });
 
 // 使用tiny-robot 提供的API
@@ -117,7 +137,7 @@ const { messages, inputMessage, messageState, sendMessage, abortRequest } =
   useMessage({
     client,
     useStreamByDefault: false,
-    initialMessages: [],
+    initialMessages: []
   });
 
 const promptItems = [
@@ -125,8 +145,8 @@ const promptItems = [
     label: '指导场景',
     description: '列出目前系统中可用的工具！',
     icon: h('span', { style: { fontSize: '18px' } }, '🧠'),
-    badge: 'NEW',
-  },
+    badge: 'NEW'
+  }
 ];
 
 const handlePromptItemClick = (e, item) => {
@@ -140,8 +160,8 @@ const showMessages = computed(() => {
       {
         role: 'assistant',
         content: '正在思考中...',
-        loading: true,
-      },
+        loading: true
+      }
     ];
   }
   return messages.value;
@@ -160,15 +180,15 @@ const roles = {
     avatar: aiAvatar,
     maxWidth: '90%',
     type: 'markdown',
-    mdConfig: { html: true },
+    mdConfig: { html: true }
   },
   user: {
     placement: 'end',
     avatar: userAvatar,
     maxWidth: '90%',
     type: 'markdown',
-    mdConfig: { html: true },
-  },
+    mdConfig: { html: true }
+  }
 };
 
 // 最新消息滚动到底部
@@ -181,7 +201,7 @@ watch(
       nextTick(() => {
         containerBody.scrollTo({
           top: containerBody.scrollHeight,
-          behavior: 'smooth',
+          behavior: 'smooth'
         });
       });
     }
