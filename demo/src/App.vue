@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { setupMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
-import { McpInspector } from '@opentiny/tiny-agent-mcp-service';
+import { McpValidator } from '@opentiny/tiny-agent-mcp-service';
 import {
   EndpointTransport,
   WebSocketClientEndpoint
@@ -17,14 +17,14 @@ import { taskScheduler } from './scheduler.js';
 const doTask = async (task: executableTaskSchema) => {
   return taskScheduler.pushTask(task);
 };
-const mcpInspector = new McpInspector();
+const mcpValidator = new McpValidator();
 const mcp = setupMcpService();
 function getWebSocketClientEndpoint() {
   return new WebSocketClientEndpoint({ url: 'ws://localhost:8082' });
 }
 const endpointTransport = new EndpointTransport(getWebSocketClientEndpoint);
 mcp.mcpServer.connect(endpointTransport);
-mcp.setInspector(mcpInspector);
+mcp.setValidator(mcpValidator);
 new McpToolParser(doTask).extractAllTools(mcpToolJson).forEach((tool) => {
   mcp.mcpServer.registerTool(tool.name, tool.config, tool.cb);
 });
@@ -41,5 +41,5 @@ if (!endpointTransport.clientId) {
 
 <template>
   <AddUser />
-  <ChatDialog :client-id="clientId" :genCode="() => mcpInspector.genVerifyCode()" />
+  <ChatDialog :client-id="clientId" :genCode="mcpValidator.genVerifyCode" />
 </template>

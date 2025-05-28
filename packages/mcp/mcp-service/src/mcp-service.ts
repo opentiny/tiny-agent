@@ -4,7 +4,7 @@ import {
 } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mergeCapabilities } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { ZodRawShape } from 'zod';
-import { McpInspector } from './mcp-inspector';
+import { McpValidator } from './mcp-validator';
 export interface ITool {
   name: string;
   description: string;
@@ -21,7 +21,7 @@ export interface IUIResource extends IResource {}
 export const MCP_SERVICE = Symbol('MCP_SERVICE');
 export class McpService {
   protected _mcpServer: McpServer;
-  protected mcpInspector!: McpInspector;
+  protected mcpValidator!: McpValidator;
   protected uiResources = new Map<string, IUIResource>();
   public get mcpServer() {
     return this._mcpServer;
@@ -46,8 +46,8 @@ export class McpService {
     };
   }
 
-  setInspector(inspector: McpInspector) {
-    this.mcpInspector = inspector;
+  setValidator(validator: McpValidator) {
+    this.mcpValidator = validator;
   }
 
   registerTool(...args: Parameters<McpServer['tool']>): RegisteredTool {
