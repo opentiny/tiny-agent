@@ -36,7 +36,7 @@ export class McpService {
     this.override();
   }
 
-  private override() {
+  protected override() {
     // prevent dynamic registration tool errors after connecting to transport, version 1.11.x
     this.mcpServer.server.registerCapabilities = (capabilities) => {
       this.mcpServer.server['_capabilities'] = mergeCapabilities(
@@ -64,8 +64,12 @@ export class McpService {
   }
 
   getTool(name: string): (RegisteredTool & { name: string }) | undefined {
+    const tool = this.mcpServer['_registeredTools'][name];
+    if (!tool) {
+      return undefined;
+    }
     return {
-      ...this.mcpServer['_registeredTools'][name],
+      ...tool,
       name
     };
   }

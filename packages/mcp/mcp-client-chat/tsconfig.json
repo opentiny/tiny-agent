@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "lib": ["es2017", "DOM"],
-    "module": "ES6",
+    "target": "ES2020",
+    "lib": ["es2020", "DOM"],
+    "module": "NodeNext",
     "outDir": "./dist",
     "strict": true,
     "sourceMap": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "typeRoots": ["./node_modules/@types"]
   },

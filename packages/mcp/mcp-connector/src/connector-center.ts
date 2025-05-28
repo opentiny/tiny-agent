@@ -11,9 +11,11 @@ export class ConnectorCenter<T extends IConnectorEndpoint>{
     }
     return client;
   }
+
   setClient(clientId: string, client: T | ((id: string) => T)) {
     this.clientMap.set(clientId, client);
   }
+  
   removeClient(clientId: string) {
     this.clientMap.delete(clientId);
   }

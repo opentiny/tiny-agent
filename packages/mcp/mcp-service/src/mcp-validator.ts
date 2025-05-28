@@ -1,9 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export class McpValidator {
-  private verifyCode!: string;
-
-  constructor() {}
+  protected verifyCode!: string;
 
   genVerifyCode() {
     const genCode = () => {

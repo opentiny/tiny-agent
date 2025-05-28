@@ -1,4 +1,4 @@
-import { JSONRPCResponse } from '@modelcontextprotocol/sdk/types.js'
+import { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
 import { IConnectorEndpoint, IEndpointMessage } from './endpoint.type'
 
@@ -11,11 +11,16 @@ export class EndpointTransport implements Transport {
   }
   protected connectorEndpoint: IConnectorEndpoint;
 
-  constructor(endpointFactory: () => IConnectorEndpoint) {
-    this.connectorEndpoint = endpointFactory()
-    this.connectorEndpoint.onmessage = (msg: IEndpointMessage) => {
-      this.onmessage?.(msg.data!, msg.extra)
+  constructor(endpointOrFactory: IConnectorEndpoint | (() => IConnectorEndpoint)){
+    if (typeof endpointOrFactory === 'function') {
+      this.connectorEndpoint = endpointOrFactory();
+    } else {
+      this.connectorEndpoint = endpointOrFactory;
     }
+    this.connectorEndpoint.onmessage = (msg: IEndpointMessage) => {
+      this.onmessage?.(msg.data!, msg.extra);
+    }
+
   }
   // override by mcp-server
   onmessage: Transport['onmessage'] = undefined;
@@ -26,7 +31,7 @@ export class EndpointTransport implements Transport {
     await this.connectorEndpoint.start()
   }
 
-  async send(message: JSONRPCResponse, options?: any): Promise<void> {
+  async send(message: JSONRPCMessage, options?: any): Promise<void> {
     return this.connectorEndpoint.send({
       type: 'message',
       data: message,
@@ -35,7 +40,7 @@ export class EndpointTransport implements Transport {
   }
 
   async close(): Promise<void> {
-    this.connectorEndpoint?.close()
+    await this.connectorEndpoint?.close()
   }
 }
  

@@ -23,15 +23,16 @@ export class WebSocketClientEndpoint implements IConnectorEndpoint {
           type: 'initialize'
         }
         this.send(message)
-        resolve();
       }
 
-      this.ws.onerror = (error) => {
+      this.ws.onerror = (error: Event) => {
         console.error('WebSocket error:', error);
+        this.onerror?.(error as any)
       };
 
       this.ws.onclose = () => {
         console.log('WebSocket closed');
+        this.onclose?.()
       };
 
       this.ws.onmessage = (messageEvent: MessageEvent<string>) => {
@@ -39,6 +40,7 @@ export class WebSocketClientEndpoint implements IConnectorEndpoint {
         if (message.type === 'initialize') {
           this.clientId = (message.data as any).clientId;
           this.clientIdResolver(this.clientId);
+          resolve();
           return;
         }
         this.onmessage?.(message);
