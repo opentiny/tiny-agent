@@ -6,7 +6,6 @@ import {
   EndpointTransport,
   WebSocketClientEndpoint
 } from '@opentiny/tiny-agent-mcp-connector';
-import { McpToolParser } from '@opentiny/tiny-agent-task-mcp';
 import {
   executableTaskSchema,
   McpToolParser
