@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
-export class McpInspector {
+export class McpValidator {
   private codeList: string[];
 
   constructor() {
