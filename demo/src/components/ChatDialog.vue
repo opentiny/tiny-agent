@@ -60,7 +60,10 @@ import {
   GeneratingStatus,
 } from '@opentiny/tiny-robot-kit';
 
-const props = defineProps({ clientId: { type: String, default: () => '' } });
+const props = defineProps({
+  clientId: { type: String, default: () => '' },
+  genCode: { type: Function, default: () => {} },
+});
 
 // 自定义模型提供者
 class CustomModelProvider extends BaseModelProvider {
@@ -72,11 +75,16 @@ class CustomModelProvider extends BaseModelProvider {
     try {
       this.validateRequest(request);
 
+      const verifyCode = props.genCode();
       const lastMessage = request.messages[request.messages.length - 1].content;
       const options = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: lastMessage, clientId: props.clientId }),
+        body: JSON.stringify({
+          query: lastMessage,
+          clientId: props.clientId,
+          verifyCode,
+        }),
       };
 
       const response = await fetch(`http://localhost:3001/chat`, options);
