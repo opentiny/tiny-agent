@@ -178,7 +178,12 @@ export class McpClientChat {
 
             this.iterationSteps--;
           } catch (error) {
-            throw error;
+            this.organizePromptMessages({
+              role: 'assistant',
+              content: 'call tools failed!',
+            });
+
+            this.iterationSteps = 0;
           }
         } else {
           this.organizePromptMessages({
@@ -246,7 +251,7 @@ export class McpClientChat {
 
       return { toolResults, toolCallMessages };
     } catch (error) {
-      console.error('调用工具时发生错误:', error);
+      console.error('Error calling tools:', error);
 
       throw error;
     }
@@ -291,7 +296,7 @@ export class McpClientChat {
 
       return (await response.json()) as ChatCompleteResponse;
     } catch (error) {
-      console.error('调用 chat/complete 报错：', error);
+      console.error('Error calling chat/complete:', error);
 
       throw error;
     }
@@ -322,11 +327,11 @@ export class McpClientChat {
 
       return readableStream;
     } catch (error) {
-      console.error('流式调用 chat/complete 报错：', error);
+      console.error('Error calling streaming chat/complete:', error);
 
-      throw new Error(`流式调用 chat 接口失败： ${String(error)}`);
+      throw new Error(`Streaming chat API call failed: ${String(error)}`);
     } finally {
-      // TODO: 待实现上下文记忆功能，此处先每次清理
+      // TODO: Implement context memory feature, for now clear after each request
       this.clearPromptMessages();
     }
   }
