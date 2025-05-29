@@ -41,17 +41,14 @@ app.get('/mcp', handleSessionRequest);
 app.delete('/mcp', handleSessionRequest);
 
 app.post('/mcp', async (req: Request, res: Response) => {
-  const server = getProxyServer();
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
-  const verifyCode = req.headers['mcp-verify-code'] as string | undefined;
-  server.setEndPoint(connectorCenter.getClient(req.query.client as string, sessionId)!);
-  server.setVerifyCode(verifyCode);
 
   let transport: Transport;
 
   if (sessionId && transports[sessionId]) {
     transport = transports[sessionId];
   } else {
+    
     transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => genId(),
       onsessioninitialized: (sessionId) => {
@@ -65,17 +62,26 @@ app.post('/mcp', async (req: Request, res: Response) => {
         delete transports[sessionId];
       }
     };
+
+    const clientId = req.headers['mcp-client-id'] as string | undefined;
+    const verifyCode = req.headers['mcp-verify-code'] as string | undefined;
+    const server = getProxyServer();
+    server.setEndPoint(connectorCenter.getClient(clientId, sessionId)!);
+    server.setVerifyCode(verifyCode);
     await server.connect(transport);
   }
   await (transport as StreamableHTTPServerTransport).handleRequest(req, res, req.body);
 });
 
 app.get('/sse', async (req: Request, res: Response) => {
-  const server = getProxyServer();
+  
   const transport = new SSEServerTransport('/messages', res);
   transports[transport.sessionId] = transport;
-  server.setEndPoint(connectorCenter.getClient(req.query.client as string, transport.sessionId)!);
-  server.setVerifyCode(req.query.code);
+  const clientId = req.query.client as string;
+  const verifyCode = req.query.code as string;
+  const server = getProxyServer();
+  server.setEndPoint(connectorCenter.getClient(clientId, transport.sessionId)!);
+  server.setVerifyCode(verifyCode);
   res.on('close', () => {
     delete transports[transport.sessionId];
   });
@@ -109,6 +115,10 @@ app.post('/chat', async (req: Request, res) => {
           timeout: 60,
           sse_read_timeout: 300,
         },
+        'localhost-mcp-streamable-http': {
+          url: 'http://127.0.0.1:3001/mcp'
+          header
+        }
       },
     },
   });
