@@ -1,7 +1,11 @@
 import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 
+export enum EndpointMessageType {
+  INITIALIZE = 'initialize',
+  MESSAGE = 'message'
+}
 export interface IEndpointMessage<T = JSONRPCMessage> {
-  type: 'initialize' | 'message' | string;
+  type: EndpointMessageType | string;
   data?: T;
   extra?: any;
 }

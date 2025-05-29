@@ -1,6 +1,6 @@
 import { WebSocket } from 'ws';
 import { isJSONRPCRequest, isJSONRPCResponse } from '@modelcontextprotocol/sdk/types.js';
-import type { IConnectorEndpoint, IEndpointMessage } from '../endpoint.type';
+import { EndpointMessageType, type IConnectorEndpoint, type IEndpointMessage } from '../endpoint.type';
 
 export class WebSocketServerEndpoint implements IConnectorEndpoint {
   public clientId: string;
@@ -17,7 +17,7 @@ export class WebSocketServerEndpoint implements IConnectorEndpoint {
   async start(): Promise<void> {
     this.ws.on('message', (messageStr: string) => {
       const message: IEndpointMessage = JSON.parse(messageStr);
-      if (message.type === 'initialize') {
+      if (message.type === EndpointMessageType.INITIALIZE) {
         return
       }
       if (!this.isCurrentServerMessage(message)) {
@@ -38,20 +38,20 @@ export class WebSocketServerEndpoint implements IConnectorEndpoint {
   }
 
   protected replaceMessageId(message: IEndpointMessage): void {
-    if (this.serverId && message.type !== 'initialize' && isJSONRPCRequest(message.data)) {
+    if (this.serverId && message.type !== EndpointMessageType.INITIALIZE && isJSONRPCRequest(message.data)) {
       message.data.id = `${this.serverId}_${message.data.id}`;
     }
   }
 
   protected isCurrentServerMessage(message: IEndpointMessage): boolean {
-    if (this.serverId && message.type !== 'initialize' && isJSONRPCResponse(message.data) && typeof message.data.id === 'string') {
+    if (this.serverId && message.type !== EndpointMessageType.INITIALIZE && isJSONRPCResponse(message.data) && typeof message.data.id === 'string') {
       return (message.data.id as string).startsWith(`${this.serverId}_`);
     }
     return true;
   }
 
   protected restoreMessageId(message: IEndpointMessage): void {
-    if (this.serverId && message.type !== 'initialize' && isJSONRPCResponse(message.data)) {
+    if (this.serverId && message.type !== EndpointMessageType.INITIALIZE && isJSONRPCResponse(message.data)) {
       message.data.id = Number((message.data.id as string).replace(`${this.serverId}_`, ''));
     }
   }

@@ -4,6 +4,7 @@ import { ConnectorCenter } from '../connector-center';
 import { genId } from '../utils';
 
 import { WebSocketServerEndpoint } from './websocket-server-endpoint';
+import { EndpointMessageType } from '../endpoint.type';
 
 export class WebSocketEndpointServer {
   public wss: WebSocketServer;
@@ -33,9 +34,9 @@ export class WebSocketEndpointServer {
 
       ws.on('message', (messageStr: string) => {
         const message = JSON.parse(messageStr);
-        if (message.type === 'initialize') {
+        if (message.type === EndpointMessageType.INITIALIZE) {
           ws.send(JSON.stringify({
-            type: 'initialize',
+            type: EndpointMessageType.INITIALIZE,
             data: {
               clientId
             }
