@@ -117,31 +117,23 @@ export class McpClientChat {
   }
 
   protected organizePromptMessages(message: Message) {
-    if (message.role === 'user') {
-      const userMessages = this.getUserMessages();
-
-      if (Array.isArray(userMessages.content)) {
-        userMessages.content.push({
-          type: 'text',
-          text: message.content as string,
-        });
-      } else {
-        userMessages.content += message.content;
-      }
-    } else {
-      this.messages.push(message);
-    }
+    this.messages.push(message);
   }
 
   protected clearPromptMessages() {
     this.messages = [];
   }
 
-  async chat(query: string) {
-    this.organizePromptMessages({
-      role: 'user',
-      content: query,
-    });
+  async chat(queryOrMessages: string | Array<Message>) {
+    if (typeof queryOrMessages === 'string') {
+      this.organizePromptMessages({
+        role: 'user',
+        content: queryOrMessages,
+      });
+    } else {
+      this.messages.push(...queryOrMessages);
+    }
+
     this.iterationSteps = this.options.maxIterationSteps || 1;
 
     try {

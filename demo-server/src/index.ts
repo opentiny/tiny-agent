@@ -134,7 +134,7 @@ app.post('/chat', async (req: Request, res) => {
   )
   try {
     // 流式数据返回
-    const streamResponse = await mcpClientChat.chat(body.query);
+    const streamResponse = await mcpClientChat.chat(body.query || body.messages);
 
     streamResponse.pipe(res);
   } catch (error) {
