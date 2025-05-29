@@ -1,4 +1,4 @@
-import { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
+import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
 
 export interface IEndpointMessage<T = JSONRPCMessage> {
   type: 'initialize' | 'message' | string;

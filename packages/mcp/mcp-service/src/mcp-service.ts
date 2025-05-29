@@ -1,6 +1,6 @@
 import {
   McpServer,
-  RegisteredTool
+  type RegisteredTool
 } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { mergeCapabilities } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { ZodRawShape } from 'zod';

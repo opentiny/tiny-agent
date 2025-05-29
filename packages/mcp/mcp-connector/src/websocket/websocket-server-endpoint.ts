@@ -1,6 +1,6 @@
 import { WebSocket } from 'ws';
 import { isJSONRPCRequest, isJSONRPCResponse } from '@modelcontextprotocol/sdk/types.js';
-import { IConnectorEndpoint, IEndpointMessage } from '../endpoint.type';
+import type { IConnectorEndpoint, IEndpointMessage } from '../endpoint.type';
 
 export class WebSocketServerEndpoint implements IConnectorEndpoint {
   public clientId: string;
@@ -42,12 +42,14 @@ export class WebSocketServerEndpoint implements IConnectorEndpoint {
       message.data.id = `${this.serverId}_${message.data.id}`;
     }
   }
+
   protected isCurrentServerMessage(message: IEndpointMessage): boolean {
     if (this.serverId && message.type !== 'initialize' && isJSONRPCResponse(message.data) && typeof message.data.id === 'string') {
       return (message.data.id as string).startsWith(`${this.serverId}_`);
     }
     return true;
   }
+
   protected restoreMessageId(message: IEndpointMessage): void {
     if (this.serverId && message.type !== 'initialize' && isJSONRPCResponse(message.data)) {
       message.data.id = Number((message.data.id as string).replace(`${this.serverId}_`, ''));
