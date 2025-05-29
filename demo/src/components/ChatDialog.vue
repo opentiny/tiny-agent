@@ -62,7 +62,7 @@ import {
 
 const props = defineProps({
   clientId: { type: String, default: () => '' },
-  genCode: { type: Function, default: () => {} }
+  genCode: { type: Function, default: () => () => {} }
 });
 
 // 自定义模型提供者
