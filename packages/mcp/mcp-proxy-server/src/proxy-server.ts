@@ -2,8 +2,9 @@ import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { IConnectorEndpoint } from '@opentiny/tiny-agent-mcp-connector';
 
 export class ProxyServer {
+  protected verifyCode?: string;
   protected endpoint?: IConnectorEndpoint;
-
+ 
   protected transport?: Transport | null;
   async connect(transport: Transport): Promise<void> {
     if (this.transport) {
@@ -22,10 +23,22 @@ export class ProxyServer {
     };
 
     this.transport.onmessage = (message, extra) => {
+      const newExtra = this.verifyCode 
+        ? {
+          ...(extra || {}),
+          authInfo: {
+            ...(extra?.authInfo || {}),
+            extra: {
+              ...(extra?.authInfo?.extra || {}),
+              verifyCode: this.verifyCode
+            }
+          }
+        }
+        : extra;
       this.endpoint!.send({
         type: "message",
         data: message,
-        extra
+        extra: newExtra
       });
     };
 
@@ -35,9 +48,14 @@ export class ProxyServer {
 
     await this.transport.start();
   }
-  async setEndPoint(endpoint: IConnectorEndpoint): Promise<void> {
+  setEndPoint(endpoint: IConnectorEndpoint) {
     this.endpoint = endpoint;
   }
+
+  setVerifyCode(code : string) {
+    this.verifyCode = code;
+  }
+
   protected onError(error: Error) {
     console.error("Error in transport", error);
   }

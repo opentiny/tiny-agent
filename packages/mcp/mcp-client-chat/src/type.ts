@@ -1,6 +1,6 @@
 export interface McpServer {
   url: string;
-  header?: Record<string, string>;
+  headers?: Record<string, string>;
   timeout?: number;
 }
 

@@ -43,6 +43,10 @@ app.delete('/mcp', handleSessionRequest);
 app.post('/mcp', async (req: Request, res: Response) => {
   const server = getProxyServer();
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
+  const verifyCode = req.headers['mcp-verify-code'] as string | undefined;
+  server.setEndPoint(connectorCenter.getClient(req.query.client as string, sessionId)!);
+  server.setVerifyCode(verifyCode);
+
   let transport: Transport;
 
   if (sessionId && transports[sessionId]) {
@@ -71,6 +75,7 @@ app.get('/sse', async (req: Request, res: Response) => {
   const transport = new SSEServerTransport('/messages', res);
   transports[transport.sessionId] = transport;
   server.setEndPoint(connectorCenter.getClient(req.query.client as string, transport.sessionId)!);
+  server.setVerifyCode(req.query.code);
   res.on('close', () => {
     delete transports[transport.sessionId];
   });
@@ -99,7 +104,7 @@ app.post('/chat', async (req: Request, res) => {
     mcpServersConfig: {
       mcpServers: {
         'localhost-mcp': {
-          url: `http://127.0.0.1:3001/sse?client=${req.headers['connector-client-id'] as string}`,
+          url: `http://127.0.0.1:3001/sse?client=${req.headers['connector-client-id'] as string}&code=${req.headers['mcp-verify-code']}`,
           headers: {},
           timeout: 60,
           sse_read_timeout: 300,

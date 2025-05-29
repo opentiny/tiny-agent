@@ -44,6 +44,24 @@ export class McpService {
         capabilities
       );
     };
+
+    // add validator.verify befall tool call
+    const originCreateRegisteredTool = this.mcpServer['_createRegisteredTool'].bind(this.mcpServer)
+    this.mcpServer['_createRegisteredTool'] = (...toolArgs: any) => {
+      const newToolArgs = [...toolArgs];
+      const originCallback = newToolArgs[5];
+      const newCallback = (async (arg: ZodRawShape, extra: any) => {
+        if (this.mcpValidator) {
+          const verified = await this.mcpValidator.verify(extra?.authInfo?.extra?.verifyCode)
+          if(!verified) {
+            throw new Error('mcp-verify-code verify failed')
+          }
+        } 
+        return originCallback(arg, extra);
+      });
+      newToolArgs[5] = newCallback;
+      originCreateRegisteredTool(...newToolArgs);
+    }
   }
 
   setValidator(validator: McpValidator) {
