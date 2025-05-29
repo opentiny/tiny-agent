@@ -12,7 +12,13 @@ export interface McpServerConfig {
 
 export type McpServersConfig = Record<string, McpServerConfig | any>;
 
+export enum AgentStrategy {
+  FUNCTION_CALLING = 'Function Calling',
+  RE_ACT = 'ReAct',
+}
+
 export interface MCPClientOptions {
+  agentStrategy: AgentStrategy;
   llmConfig: {
     // 模型配置
     url: string; // ai 接口地址
@@ -38,13 +44,7 @@ export interface AvailableTool {
 }
 
 export interface CallToolsParams {
-  toolCalls: {
-    id: string;
-    function: {
-      name: string;
-      arguments: string;
-    };
-  }[];
+  toolCalls: ToolCall[];
 }
 
 export interface ChatBody {
@@ -54,7 +54,14 @@ export interface ChatBody {
 
 export type ToolResults = Array<{ call: string; result: any }>;
 
-export type Role = 'function' | 'user' | 'assistant' | 'developer' | 'system' | 'tool';
+export enum Role {
+  FUNCTION = 'function',
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  DEVELOPER = 'developer',
+  SYSTEM = 'system',
+  TOOL = 'tool'
+}
 
 export type ErrorResponse = {
   code: number; // See "Error Handling" section
