@@ -1,5 +1,5 @@
-import { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import { IConnectorEndpoint } from '@opentiny/tiny-agent-mcp-connector';
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type { IConnectorEndpoint } from '@opentiny/tiny-agent-mcp-connector';
 
 export class ProxyServer {
   protected verifyCode?: string;

@@ -1,4 +1,4 @@
-import { IConnectorEndpoint } from "./endpoint.type";
+import type { IConnectorEndpoint } from "./endpoint.type";
 import { genId } from "./utils";
 
 export class ConnectorCenter<T extends IConnectorEndpoint>{

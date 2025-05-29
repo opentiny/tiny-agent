@@ -75,7 +75,7 @@ class CustomModelProvider extends BaseModelProvider {
     try {
       this.validateRequest(request);
 
-      const verifyCode = props.genCode();
+      const verifyCode = await props.genCode();
       const lastMessage = request.messages[request.messages.length - 1].content;
       const options = {
         method: 'POST',

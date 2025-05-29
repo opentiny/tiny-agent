@@ -1,4 +1,4 @@
-import { IConnectorEndpoint, IEndpointMessage } from '../endpoint.type';
+import { EndpointMessageType, type IConnectorEndpoint, type IEndpointMessage } from '../endpoint.type';
 
 export class WebSocketClientEndpoint implements IConnectorEndpoint {
   public clientId!: string | number;
@@ -20,7 +20,7 @@ export class WebSocketClientEndpoint implements IConnectorEndpoint {
 
       this.ws.onopen = () => {
         const message = {
-          type: 'initialize'
+          type: EndpointMessageType.INITIALIZE
         }
         this.send(message)
       }
@@ -36,7 +36,7 @@ export class WebSocketClientEndpoint implements IConnectorEndpoint {
 
       this.ws.onmessage = (messageEvent: MessageEvent<string>) => {
         const message: IEndpointMessage = JSON.parse(messageEvent.data);
-        if (message.type === 'initialize') {
+        if (message.type === EndpointMessageType.INITIALIZE) {
           this.clientId = (message.data as any).clientId;
           this.clientIdResolver(this.clientId);
           resolve();
@@ -52,7 +52,7 @@ export class WebSocketClientEndpoint implements IConnectorEndpoint {
   }
 
   async send(message: IEndpointMessage): Promise<void> {
-    if(message.type !== 'initialize') {
+    if(message.type !== EndpointMessageType.INITIALIZE) {
       await this.clientIdResolved;
     }
     this.ws.send(JSON.stringify(message));

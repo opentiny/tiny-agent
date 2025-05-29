@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 export class McpValidator {
-  protected verifyCode!: string;
+  protected verifyCode?: string;
 
   genVerifyCode = async () => {
     const nonceCode = uuidv4();
@@ -10,8 +10,8 @@ export class McpValidator {
   };
 
   async verify(code: string) {
-    const isVerified = this.verifyCode === code;
-    this.verifyCode = '';
+    const isVerified = this.verifyCode && this.verifyCode === code;
+    this.verifyCode = undefined;
     return isVerified;
   }
 }

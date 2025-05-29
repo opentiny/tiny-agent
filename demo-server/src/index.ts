@@ -63,7 +63,7 @@ app.post('/mcp', async (req: Request, res: Response) => {
       }
     };
 
-    const clientId = req.headers['mcp-client-id'] as string | undefined;
+    const clientId = req.headers['connector-client-id'] as string | undefined;
     const verifyCode = req.headers['mcp-verify-code'] as string | undefined;
     const server = getProxyServer();
     server.setEndPoint(connectorCenter.getClient(clientId, sessionId)!);
@@ -109,15 +109,21 @@ app.post('/chat', async (req: Request, res) => {
     maxIterationSteps: 3,
     mcpServersConfig: {
       mcpServers: {
-        'localhost-mcp': {
-          url: `http://127.0.0.1:3001/sse?client=${req.headers['connector-client-id'] as string}&code=${req.headers['mcp-verify-code']}`,
-          headers: {},
+        // http with sse(deprecated )
+        // 'localhost-mcp': {
+        //   url: `http://127.0.0.1:3001/sse?client=${req.headers['connector-client-id'] as string}&code=${req.headers['mcp-verify-code']}`,
+        //   headers: {},
+        //   timeout: 60,
+        //   sse_read_timeout: 300,
+        // },
+        'localhost-mcp-streamable-http': {
+          url: 'http://127.0.0.1:3001/mcp',
+          headers: {
+            'connector-client-id': req.headers['connector-client-id'],
+            'mcp-verify-code': req.headers['mcp-verify-code']
+          },
           timeout: 60,
           sse_read_timeout: 300,
-        },
-        'localhost-mcp-streamable-http': {
-          url: 'http://127.0.0.1:3001/mcp'
-          header
         }
       },
     },

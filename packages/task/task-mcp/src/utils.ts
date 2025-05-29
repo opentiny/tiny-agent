@@ -1,5 +1,5 @@
-import { Tool } from "@modelcontextprotocol/sdk/types";
-import { JsonSchema, jsonSchemaToZod } from "json-schema-to-zod";
+import type { Tool } from "@modelcontextprotocol/sdk/types";
+import { type JsonSchema, jsonSchemaToZod } from "json-schema-to-zod";
 import { z, ZodRawShape} from 'zod';
 
 export function getZodType(jsonSchema: JsonSchema): z.ZodTypeAny {

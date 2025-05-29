@@ -1,6 +1,6 @@
-import { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
-import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
-import { IConnectorEndpoint, IEndpointMessage } from './endpoint.type'
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'
+import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js'
+import type { IConnectorEndpoint, IEndpointMessage } from './endpoint.type'
 
 export class EndpointTransport implements Transport {
   get clientId(): string | number {
