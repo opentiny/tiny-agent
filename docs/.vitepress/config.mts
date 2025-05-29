@@ -31,7 +31,7 @@ export default defineConfig({
       { text: '指引', link: '/guide/write-docs-guide' },
       { text: '配置', link: '/config/config' },
       { text: 'API', link: '/api/api' },
-      { text: '扩展', link: '/extensions/simulate-lib' },
+      { text: '扩展', link: '/extensions/extension' },
       { text: '演示', link: '/examples/demo' },
       { text: '1.0.0', link: '/releases/releases' },
     ],
@@ -61,6 +61,18 @@ export default defineConfig({
           ],
         },
         {
+          text: '操作库',
+          base: '/api/actions/',
+          items: [
+            { text: 'Actions概述', link: 'simulate-lib' },
+            { text: 'BaseActions', link: 'base-actions' },
+            { text: 'FormActions', link: 'form-actions' },
+            { text: 'TinyVueActions', link: 'tiny-vue-actions' },
+            { text: 'VueRouterActions', link: 'vue-router-actions' },
+            { text: 'UserGuideActions', link: 'user-guide-actions' },
+          ],
+        },
+        {
           text: '基础UI库',
           base: '/api/ui/',
           items: [
@@ -81,13 +93,6 @@ export default defineConfig({
           text: '配置',
           base: '/config/',
           items: [{ text: '配置方案', link: 'config' }],
-        },
-      ],
-      '/extensions/': [
-        {
-          text: '扩展',
-          base: '/extensions/',
-          items: [{ text: '模拟dom操作库', link: 'simulate-lib' }],
         },
       ],
     },
