@@ -1,0 +1,26 @@
+{
+  "name": "@opentiny/tiny-agent-mcp-proxy-server",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.4",
+    "@opentiny/tiny-agent-mcp-connector": "workspace:*",
+    "commander": "^13.1.0",
+    "express": "^5.1.0",
+    "pm2": "^6.0.5",
+    "zod": "^3.24.2",
+    "ws": "^8.18.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/ws": "^8.18.1",
+    "vite": "^6.0.0",
+    "vite-plugin-dts": "^4.0.0"
+  }
+}

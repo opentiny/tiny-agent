@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["es2017", "DOM", "ES2019", "ES2021"],
+    "module": "ES2022",
+    "outDir": "./dist",
+    "strict": true,
+    "sourceMap": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "typeRoots": ["./node_modules/@types"]
+  },
+  "include": ["src", "src/*.d.ts"]
+}

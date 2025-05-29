@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@opentiny/tiny-agent-mcp-connector": ["../packages/mcp/mcp-connector/src/index.ts"],
+      "@opentiny/tiny-agent-mcp-proxy-server": ["../packages/mcp/mcp-proxy-server/src/index.ts"],
+      "@opentiny/tiny-agent-mcp-client-chat": ["../packages/mcp/mcp-client-chat/src/index.ts"]
+    }
+  },
+  "include": [
+    "src",
+    "../packages/**/*.ts"
+  ]
+}

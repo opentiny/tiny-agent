@@ -5,6 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "pnpm --filter @opentiny/tiny-agent-* build",
+    "dev:demo": "pnpm --filter agent-app dev",
+    "dev:demo-server": "pnpm --filter app-server dev",
+    "dev": "concurrently \"pnpm dev:demo-server\"  \"pnpm dev:demo\"",
     "docs": "pnpm --filter docs run docs:dev"
   },
   "repository": {
@@ -23,5 +27,8 @@
   "bugs": {
     "url": "https://github.com/opentiny/tiny-agent/issues"
   },
-  "homepage": "https://github.com/opentiny/tiny-agent#readme"
+  "homepage": "https://github.com/opentiny/tiny-agent#readme",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
 }
