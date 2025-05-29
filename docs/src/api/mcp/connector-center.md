@@ -4,7 +4,7 @@
 
 本质上，ConnectorCenter 是用于维护管理通信层多客户端的管理器
 
-## Config
+## 方法
 
 ### getClient
 
@@ -14,8 +14,8 @@
 - **示例**
 
 ```typescript
-const connectorCenter = new ConnectorCenter();
-connectorCenter.getClient('clientId');
+const connectorCenter = new ConnectorCenter()
+connectorCenter.getClient('clientId')
 ```
 
 ### setClient
@@ -25,8 +25,8 @@ connectorCenter.getClient('clientId');
 - **示例**
 
 ```typescript
-const connectorCenter = new ConnectorCenter();
-connectorCenter.setClient('clientId', socket);
+const connectorCenter = new ConnectorCenter()
+connectorCenter.setClient('clientId', socket)
 ```
 
 ### removeClient
@@ -36,6 +36,6 @@ connectorCenter.setClient('clientId', socket);
 - **示例**
 
 ```typescript
-const connectorCenter = new ConnectorCenter();
-connectorCenter.removeClient('clientId');
+const connectorCenter = new ConnectorCenter()
+connectorCenter.removeClient('clientId')
 ```
