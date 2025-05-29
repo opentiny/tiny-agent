@@ -10,7 +10,10 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
-      external: Object.keys(packageJson.dependencies || {})
+      external: [
+        ...Object.keys(packageJson.dependencies || {}),
+        ...Object.keys(packageJson.peerDependencies || {})
+      ]
     },
   },
   plugins: [
