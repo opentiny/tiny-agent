@@ -46,7 +46,7 @@ export class McpToolParser {
   replaceInstructionParamValue(instruction: InstructionSchema, paramsKey: string, paramsValue: any): void {
     Object.keys(instruction.params).forEach((key) => {
       if (typeof instruction.params[key] === 'string') {
-        instruction.params[key] = instruction.params[key].replace(this.placeholder(paramsKey), paramsValue);
+        instruction.params[key] = instruction.params[key].replaceAll(this.placeholder(paramsKey), paramsValue);
       }
     });
   }
