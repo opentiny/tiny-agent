@@ -170,7 +170,6 @@ export class McpClientChat {
 
         const message = (response.choices[0] as NonStreamingChoice).message;
 
-        // const { tool_calls } = this.getActionFromContent(message.content || '');
         const tool_calls = extractActions(message.content || '');
 
         // 工具调用
@@ -217,32 +216,6 @@ export class McpClientChat {
         message: error instanceof Error ? error.message : String(error),
       };
     }
-  }
-
-  protected getActionFromContent(content: string): { tool_calls: ToolCall[] } {
-    const actionStr = 'action:';
-    const actionInputStr = 'action-input:';
-    // 使用正则表达式匹配 JSON 对象
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    const tool_calls: ToolCall[] = [];
-
-    if (!jsonMatch) {
-      return { tool_calls };
-    }
-
-    const jsonStr = jsonMatch[0];
-    const { action, action_input = {} } = JSON.parse(jsonStr);
-
-    tool_calls.push({
-      id: action,
-      type: 'function',
-      function: {
-        name: action,
-        arguments: action_input,
-      },
-    });
-
-    return { tool_calls };
   }
 
   protected async initSystemPromptMessages(): Promise<string> {
