@@ -57,12 +57,13 @@ import {
   AIClient,
   useMessage,
   STATUS,
-  GeneratingStatus
+  GeneratingStatus,
 } from '@opentiny/tiny-robot-kit';
 
 const props = defineProps({
   clientId: { type: String, default: () => '' },
-  genCode: { type: Function, default: () => () => {} }
+  genCode: { type: Function, default: () => () => {} },
+  memory: { type: Boolean, default: true}
 });
 
 // 自定义模型提供者
@@ -82,9 +83,13 @@ class CustomModelProvider extends BaseModelProvider {
         headers: {
           'Content-Type': 'application/json',
           'connector-client-id': props.clientId,
-          'mcp-verify-code': verifyCode
+          'mcp-verify-code': verifyCode,
         },
-        body: JSON.stringify({ query: lastMessage })
+        body: JSON.stringify(
+          props.memory 
+          ? { messages: request.messages}
+          : { query: lastMessage }
+        )
       };
 
       const response = await fetch(`http://localhost:3001/chat`, options);
@@ -129,7 +134,7 @@ const customModelProvider = new CustomModelProvider();
 
 const client = new AIClient({
   provider: 'custom',
-  providerImplementation: customModelProvider
+  providerImplementation: customModelProvider,
 });
 
 // 使用tiny-robot 提供的API
@@ -137,7 +142,7 @@ const { messages, inputMessage, messageState, sendMessage, abortRequest } =
   useMessage({
     client,
     useStreamByDefault: false,
-    initialMessages: []
+    initialMessages: [],
   });
 
 const promptItems = [
@@ -145,8 +150,8 @@ const promptItems = [
     label: '指导场景',
     description: '列出目前系统中可用的工具！',
     icon: h('span', { style: { fontSize: '18px' } }, '🧠'),
-    badge: 'NEW'
-  }
+    badge: 'NEW',
+  },
 ];
 
 const handlePromptItemClick = (e, item) => {
@@ -160,13 +165,16 @@ const showMessages = computed(() => {
       {
         role: 'assistant',
         content: '正在思考中...',
-        loading: true
-      }
+        loading: true,
+      },
     ];
   }
   return messages.value;
 });
-const show = ref(true);
+const show = defineModel('show', {
+  type: Boolean,
+  default: true,
+});
 const fullscreen = ref(false);
 const senderRef = ref(null);
 
@@ -180,28 +188,27 @@ const roles = {
     avatar: aiAvatar,
     maxWidth: '90%',
     type: 'markdown',
-    mdConfig: { html: true }
+    mdConfig: { html: true },
   },
   user: {
     placement: 'end',
     avatar: userAvatar,
     maxWidth: '90%',
     type: 'markdown',
-    mdConfig: { html: true }
-  }
+    mdConfig: { html: true },
+  },
 };
 
 // 最新消息滚动到底部
 watch(
   () => messages.value[messages.value.length - 1],
   () => {
-    console.log('messages', messages);
     const containerBody = document.querySelector('div.tr-bubble-list');
     if (containerBody) {
       nextTick(() => {
         containerBody.scrollTo({
           top: containerBody.scrollHeight,
-          behavior: 'smooth'
+          behavior: 'smooth',
         });
       });
     }
@@ -216,11 +223,18 @@ watch(
 }
 .tr-container__footer {
   padding: 0 16px;
+  margin-bottom: 16px;
 }
 .tr-prompts {
   padding: 0 16px;
 }
 .prompt-item {
   width: calc(100% - 48px);
+}
+.tr-bubble__content-wrapper {
+  max-width: calc(100% - 56px);
+}
+.tr-bubbule__body {
+  overflow: auto;
 }
 </style>

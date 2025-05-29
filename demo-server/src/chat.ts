@@ -12,7 +12,7 @@ export function createChat(configFn: (req: Request) => MCPClientOptions) {
     )
     try {
       // 流式数据返回
-      const streamResponse = await mcpClientChat.chat(body.query);
+      const streamResponse = await mcpClientChat.chat(body.query || body.messages);
 
       streamResponse.pipe(res);
     } catch (error) {

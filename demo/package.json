@@ -16,9 +16,9 @@
     "@opentiny/tiny-agent-task-action-lib": "workspace:*",
     "@opentiny/tiny-agent-task-mcp": "workspace:*",
     "@opentiny/tiny-agent-task-runtime-service": "workspace:*",
-    "@opentiny/tiny-robot": "0.2.0-alpha.3",
-    "@opentiny/tiny-robot-kit": "0.2.0-alpha.3",
-    "@opentiny/tiny-robot-svgs": "0.2.0-alpha.3",
+    "@opentiny/tiny-robot": "0.2.0-alpha.6",
+    "@opentiny/tiny-robot-kit": "0.2.0-alpha.6",
+    "@opentiny/tiny-robot-svgs": "0.2.0-alpha.6",
     "@opentiny/vue": "^3.23.0",
     "vue": "^3.5.13",
     "zod": "^3.25.13"
