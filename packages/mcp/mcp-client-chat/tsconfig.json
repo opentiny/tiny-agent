@@ -1,16 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2020",
+    "lib": ["es2020", "DOM"],
     "module": "NodeNext",
-    "moduleResolution": "nodenext",
     "outDir": "./dist",
-    "rootDir": "./",
-    "esModuleInterop": true,
     "strict": true,
+    "sourceMap": false,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "declaration": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": [ "src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src", "src/*.d.ts"]
 }

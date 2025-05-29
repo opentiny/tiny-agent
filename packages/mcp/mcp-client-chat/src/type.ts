@@ -1,6 +1,6 @@
 export interface McpServer {
   url: string;
-  header?: Record<string, string>;
+  headers?: Record<string, string>;
   timeout?: number;
 }
 
@@ -13,7 +13,6 @@ export interface McpServerConfig {
 export type McpServersConfig = Record<string, McpServerConfig | any>;
 
 export interface MCPClientOptions {
-  clientId: string;
   llmConfig: {
     // 模型配置
     url: string; // ai 接口地址

@@ -1,4 +1,4 @@
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
@@ -51,10 +51,15 @@ export class McpClientChat {
     const baseUrl = new URL(url);
 
     try {
-      const transport = new StreamableHTTPClientTransport(new URL(baseUrl));
+      const transport = new StreamableHTTPClientTransport(baseUrl, {
+        requestInit: {
+          headers: serverConfig.headers
+        }
+      });
 
       await client.connect(transport);
     } catch (error) {
+      // SSEClientTransport will dump requestInit.headers (version 1.11.4)
       const sseTransport = new SSEClientTransport(baseUrl);
 
       await client.connect(sseTransport);
@@ -127,6 +132,7 @@ export class McpClientChat {
       this.messages.push(message);
     }
   }
+
   protected clearPromptMessages() {
     this.messages = [];
   }

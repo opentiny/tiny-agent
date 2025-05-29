@@ -1,28 +1,47 @@
-<script setup>
+<script setup lang="ts">
+import { ref } from 'vue';
+import { setupMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
+import { McpValidator } from '@opentiny/tiny-agent-mcp-service';
+import {
+  EndpointTransport,
+  WebSocketClientEndpoint
+} from '@opentiny/tiny-agent-mcp-connector';
+import {
+  executableTaskSchema,
+  McpToolParser
+} from '@opentiny/tiny-agent-task-mcp';
 import ChatDialog from './components/ChatDialog.vue';
 import AddUser from './components/AddUser.vue';
-import { setupMcpService } from '@opentiny/tiny-agent-mcp-service/vue/use-mcp-service';
-import { startClient } from '@opentiny/tiny-agent-mcp-tool-server/src/socket/client';
-import { ref } from 'vue';
-import { taskScheduler } from './scheduler';
-
+import mcpToolJson from './mcp-tool.json';
+import { taskScheduler } from './scheduler.js';
+const doTask = async (task: executableTaskSchema) => {
+  return taskScheduler.pushTask(task);
+};
+const mcpValidator = new McpValidator();
 const mcp = setupMcpService();
+function getWebSocketClientEndpoint() {
+  return new WebSocketClientEndpoint({ url: 'ws://localhost:8082' });
+}
+const endpointTransport = new EndpointTransport(getWebSocketClientEndpoint);
+mcp.mcpServer.connect(endpointTransport);
+mcp.setValidator(mcpValidator);
+new McpToolParser(doTask).extractAllTools(mcpToolJson).forEach((tool) => {
+  mcp.mcpServer.registerTool(tool.name, tool.config, tool.cb);
+});
 
-const client = startClient(
-  (task) => taskScheduler.pushTask(task),
-  mcp,
-  'ws://127.0.0.1:3001'
-);
+const clientId = ref(endpointTransport.clientId);
 
-// 需要唯一标识，区分与服务端链接的每个对话框
-const clientId = ref(client.clientId);
-
-setTimeout(() => {
-  clientId.value = client.clientId;
-}, 1000);
+if (!endpointTransport.clientId) {
+  endpointTransport.clientIdResolved.then((id) => {
+    clientId.value = id;
+    console.log('Client ID:', clientId.value);
+  });
+} else {
+  console.log('Client ID:', clientId.value);
+}
 </script>
 
 <template>
   <AddUser />
-  <ChatDialog :client-id="clientId" />
+  <ChatDialog :client-id="clientId" :genCode="mcpValidator.genVerifyCode" />
 </template>
