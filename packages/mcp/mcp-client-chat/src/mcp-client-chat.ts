@@ -51,7 +51,7 @@ export class McpClientChat {
     const baseUrl = new URL(url);
 
     try {
-      const transport = new StreamableHTTPClientTransport(new URL(baseUrl),{
+      const transport = new StreamableHTTPClientTransport(baseUrl, {
         requestInit: {
           headers: serverConfig.headers
         }
@@ -60,7 +60,7 @@ export class McpClientChat {
       await client.connect(transport);
     } catch (error) {
       // SSEClientTransport will dump requestInit.headers (version 1.11.4)
-      const sseTransport = new SSEClientTransport(baseUrl); 
+      const sseTransport = new SSEClientTransport(baseUrl);
 
       await client.connect(sseTransport);
     }
