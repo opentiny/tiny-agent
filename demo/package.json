@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@opentiny/tiny-robot": "0.2.0-alpha.3",
-    "@opentiny/tiny-robot-kit": "0.2.0-alpha.3",
-    "@opentiny/tiny-robot-svgs": "0.2.0-alpha.3",
+    "@opentiny/tiny-robot": "0.2.0-alpha.6",
+    "@opentiny/tiny-robot-kit": "0.2.0-alpha.6",
+    "@opentiny/tiny-robot-svgs": "0.2.0-alpha.6",
     "@opentiny/tiny-agent-mcp-connector": "workspace:*",
     "@opentiny/tiny-agent-mcp-proxy-server": "workspace:*",
     "@opentiny/tiny-agent-mcp-service": "workspace:*",
