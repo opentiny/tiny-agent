@@ -63,6 +63,7 @@ import {
 const props = defineProps({
   clientId: { type: String, default: () => '' },
   genCode: { type: Function, default: () => () => {} },
+  memory: { type: Boolean, default: true}
 });
 
 // 自定义模型提供者
@@ -84,7 +85,11 @@ class CustomModelProvider extends BaseModelProvider {
           'connector-client-id': props.clientId,
           'mcp-verify-code': verifyCode,
         },
-        body: JSON.stringify({ query: lastMessage }),
+        body: JSON.stringify(
+          props.memory 
+          ? { messages: request.messages}
+          : { query: lastMessage }
+        )
       };
 
       const response = await fetch(`http://localhost:3001/chat`, options);
