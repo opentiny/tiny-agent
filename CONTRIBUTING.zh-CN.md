@@ -43,7 +43,7 @@
 
 ## 提交 PR
 
-提交 PR 之前，请先确保你提交的内容是符合 TinyVue 整体规划的，一般已经标记为 [bug](https://github.com/opentiny/tiny-agent/labels/bug) 的 Issue 是鼓励提交 PR 的，如果你不是很确定，可以创建一个 [Discussion](https://github.com/opentiny/tiny-agent/discussions) 进行讨论。
+提交 PR 之前，请先确保你提交的内容是符合 TinyAgent 整体规划的，一般已经标记为 [bug](https://github.com/opentiny/tiny-agent/labels/bug) 的 Issue 是鼓励提交 PR 的，如果你不是很确定，可以创建一个 [Discussion](https://github.com/opentiny/tiny-agent/discussions) 进行讨论。
 
 ### Pull Request 规范
 
@@ -63,15 +63,11 @@ commit 信息要以 `type(scope): 描述信息` 的形式填写，例如 `fix(mc
 
 1. 标题的规范与 commit 信息一样，以`type(scope): 描述信息` 的形式填写。
 
-2. 触发组件的 **e2e 测试**: CI 会自动根据 PR 修改的文件来触发相应组件的测试用例。如果需要手动触发特定组件的测试，可以在 Pull Request 标题中添加 `[componentName1, componentName2]` 格式的组件名称，系统将会执行这些指定组件的测试用例。
+2. 标题示例:
 
-   - 注：本项目下的 `github action` 会用`[componentName1, componentName2]`声明的组件名匹配 `examples/sites/demos` 目录下的路径名称，识别要执行的测试e2e用例。（因为全量跑测试用例太耗费时间）
-
-3. 标题示例:
-
-- 补充 alert 组件文档： `docs(alert): xxxxxxxxxxxxxxx`, `docs(site):xxxxxxxxxxxxxxx`
-- 补充 alert 组件测试用例: `test(alert): xxxxxxxxxxxxxx`
-- 修复 alert 组件 @opentiny/vue-renderless 下的缺陷（手动触发 e2e 测试用例）: `fix(vue-renderless/alert): [alert] xxxxxxxxxxxxxx`
+- 补充 task 模块文档： `docs(补充task文档：): xxxxxxxxxxxxxxx`
+- 补充 task 模块测试用例: `test(task): xxxxxxxxxxxxxx`
+- 修复 task 模块 @opentiny/tiny-agent-task-action-lib 下的缺陷（手动触发 e2e 测试用例）: `fix(task/task-action-lib): xxxxxxxxxxxxxx`
 
 #### Pull Request 的描述
 
@@ -114,7 +110,7 @@ pnpm dev
 - 本地编码
 - 遵循 [Commit Message Format](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 规范进行提交，不符合提交规范的 PR 将不会被合并
 - 提交到远程仓库：git push origin branchName
-- 打开 TinyVue 代码仓库的 [Pull requests](https://github.com/opentiny/tiny-agent/pulls) 链接，点击 New pull request 按钮提交 PR
+- 打开 TinyAgent 代码仓库的 [Pull requests](https://github.com/opentiny/tiny-agent/pulls) 链接，点击 New pull request 按钮提交 PR
 - 按照 PR 模板补充相关信息，包括 PR 自检项、PR 类型、关联的 Issue 编号、是否是破坏性变更
 - 项目 Committer 进行 Code Review，并提出意见
 - PR 作者根据意见调整代码，请注意一个分支发起了 PR 后，后续的 commit 会自动同步，无需重新提交 PR
