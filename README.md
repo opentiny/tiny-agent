@@ -206,7 +206,7 @@ $ git clone git@github.com:opentiny/tiny-agent.git
 $ npm install pnpm -g
 
 # Install dependencies
-$ cd tiny-engine/ && pnpm install
+$ cd tiny-agent/ && pnpm install
 
 # Start
 $ pnpm dev
