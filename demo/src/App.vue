@@ -3,14 +3,8 @@ import { ref } from 'vue';
 import { setupMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
 import { McpValidator } from '@opentiny/tiny-agent-mcp-service';
 import AiChatSvg from './assets/ai-chat.svg?url';
-import {
-  EndpointTransport,
-  WebSocketClientEndpoint,
-} from '@opentiny/tiny-agent-mcp-connector';
-import {
-  executableTaskSchema,
-  McpToolParser,
-} from '@opentiny/tiny-agent-task-mcp';
+import { EndpointTransport, WebSocketClientEndpoint } from '@opentiny/tiny-agent-mcp-connector';
+import { executableTaskSchema, McpToolParser } from '@opentiny/tiny-agent-task-mcp';
 import ChatDialog from './components/ChatDialog.vue';
 import AddUser from './components/AddUser.vue';
 import mcpToolJson from './mcp-tool.json';
@@ -49,14 +43,10 @@ const showChat = ref(true);
   <ChatDialog
     :client-id="clientId"
     :genCode="mcpValidator.genVerifyCode"
+    :clearCode="mcpValidator.clearVerifyCode"
     v-model:show="showChat"
   />
-  <div
-    class="ai-chat-toggle"
-    title="打开AI对话框"
-    v-show="!showChat"
-    @click="showChat = true"
-  >
+  <div class="ai-chat-toggle" title="打开AI对话框" v-show="!showChat" @click="showChat = true">
     <img :src="AiChatSvg" />
   </div>
 </template>

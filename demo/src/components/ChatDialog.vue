@@ -1,9 +1,5 @@
 <template>
-  <tr-container
-    v-model:fullscreen="fullscreen"
-    v-model:show="show"
-    id="tiny-container"
-  >
+  <tr-container v-model:fullscreen="fullscreen" v-model:show="show" id="tiny-container">
     <template #title>
       <span></span>
     </template>
@@ -17,8 +13,7 @@
         @item-click="handlePromptItemClick"
       ></tr-prompts>
     </template>
-    <tr-bubble-list v-else :items="showMessages" :roles="roles">
-    </tr-bubble-list>
+    <tr-bubble-list v-else :items="showMessages" :roles="roles"> </tr-bubble-list>
     <template #footer>
       <tr-sender
         class="chat-input"
@@ -28,9 +23,7 @@
         :showWordLimit="true"
         ref="senderRef"
         :placeholder="
-          messageState.status === STATUS.PROCESSING
-            ? '正在思考中...'
-            : '请输入您的问题'
+          messageState.status === STATUS.PROCESSING ? '正在思考中...' : '请输入您的问题'
         "
         :clearable="true"
         :loading="GeneratingStatus.includes(messageState.status)"
@@ -57,13 +50,14 @@ import {
   AIClient,
   useMessage,
   STATUS,
-  GeneratingStatus,
+  GeneratingStatus
 } from '@opentiny/tiny-robot-kit';
 
 const props = defineProps({
   clientId: { type: String, default: () => '' },
   genCode: { type: Function, default: () => () => {} },
-  memory: { type: Boolean, default: true}
+  clearCode: { type: Function, default: () => () => {} },
+  memory: { type: Boolean, default: true }
 });
 
 // 自定义模型提供者
@@ -83,22 +77,16 @@ class CustomModelProvider extends BaseModelProvider {
         headers: {
           'Content-Type': 'application/json',
           'connector-client-id': props.clientId,
-          'mcp-verify-code': verifyCode,
+          'mcp-verify-code': verifyCode
         },
-        body: JSON.stringify(
-          props.memory 
-          ? { messages: request.messages}
-          : { query: lastMessage }
-        )
+        body: JSON.stringify(props.memory ? { messages: request.messages } : { query: lastMessage })
       };
 
       const response = await fetch(`http://localhost:3001/chat`, options);
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          `HTTP error! status: ${response.status}, details: ${errorText}`
-        );
+        throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
       }
 
       const reader = response.body.getReader();
@@ -122,6 +110,9 @@ class CustomModelProvider extends BaseModelProvider {
           text += '';
         }
       }
+
+      props.clearCode();
+
       return { choices: [{ message: { content: text } }] };
     } catch (error) {
       console.error(error);
@@ -134,24 +125,23 @@ const customModelProvider = new CustomModelProvider();
 
 const client = new AIClient({
   provider: 'custom',
-  providerImplementation: customModelProvider,
+  providerImplementation: customModelProvider
 });
 
 // 使用tiny-robot 提供的API
-const { messages, inputMessage, messageState, sendMessage, abortRequest } =
-  useMessage({
-    client,
-    useStreamByDefault: false,
-    initialMessages: [],
-  });
+const { messages, inputMessage, messageState, sendMessage, abortRequest } = useMessage({
+  client,
+  useStreamByDefault: false,
+  initialMessages: []
+});
 
 const promptItems = [
   {
     label: '指导场景',
     description: '列出目前系统中可用的工具！',
     icon: h('span', { style: { fontSize: '18px' } }, '🧠'),
-    badge: 'NEW',
-  },
+    badge: 'NEW'
+  }
 ];
 
 const handlePromptItemClick = (e, item) => {
@@ -165,15 +155,15 @@ const showMessages = computed(() => {
       {
         role: 'assistant',
         content: '正在思考中...',
-        loading: true,
-      },
+        loading: true
+      }
     ];
   }
   return messages.value;
 });
 const show = defineModel('show', {
   type: Boolean,
-  default: true,
+  default: true
 });
 const fullscreen = ref(false);
 const senderRef = ref(null);
@@ -188,15 +178,15 @@ const roles = {
     avatar: aiAvatar,
     maxWidth: '90%',
     type: 'markdown',
-    mdConfig: { html: true },
+    mdConfig: { html: true }
   },
   user: {
     placement: 'end',
     avatar: userAvatar,
     maxWidth: '90%',
     type: 'markdown',
-    mdConfig: { html: true },
-  },
+    mdConfig: { html: true }
+  }
 };
 
 // 最新消息滚动到底部
@@ -208,7 +198,7 @@ watch(
       nextTick(() => {
         containerBody.scrollTo({
           top: containerBody.scrollHeight,
-          behavior: 'smooth',
+          behavior: 'smooth'
         });
       });
     }
