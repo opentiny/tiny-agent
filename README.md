@@ -215,3 +215,9 @@ Open browser and visit: `http://localhost:5173/`
 ### Environment Configuration
 
 Copy the contents from `demo-server/.env-example` to `demo-server/.env` and fill in your own API key.
+
+### 🤝 Contributing
+
+If you're interested in our open source project, we welcome you to join us! 🎉
+
+Please read the [Contributing Guide](CONTRIBUTING.md) before contributing.

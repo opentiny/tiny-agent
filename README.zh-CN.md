@@ -6,7 +6,7 @@
 </p>
 <p align="center"> 基于MCP协议使AI理解与操作用户界面，完成用户任务。</p>
 
-[English](README.md) | 简体中文
+[English](README.md) | [简体中文](README.zh-CN.md)
 
 ## 🌈 特性
 
