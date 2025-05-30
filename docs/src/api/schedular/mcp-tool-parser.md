@@ -6,7 +6,7 @@
 
 ### replaceInstructionParamValue
 
-使用真实参数替换静态工具JSON数据中的参数占位符
+使用真实参数替换静态工具 JSON 数据中的参数占位符
 
 #### 示例
 
@@ -35,9 +35,9 @@ console.log(instruction) // { action: '注册Tool', params: { name: 'queryTool' 
 
 ```typescript
 const doTask = () => {
-  console.log('execute task...')
-}
-const mcpToolParser = new McpToolParser(doTask)
+  console.log('execute task...');
+};
+const mcpToolParser = new McpToolParser(doTask);
 
 /**
  * extractTool 将单个工具进行标准化
@@ -45,20 +45,20 @@ const mcpToolParser = new McpToolParser(doTask)
  * mcpToolJson 为JSON格式的静态工具集 详细可参考demo目录下的mcp-tool.json
  * mcpTool 即为符合MCP协议标准的MCP Tool
  **/
-const mcpTool = mcpToolParser.extractTool(mcpToolJson)
-const mcpTools = mcpToolParser.extractTool(mcpToolsJson)
+const mcpTool = mcpToolParser.extractTool(mcpToolJson);
+const mcpTools = mcpToolParser.extractTool(mcpToolsJson);
 ```
 
 ## getTaskOutputSchema
 
-获取MCP Tool OutputSchema
+获取 MCP Tool OutputSchema
 
 #### 示例
 
 ```typescript
 const doTask = () => {
-  console.log('execute task...')
-}
-const mcpToolParser = new McpToolParser(doTask)
-const taskOutputSchema = mcpToolParser.getTaskOutputSchema()
+  console.log('execute task...');
+};
+const mcpToolParser = new McpToolParser(doTask);
+const taskOutputSchema = mcpToolParser.getTaskOutputSchema();
 ```

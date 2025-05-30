@@ -10,16 +10,16 @@ EndpointTransport 实现了 MCP 标准化的 Transport 协议，内置通信层�
 
 ```typescript
 function getWebSocketClientEndpoint() {
-  return new WebSocketClientEndpoint({ url: 'ws://localhost:8082' })
+  return new WebSocketClientEndpoint({ url: 'ws://localhost:8082' });
 }
 
-const endpointTransport = new EndpointTransport(getWebSocketClientEndpoint)
+const endpointTransport = new EndpointTransport(getWebSocketClientEndpoint);
 const mcpServer = new McpServer({
   name: 'MCP Service',
-  version: '1.0.0'
-})
+  version: '1.0.0',
+});
 
-mcpServer.connect(endpointTransport)
+mcpServer.connect(endpointTransport);
 ```
 
 ## 拓展

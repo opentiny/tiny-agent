@@ -14,8 +14,8 @@
 - **示例**
 
 ```typescript
-const connectorCenter = new ConnectorCenter()
-connectorCenter.getClient('clientId')
+const connectorCenter = new ConnectorCenter();
+connectorCenter.getClient('clientId');
 ```
 
 ### setClient
@@ -25,8 +25,8 @@ connectorCenter.getClient('clientId')
 - **示例**
 
 ```typescript
-const connectorCenter = new ConnectorCenter()
-connectorCenter.setClient('clientId', socket)
+const connectorCenter = new ConnectorCenter();
+connectorCenter.setClient('clientId', socket);
 ```
 
 ### removeClient
@@ -36,6 +36,6 @@ connectorCenter.setClient('clientId', socket)
 - **示例**
 
 ```typescript
-const connectorCenter = new ConnectorCenter()
-connectorCenter.removeClient('clientId')
+const connectorCenter = new ConnectorCenter();
+connectorCenter.removeClient('clientId');
 ```

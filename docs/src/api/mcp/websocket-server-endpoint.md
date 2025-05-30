@@ -9,7 +9,7 @@ WebsocketServerEndpoint 只负责消息的处理以及端点的关闭，初始�
 ## 使用
 
 ```typescript
-const webSocketServerEndpoint = new WebSocketServerEndpoint(ws, clientId, serverId)
+const webSocketServerEndpoint = new WebSocketServerEndpoint(ws, clientId, serverId);
 ```
 
 ## 方法
@@ -21,7 +21,7 @@ const webSocketServerEndpoint = new WebSocketServerEndpoint(ws, clientId, server
 - **示例**
 
 ```typescript
-webSocketServerEndpoint.start()
+webSocketServerEndpoint.start();
 ```
 
 ### close
@@ -31,7 +31,7 @@ webSocketServerEndpoint.start()
 - **示例**
 
 ```typescript
-webSocketServerEndpoint.close()
+webSocketServerEndpoint.close();
 ```
 
 ### send
@@ -41,5 +41,5 @@ webSocketServerEndpoint.close()
 - **示例**
 
 ```typescript
-webSocketServerEndpoint.send()
+webSocketServerEndpoint.send();
 ```

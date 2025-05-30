@@ -5,7 +5,7 @@
 ## 使用
 
 ```typescript
-const webSocketClientEndpoint = new WebSocketClientEndpoint({ url: 'ws://localhost:8082' })
+const webSocketClientEndpoint = new WebSocketClientEndpoint({ url: 'ws://localhost:8082' });
 ```
 
 ## 方法
@@ -17,7 +17,7 @@ const webSocketClientEndpoint = new WebSocketClientEndpoint({ url: 'ws://localho
 - **示例**
 
 ```typescript
-webSocketClientEndpoint.start()
+webSocketClientEndpoint.start();
 ```
 
 ### close
@@ -27,7 +27,7 @@ webSocketClientEndpoint.start()
 - **示例**
 
 ```typescript
-webSocketClientEndpoint.close()
+webSocketClientEndpoint.close();
 ```
 
 ### send
@@ -37,5 +37,5 @@ webSocketClientEndpoint.close()
 - **示例**
 
 ```typescript
-webSocketClientEndpoint.send()
+webSocketClientEndpoint.send();
 ```

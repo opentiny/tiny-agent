@@ -5,9 +5,9 @@ WebSocket 服务端
 ## 使用
 
 ```typescript
-const connectorCenter = new ConnectorCenter<WebSocketServerEndpoint>()
-const webSocketEndpointServer = new WebSocketEndpointServer({ port: 8082 }, connectorCenter)
-webSocketEndpointServer.start()
+const connectorCenter = new ConnectorCenter<WebSocketServerEndpoint>();
+const webSocketEndpointServer = new WebSocketEndpointServer({ port: 8082 }, connectorCenter);
+webSocketEndpointServer.start();
 ```
 
 ## 方法
@@ -19,5 +19,5 @@ webSocketEndpointServer.start()
 - **示例**
 
 ```typescript
-webSocketEndpointServer.start()
+webSocketEndpointServer.start();
 ```
