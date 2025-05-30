@@ -212,6 +212,9 @@ export const { taskScheduler, actionManager } = createScheduler(
 # 下载代码到本地
 $ git clone git@github.com:opentiny/tiny-agent.git
 
+# 全局安装 pnpm
+$ npm install pnpm -g
+
 # 安装所需的依赖
 $ cd tiny-engine/ && pnpm install
 
@@ -223,14 +226,4 @@ $ pnpm dev
 
 ### 环境配置
 
-```env
-# demo-server/.env
-# AI 平台 API 请求地址
-url=
-# AI 平台 API Key
-apiKey=
-# 使用的模型名称
-model=
-# 系统提示词
-systemPrompt=You are a helpful assistant with access to tools.
-```
+复制 `demo-server/.env-example` 内容到 `demo-server/.env` 中，填写自己的api key
