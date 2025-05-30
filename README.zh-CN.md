@@ -1,3 +1,21 @@
+<p align="center">
+  <a href="" target="_blank" rel="noopener noreferrer">
+    <img alt="OpenTiny TinyAgent Logo" src="./docs/src/public/logo.svg" height="100" style="max-width:100%;vertical-align: middle">
+    <span style="font-size: 36px; vertical-align: middle; margin-left: 24px">OpenTiny TinyAgent</span>
+  </a>
+</p>
+<p align="center"> 基于MCP协议使AI理解与操作用户界面，完成用户任务。</p>
+
+[English](README.md) | 简体中文
+
+## 🌈 特性
+
+- **支持MCP协议** 支持MCP客户端 + FunctionCall/ReAct模式的大模型
+- **任务调度指令** 支持模拟人机交互，让AI操作用户界面，可人为干预
+- **可扩展操作哭** 丰富的人机交互模拟，支持组件模块API专有扩展
+- **开发工具套件** 轻松标记编排，生成AI能理解的网站使用说明书
+
+
 ## 如何使用
 
 ### 使用MCP server
