@@ -14,24 +14,32 @@
 - 翻译文档
 - 参与代码检视
 
-## 提交 Issue
+## 如何提交 Issue
 
-如果你在使用 TinyAgent 过程中遇到问题，欢迎给我们提交 Issue，提交 Issue 之前，请先仔细阅读相关的[官方文档](https://opentiny.design)，确认这是一个缺陷还是尚未实现的功能。
+感谢您使用 Tiny Agent！在提交 Issue 前，请先确认以下内容：
 
-如果是一个缺陷，创建新 Issue 时选择 [Bug report](https://github.com/opentiny/tiny-agent/issues/new?template=bug-report.yml) 模板，标题遵循 `[componentName]缺陷简述` 的格式，比如：`[select]过滤功能中，选中的选项退格删除后，无法再次选中该选项`。
+已仔细阅读 [Tiny Agent 官方文档](100.94.63.14:5174/docs/tiny-agent)，确认问题不是文档未覆盖的使用疑问。
 
-报告缺陷的 Issue 主要需要填写以下信息：
+已检查该问题是否已被 [现有 Issue](https://github.com/your-repo/issues) 覆盖，避免重复提交。
 
-- tiny-agent 的版本号
-- 缺陷的表现，可截图辅助说明，如果有报错可贴上报错信息
-- 缺陷的复现步骤，最好能提供一个最小可复现 demo 链接
+**重要提示**
 
-如果是一个新特性，则选择 [Feature request](https://github.com/opentiny/tiny-agent/issues/new?template=feature-request.yml) 模板，标题遵循 `[componentName]新特性简述` 的格式，比如：`[select]选择框内容太长展示不下时，希望能支持配置tips提示`。
+提交缺陷报告时，请务必包含以下信息：
 
-新特性的 Issue 主要需要填写以下信息：
+- **清晰且具描述性的标题**
+- **缺陷的详细描述**（包括任何错误信息）
+- **复现步骤**
+- **预期行为**
+- **日志**（如适用，对于后端问题尤为重要，可在 docker-compose logs 中查找）
+- **截图或视频**（如有必要）
 
-- 该特性主要解决用户的什么问题
-- 该特性的 api 是什么样的
+### 我们的优先级划分：
+
+| **问题类型**                                                 | **优先级**                 |
+| ------------------------------------------------------------ | -------------------------- |
+| 核心功能缺陷（云服务异常、无法登录、应用无法使用、安全漏洞） | 紧急 Critical              |
+| 非关键缺陷、性能优化请求                                     | 中等优先级 Medium Priority |
+| 微小修复（拼写错误、存在混淆但可用的界面）                   | 低优先级 Low Priority      |
 
 ## 提交 PR
 
