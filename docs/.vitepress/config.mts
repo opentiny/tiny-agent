@@ -51,6 +51,22 @@ export default defineConfig({
       ],
       '/api/': [
         {
+          text: 'MCP服务',
+          base: '/api/mcp/mcp-service/',
+          items: [
+            { text: 'McpService', link: 'mcp-service' },
+            { text: 'McpServiceVue', link: 'mcp-service-vue' },
+            { text: 'McpValidator', link: 'mcp-validator' },
+          ],
+        },
+        {
+          text: '代理服务器',
+          base: '/api/mcp/',
+          items: [
+            { text: 'ProxyServer', link: 'mcp-proxy-server' },
+          ],
+        },
+        {
           text: '调度器',
           base: '/api/schedular/',
           items: [
@@ -93,6 +109,23 @@ export default defineConfig({
           text: '配置',
           base: '/config/',
           items: [{ text: '配置方案', link: 'config' }],
+        },
+      ],
+      '/extensions/': [
+        {
+          text: '连接器扩展',
+          base: '/extension/',
+          items: [],
+        },
+        {
+          text: '操作库扩展',
+          base: '/extension/',
+          items: [],
+        },
+        {
+          text: '验证器扩展', 
+          base: '/extension/',
+          items: [],
         },
       ],
     },
