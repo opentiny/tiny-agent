@@ -196,8 +196,6 @@ export const { taskScheduler, actionManager } = createScheduler(
 
 ## Development
 
-### Install Dependencies
-
 ```sh
 # Clone code to local
 $ git clone git@github.com:opentiny/tiny-agent.git

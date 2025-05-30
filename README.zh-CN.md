@@ -204,9 +204,7 @@ export const { taskScheduler, actionManager } = createScheduler(
 ```
 
 
-## 开发
-
-### 安装所需的依赖
+## 本地开发
 
 ```sh
 # 下载代码到本地
