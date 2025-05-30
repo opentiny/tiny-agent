@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "pnpm --filter @opentiny/tiny-agent-* build",
-    "pub": "pnpm --filter @opentiny/tiny-agent-task-* publish --no-git-check",
+    "pub": "pnpm --filter @opentiny/tiny-agent-* publish --no-git-check",
     "updateVersion": "node update-version.js",
     "dev:demo": "pnpm --filter demo-web dev",
     "dev:demo-server": "pnpm --filter demo-server dev",
