@@ -14,13 +14,20 @@ mcpServer.connect(...);
 mcpServer.tool(...);
 ```
 
-- **属性**
+## 属性
 
+### mcpServer(McpServer)
 
-- **方法**
+McpServer实例
 
+## 方法
 
+### setValidator
 
+设置验证器， 用于验证任务时用户授权的
 
+- **参数**
+
+validator(McpValidator)
 
 

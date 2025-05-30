@@ -1,9 +1,14 @@
 # MCP Proxy Server
 
-一个基于给予 MCP Connector Endpoint 的远程 MCP Server 代理方案，可以对接各类 ServerTransport。
+一个基于 MCP Connector Endpoint 的远程 MCP Server 代理方案，可以对接各类 ServerTransport。
 
 ## 用法
 
+```typescript
+const server = new ProxyServer();
+server.connect(new SSEServerTransport(...))；
+server.setEndpoint(new WebSocketServerEndpoint(...))；
+```
 
 ## 方法
 
@@ -20,7 +25,7 @@
 
 ```typescript
 const server = new ProxyServer();
-server.connect(new SSEServerTransport(...))
+server.connect(new SSEServerTransport(...))；
 ```
 
 ### setEndpoint
@@ -35,7 +40,7 @@ server.setEndpoint(new WebSocketServerEndpoint(...))
 
 ```
 
-## setVerifyCode
+### setVerifyCode
 
 设置验证信息
 

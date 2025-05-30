@@ -1,5 +1,4 @@
-
-## McpValidator
+# McpValidator
 
 MCP工具调用验证器，
 
