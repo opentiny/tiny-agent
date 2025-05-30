@@ -74,6 +74,7 @@ export default defineConfig({
             { text: 'ActionManager', link: 'action-manager' },
             { text: 'TaskScheduler', link: 'task-scheduler' },
             { text: 'TaskUI', link: 'task-ui' },
+            { text: 'McpToolParser', link: 'mcp-tool-parser' },
           ],
         },
         {
@@ -101,6 +102,11 @@ export default defineConfig({
           base: '/api/mcp/',
           items: [
             { text: 'MCPClientChat', link: 'mcp-client-chat' },
+            { text: 'ConnectorCenter', link: 'connector-center' },
+            { text: 'EndpointTransport', link: 'endpoint-transport' },
+            { text: 'WebsocketClientEndpoint', link: 'websocket-client-endpoint' },
+            { text: 'WebsocketEndpointServer', link: 'websocket-endpoint-server' },
+            { text: 'WebsocketServerEndpoint', link: 'websocket-server-endpoint' },
           ],
         },
       ],
@@ -129,9 +135,7 @@ export default defineConfig({
         },
       ],
     },
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/opentiny/tiny-agent' },
-    ],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/opentiny/tiny-agent' }],
     search: {
       provider: 'local',
     },
