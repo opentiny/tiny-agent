@@ -7,6 +7,9 @@
   "scripts": {
     "build": "vite build"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.4",
     "@opentiny/tiny-agent-mcp-connector": "workspace:~",
