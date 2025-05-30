@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitepress'
-import { vitepressDemoPlugin } from 'vitepress-demo-plugin'
+import { defineConfig } from 'vitepress';
+import { vitepressDemoPlugin } from 'vitepress-demo-plugin';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -11,20 +11,20 @@ export default defineConfig({
   ignoreDeadLinks: true,
   markdown: {
     config(md) {
-      md.use(vitepressDemoPlugin)
-    }
+      md.use(vitepressDemoPlugin);
+    },
   },
   vite: {
     server: {
       host: '0.0.0.0', // 允许外部访问
-      open: true // 开发时自动打开浏览器
-    }
+      open: true, // 开发时自动打开浏览器
+    },
   },
   themeConfig: {
     logo: '/logo.svg',
     outline: {
       level: [2, 3], // 显示 <h2> 和 <h3> 标题
-      label: '目录' // 可选，自定义目录标题
+      label: '目录', // 可选，自定义目录标题
     },
     // https://vitepress.dev/reference/default-theme-config
     nav: [
@@ -33,7 +33,7 @@ export default defineConfig({
       { text: 'API', link: '/api/api' },
       { text: '扩展', link: '/extensions/extension' },
       { text: '演示', link: '/examples/demo' },
-      { text: '1.0.0', link: '/releases/releases' }
+      { text: '1.0.0', link: '/releases/releases' },
     ],
 
     sidebar: {
@@ -45,9 +45,9 @@ export default defineConfig({
             { text: '开发指引', link: 'develop' },
             { text: '部署流程', link: 'deploy' },
             { text: '如何使用', link: 'use' },
-            { text: '如何写文章', link: 'write-docs-guide' }
-          ]
-        }
+            { text: '如何写文章', link: 'write-docs-guide' },
+          ],
+        },
       ],
       '/api/': [
         {
@@ -58,8 +58,8 @@ export default defineConfig({
             { text: 'ActionManager', link: 'action-manager' },
             { text: 'TaskScheduler', link: 'task-scheduler' },
             { text: 'TaskUI', link: 'task-ui' },
-            { text: 'McpToolParser', link: 'mcp-tool-parser' }
-          ]
+            { text: 'McpToolParser', link: 'mcp-tool-parser' },
+          ],
         },
         {
           text: '操作库',
@@ -70,16 +70,16 @@ export default defineConfig({
             { text: 'FormActions', link: 'form-actions' },
             { text: 'TinyVueActions', link: 'tiny-vue-actions' },
             { text: 'VueRouterActions', link: 'vue-router-actions' },
-            { text: 'UserGuideActions', link: 'user-guide-actions' }
-          ]
+            { text: 'UserGuideActions', link: 'user-guide-actions' },
+          ],
         },
         {
           text: '基础UI库',
           base: '/api/ui/',
           items: [
             { text: 'Tooltip', link: 'tooltip' },
-            { text: 'Popup', link: 'popup' }
-          ]
+            { text: 'Popup', link: 'popup' },
+          ],
         },
         {
           text: 'MCP客户端',
@@ -90,21 +90,21 @@ export default defineConfig({
             { text: 'EndpointTransport', link: 'endpoint-transport' },
             { text: 'WebsocketClientEndpoint', link: 'websocket-client-endpoint' },
             { text: 'WebsocketEndpointServer', link: 'websocket-endpoint-server' },
-            { text: 'WebsocketServerEndpoint', link: 'websocket-server-endpoint' }
-          ]
-        }
+            { text: 'WebsocketServerEndpoint', link: 'websocket-server-endpoint' },
+          ],
+        },
       ],
       '/config/': [
         {
           text: '配置',
           base: '/config/',
-          items: [{ text: '配置方案', link: 'config' }]
-        }
-      ]
+          items: [{ text: '配置方案', link: 'config' }],
+        },
+      ],
     },
     socialLinks: [{ icon: 'github', link: 'https://github.com/opentiny/tiny-agent' }],
     search: {
-      provider: 'local'
-    }
-  }
-})
+      provider: 'local',
+    },
+  },
+});
