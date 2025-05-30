@@ -1,9 +1,5 @@
 <template>
-  <tr-container
-    v-model:fullscreen="fullscreen"
-    v-model:show="show"
-    id="tiny-container"
-  >
+  <tr-container v-model:fullscreen="fullscreen" v-model:show="show" id="tiny-container">
     <template #title>
       <span></span>
     </template>
@@ -17,8 +13,7 @@
         @item-click="handlePromptItemClick"
       ></tr-prompts>
     </template>
-    <tr-bubble-list v-else :items="showMessages" :roles="roles">
-    </tr-bubble-list>
+    <tr-bubble-list v-else :items="showMessages" :roles="roles"> </tr-bubble-list>
     <template #footer>
       <tr-sender
         class="chat-input"
@@ -27,11 +22,7 @@
         v-model="inputMessage"
         :showWordLimit="true"
         ref="senderRef"
-        :placeholder="
-          messageState.status === STATUS.PROCESSING
-            ? '正在思考中...'
-            : '请输入您的问题'
-        "
+        :placeholder="messageState.status === STATUS.PROCESSING ? '正在思考中...' : '请输入您的问题'"
         :clearable="true"
         :loading="GeneratingStatus.includes(messageState.status)"
         @submit="sendMessage"
@@ -52,18 +43,13 @@
 <script setup>
 import { IconAi, IconUser } from '@opentiny/tiny-robot-svgs';
 import { h, ref, watch, nextTick, computed } from 'vue';
-import {
-  BaseModelProvider,
-  AIClient,
-  useMessage,
-  STATUS,
-  GeneratingStatus,
-} from '@opentiny/tiny-robot-kit';
+import { BaseModelProvider, AIClient, useMessage, STATUS, GeneratingStatus } from '@opentiny/tiny-robot-kit';
 
 const props = defineProps({
   clientId: { type: String, default: () => '' },
   genCode: { type: Function, default: () => () => {} },
-  memory: { type: Boolean, default: true}
+  clearCode: { type: Function, default: () => () => {} },
+  memory: { type: Boolean, default: true },
 });
 
 // 自定义模型提供者
@@ -85,20 +71,14 @@ class CustomModelProvider extends BaseModelProvider {
           'connector-client-id': props.clientId,
           'mcp-verify-code': verifyCode,
         },
-        body: JSON.stringify(
-          props.memory 
-          ? { messages: request.messages}
-          : { query: lastMessage }
-        )
+        body: JSON.stringify(props.memory ? { messages: request.messages } : { query: lastMessage }),
       };
 
       const response = await fetch(`http://localhost:3001/chat`, options);
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
-          `HTTP error! status: ${response.status}, details: ${errorText}`
-        );
+        throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
       }
 
       const reader = response.body.getReader();
@@ -122,10 +102,13 @@ class CustomModelProvider extends BaseModelProvider {
           text += '';
         }
       }
+
       return { choices: [{ message: { content: text } }] };
     } catch (error) {
       console.error(error);
       throw error;
+    } finally {
+      props.clearCode();
     }
   }
 }
@@ -138,12 +121,11 @@ const client = new AIClient({
 });
 
 // 使用tiny-robot 提供的API
-const { messages, inputMessage, messageState, sendMessage, abortRequest } =
-  useMessage({
-    client,
-    useStreamByDefault: false,
-    initialMessages: [],
-  });
+const { messages, inputMessage, messageState, sendMessage, abortRequest } = useMessage({
+  client,
+  useStreamByDefault: false,
+  initialMessages: [],
+});
 
 const promptItems = [
   {
@@ -212,7 +194,7 @@ watch(
         });
       });
     }
-  }
+  },
 );
 </script>
 
