@@ -15,6 +15,10 @@
 - **可扩展操作哭** 丰富的人机交互模拟，支持组件模块API专有扩展
 - **开发工具套件** 轻松标记编排，生成AI能理解的网站使用说明书
 
+<p align="center">
+  <img alt="TinyAgent Architect" src="./docs/src/public/architect.svg" height="400" style="max-width:100%;vertical-align: middle">
+</p>
+
 ## 如何使用
 
 ### 使用MCP server

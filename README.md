@@ -15,6 +15,10 @@
 - **Extensible Operations** Rich human-computer interaction simulation, supporting component module API-specific extensions
 - **Development Toolkit** Easily mark and orchestrate to generate website user manuals that AI can understand
 
+<p align="center">
+  <img alt="TinyAgent Architect" src="./docs/src/public/architect.svg" height="400" style="max-width:100%;vertical-align: middle">
+</p>
+
 ## How to Use
 
 ### Using MCP Server
