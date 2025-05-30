@@ -8,9 +8,9 @@
   "main": "dist/index.js",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.11.0",
-    "@opentiny/tiny-agent-mcp-client-chat": "workspace:*",
-    "@opentiny/tiny-agent-mcp-connector": "workspace:*",
-    "@opentiny/tiny-agent-mcp-proxy-server": "workspace:*",
+    "@opentiny/tiny-agent-mcp-client-chat": "workspace:~",
+    "@opentiny/tiny-agent-mcp-connector": "workspace:~",
+    "@opentiny/tiny-agent-mcp-proxy-server": "workspace:~",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
