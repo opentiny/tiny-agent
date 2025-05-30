@@ -18,9 +18,9 @@
 
 感谢您使用 Tiny Agent！在提交 Issue 前，请先确认以下内容：
 
-已仔细阅读 [Tiny Agent 官方文档](100.94.63.14:5174/docs/tiny-agent)，确认问题不是文档未覆盖的使用疑问。
+已仔细阅读 [Tiny Agent 官方文档](http://100.94.63.14:5174/docs/tiny-agent)，确认问题不是文档未覆盖的使用疑问。
 
-已检查该问题是否已被 [现有 Issue](https://github.com/your-repo/issues) 覆盖，避免重复提交。
+已检查该问题是否已被 [现有 Issue](https://github.com/opentiny/tiny-agent/issues) 覆盖，避免重复提交。
 
 **重要提示**
 
