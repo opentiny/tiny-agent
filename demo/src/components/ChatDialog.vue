@@ -103,12 +103,12 @@ class CustomModelProvider extends BaseModelProvider {
         }
       }
 
-      props.clearCode();
-
       return { choices: [{ message: { content: text } }] };
     } catch (error) {
       console.error(error);
       throw error;
+    } finally {
+      props.clearCode();
     }
   }
 }
