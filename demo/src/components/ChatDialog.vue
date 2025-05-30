@@ -32,8 +32,10 @@
   </tr-container>
   <div
     @click="
-      show = !show
-      senderRef?.focus()
+      () => {
+        show = !show
+        senderRef?.focus()
+      }
     "
   >
     <slot></slot>
@@ -61,7 +63,7 @@ class CustomModelProvider extends BaseModelProvider {
     try {
       this.validateRequest(request)
 
-      const verifyCode = await mcpValidator.genVerifyCode()
+      const verifyCode = await props.mcpValidator.genVerifyCode()
       const lastMessage = request.messages[request.messages.length - 1].content
       const options = {
         method: 'POST',
@@ -102,7 +104,7 @@ class CustomModelProvider extends BaseModelProvider {
         }
       }
 
-      mcpValidator.clearVerifyCode()
+      props.mcpValidator.clearVerifyCode()
 
       return { choices: [{ message: { content: text } }] }
     } catch (error) {
