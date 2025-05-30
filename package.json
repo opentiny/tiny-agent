@@ -1,12 +1,14 @@
 {
   "name": "@opentiny/tiny-agent",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "agent tool collection",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "pnpm --filter @opentiny/tiny-agent-* build",
+    "pub": "pnpm --filter @opentiny/tiny-agent-* publish --no-git-check",
+    "updateVersion": "node update-version.js",
     "dev:demo": "pnpm --filter demo-web dev",
     "dev:demo-server": "pnpm --filter demo-server dev",
     "dev": "concurrently \"pnpm dev:demo-server\"  \"pnpm dev:demo\"",
@@ -41,6 +43,10 @@
     "globals": "^16.2.0",
     "prettier": "^3.3.3",
     "typescript": "~5.7.2",
-    "typescript-eslint": "^8.32.1"
+    "typescript-eslint": "^8.32.1",
+    "commander": "^11.1.0",
+    "glob": "^10.3.10",
+    "chalk": "^5.3.0",
+    "ora": "^7.0.1"
   }
 }
