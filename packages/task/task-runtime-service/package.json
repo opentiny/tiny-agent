@@ -12,7 +12,7 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@opentiny/tiny-agent-ui-components": "workspace:*"
+    "@opentiny/tiny-agent-ui-components": "workspace:~"
   },
   "devDependencies": {
     "vite": "^6.0.0",

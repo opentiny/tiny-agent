@@ -1,5 +1,5 @@
 {
-  "name": "agent-app",
+  "name": "demo-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,16 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@opentiny/tiny-agent-mcp-connector": "workspace:~",
+    "@opentiny/tiny-agent-mcp-proxy-server": "workspace:~",
+    "@opentiny/tiny-agent-mcp-service": "workspace:~",
+    "@opentiny/tiny-agent-mcp-service-vue": "workspace:~",
+    "@opentiny/tiny-agent-task-action-lib": "workspace:~",
+    "@opentiny/tiny-agent-task-mcp": "workspace:~",
+    "@opentiny/tiny-agent-task-runtime-service": "workspace:~",
     "@opentiny/tiny-robot": "0.2.0-alpha.6",
     "@opentiny/tiny-robot-kit": "0.2.0-alpha.6",
     "@opentiny/tiny-robot-svgs": "0.2.0-alpha.6",
-    "@opentiny/tiny-agent-mcp-connector": "workspace:*",
-    "@opentiny/tiny-agent-mcp-proxy-server": "workspace:*",
-    "@opentiny/tiny-agent-mcp-service": "workspace:*",
-    "@opentiny/tiny-agent-mcp-service-vue": "workspace:*",
-    "@opentiny/tiny-agent-task-action-lib": "workspace:*",
-    "@opentiny/tiny-agent-task-mcp": "workspace:*",
-    "@opentiny/tiny-agent-task-runtime-service": "workspace:*",
     "@opentiny/vue": "^3.23.0",
     "vue": "^3.5.13",
     "zod": "^3.25.13"

@@ -10,8 +10,10 @@ export class McpValidator {
   };
 
   async verify(code: string) {
-    const isVerified = this.verifyCode && this.verifyCode === code;
+    return this.verifyCode && this.verifyCode === code;
+  }
+
+  clearVerifyCode() {
     this.verifyCode = undefined;
-    return isVerified;
   }
 }

@@ -51,6 +51,22 @@ export default defineConfig({
       ],
       '/api/': [
         {
+          text: 'MCP服务',
+          base: '/api/mcp/mcp-service/',
+          items: [
+            { text: 'McpService', link: 'mcp-service' },
+            { text: 'McpServiceVue', link: 'mcp-service-vue' },
+            { text: 'McpValidator', link: 'mcp-validator' },
+          ],
+        },
+        {
+          text: '代理服务器',
+          base: '/api/mcp/',
+          items: [
+            { text: 'ProxyServer', link: 'mcp-proxy-server' },
+          ],
+        },
+        {
           text: '调度器',
           base: '/api/schedular/',
           items: [
@@ -58,6 +74,7 @@ export default defineConfig({
             { text: 'ActionManager', link: 'action-manager' },
             { text: 'TaskScheduler', link: 'task-scheduler' },
             { text: 'TaskUI', link: 'task-ui' },
+            { text: 'McpToolParser', link: 'mcp-tool-parser' },
           ],
         },
         {
@@ -85,6 +102,11 @@ export default defineConfig({
           base: '/api/mcp/',
           items: [
             { text: 'MCPClientChat', link: 'mcp-client-chat' },
+            { text: 'ConnectorCenter', link: 'connector-center' },
+            { text: 'EndpointTransport', link: 'endpoint-transport' },
+            { text: 'WebsocketClientEndpoint', link: 'websocket-client-endpoint' },
+            { text: 'WebsocketEndpointServer', link: 'websocket-endpoint-server' },
+            { text: 'WebsocketServerEndpoint', link: 'websocket-server-endpoint' },
           ],
         },
       ],
@@ -95,10 +117,25 @@ export default defineConfig({
           items: [{ text: '配置方案', link: 'config' }],
         },
       ],
+      '/extensions/': [
+        {
+          text: '连接器扩展',
+          base: '/extension/',
+          items: [],
+        },
+        {
+          text: '操作库扩展',
+          base: '/extension/',
+          items: [],
+        },
+        {
+          text: '验证器扩展', 
+          base: '/extension/',
+          items: [],
+        },
+      ],
     },
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/opentiny/tiny-agent' },
-    ],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/opentiny/tiny-agent' }],
     search: {
       provider: 'local',
     },

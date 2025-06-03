@@ -10,6 +10,9 @@
     "build": "vite build",
     "test": "tsc && node dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "action",
     "dom",
@@ -17,8 +20,8 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@opentiny/tiny-agent-task-runtime-service": "workspace:*",
-    "@opentiny/tiny-agent-ui-components": "workspace:*"
+    "@opentiny/tiny-agent-task-runtime-service": "workspace:~",
+    "@opentiny/tiny-agent-ui-components": "workspace:~"
   },
   "devDependencies": {
     "typescript": "^5.8.3",
