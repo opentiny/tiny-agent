@@ -58,29 +58,33 @@ class CustomModelProvider extends BaseModelProvider {
     super(options);
   }
   validateRequest() {}
+  async getData(request) {
+    this.validateRequest(request);
+
+    const verifyCode = await props.genCode();
+    const lastMessage = request.messages[request.messages.length - 1].content;
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'connector-client-id': props.clientId,
+        'mcp-verify-code': verifyCode,
+      },
+      body: JSON.stringify(props.memory ? { messages: request.messages } : { query: lastMessage }),
+    };
+
+    const response = await fetch(`http://localhost:3001/chat`, options);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
+    }
+    return response;
+  }
+
   async chat(request) {
     try {
-      this.validateRequest(request);
-
-      const verifyCode = await props.genCode();
-      const lastMessage = request.messages[request.messages.length - 1].content;
-      const options = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'connector-client-id': props.clientId,
-          'mcp-verify-code': verifyCode,
-        },
-        body: JSON.stringify(props.memory ? { messages: request.messages } : { query: lastMessage }),
-      };
-
-      const response = await fetch(`http://localhost:3001/chat`, options);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
-      }
-
+      const response = await this.getData(request);
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let text = '';
@@ -111,32 +115,13 @@ class CustomModelProvider extends BaseModelProvider {
       props.clearCode();
     }
   }
+
   async chatStream(request, handler) {
     const { onData, onDone, onError } = handler;
-
+    let reader = null;
     try {
-      this.validateRequest(request);
-
-      const verifyCode = await props.genCode();
-      const lastMessage = request.messages[request.messages.length - 1].content;
-      const options = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'connector-client-id': props.clientId,
-          'mcp-verify-code': verifyCode,
-        },
-        body: JSON.stringify(props.memory ? { messages: request.messages } : { query: lastMessage }),
-      };
-
-      const response = await fetch(`http://localhost:3001/chat`, options);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
-      }
-
-      const reader = response.body.getReader();
+      const response = await this.getData(request);
+      reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let buffer = '';
 
