@@ -58,29 +58,33 @@ class CustomModelProvider extends BaseModelProvider {
     super(options);
   }
   validateRequest() {}
+  async getData(request) {
+    this.validateRequest(request);
+
+    const verifyCode = await props.genCode();
+    const lastMessage = request.messages[request.messages.length - 1].content;
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'connector-client-id': props.clientId,
+        'mcp-verify-code': verifyCode,
+      },
+      body: JSON.stringify(props.memory ? { messages: request.messages } : { query: lastMessage }),
+    };
+
+    const response = await fetch(`http://localhost:3001/chat`, options);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
+    }
+    return response;
+  }
+
   async chat(request) {
     try {
-      this.validateRequest(request);
-
-      const verifyCode = await props.genCode();
-      const lastMessage = request.messages[request.messages.length - 1].content;
-      const options = {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'connector-client-id': props.clientId,
-          'mcp-verify-code': verifyCode,
-        },
-        body: JSON.stringify(props.memory ? { messages: request.messages } : { query: lastMessage }),
-      };
-
-      const response = await fetch(`http://localhost:3001/chat`, options);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, details: ${errorText}`);
-      }
-
+      const response = await this.getData(request);
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let text = '';
@@ -111,6 +115,51 @@ class CustomModelProvider extends BaseModelProvider {
       props.clearCode();
     }
   }
+
+  async chatStream(request, handler) {
+    const { onData, onDone, onError } = handler;
+    let reader = null;
+    try {
+      const response = await this.getData(request);
+      reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        // Append new chunk to buffer
+        buffer += decoder.decode(value, { stream: true });
+        // Process complete lines from buffer
+        while (true) {
+          const lineEnd = buffer.indexOf('\n');
+          if (lineEnd === -1) break;
+          const line = buffer.slice(0, lineEnd).trim();
+          buffer = buffer.slice(lineEnd + 1);
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') break;
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices[0].delta.content;
+              if (content) {
+                onData({ choices: [{ delta: { content } }] });
+              }
+            } catch (e) {
+              // Ignore invalid JSON
+            }
+          }
+        }
+      }
+      onDone();
+    } catch (error) {
+      onError(error);
+      throw error;
+    } finally {
+      reader.cancel();
+      props.clearCode();
+    }
+  }
 }
 
 const customModelProvider = new CustomModelProvider();
@@ -123,14 +172,26 @@ const client = new AIClient({
 // 使用tiny-robot 提供的API
 const { messages, inputMessage, messageState, sendMessage, abortRequest } = useMessage({
   client,
-  useStreamByDefault: false,
+  useStreamByDefault: true,
   initialMessages: [],
 });
 
 const promptItems = [
   {
-    label: '指导场景',
+    label: '列出工具',
     description: '列出目前系统中可用的工具！',
+    icon: h('span', { style: { fontSize: '18px' } }, '🧠'),
+    badge: 'NEW',
+  },
+  {
+    label: '界面操作',
+    description: '通过界面新增用户 张三 男 2000-1-1',
+    icon: h('span', { style: { fontSize: '18px' } }, '🧠'),
+    badge: 'NEW',
+  },
+  {
+    label: '函数调用',
+    description: '新增用户 李四 女 2000-2-2',
     icon: h('span', { style: { fontSize: '18px' } }, '🧠'),
     badge: 'NEW',
   },
@@ -218,5 +279,8 @@ watch(
 }
 .tr-bubbule__body {
   overflow: auto;
+}
+.tr-prompt__content-label {
+ font-size: 1.2em; 
 }
 </style>
