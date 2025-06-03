@@ -1,4 +1,4 @@
-const toolPromptTemplate = `Respond to the human as helpfully and accurately as possible.
+export const toolPromptTemplate = `Respond to the human as helpfully and accurately as possible.
 
 {{instruction}}
 
@@ -22,22 +22,21 @@ Follow this format:
 
 Question: input question to answer
 Thought: consider previous and subsequent steps
-Action:
+<Action>
 \`\`\`
 $JSON_BLOB
 \`\`\`
-Observation: action result
+</Action>
+<Observation>action result</Observation>
 ... (repeat Thought/Action/Observation N times)
-Thought: I know what to respond
-Action:
-\`\`\`
+<Thought>I know what to respond</Thought>
+<Action>
+\`\`\`json
 {
   "action": "Final Answer",
   "action_input": "Final response to human"
 }
 \`\`\`
-
+</Action>
 Begin! Reminder to ALWAYS respond with a valid json blob of a single action. Use tools if necessary. Respond directly if appropriate. Format is Action:\`\`\`$JSON_BLOB\`\`\`then Observation:.
 `;
-
-export { toolPromptTemplate };

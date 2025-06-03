@@ -119,7 +119,7 @@ export type ResponseUsage = {
 
 export type ChatCompleteResponse = {
   id: string;
-  choices: (NonStreamingChoice | NonChatChoice)[];
+  choices: (NonStreamingChoice | StreamingChoice  | NonChatChoice)[];
   // choices: NonStreamingChoice[];
   created: number;
   model: string;
