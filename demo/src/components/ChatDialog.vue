@@ -178,8 +178,20 @@ const { messages, inputMessage, messageState, sendMessage, abortRequest } = useM
 
 const promptItems = [
   {
-    label: '指导场景',
+    label: '列出工具',
     description: '列出目前系统中可用的工具！',
+    icon: h('span', { style: { fontSize: '18px' } }, '🧠'),
+    badge: 'NEW',
+  },
+  {
+    label: '界面操作',
+    description: '通过界面新增用户 张三 男 2000-1-1',
+    icon: h('span', { style: { fontSize: '18px' } }, '🧠'),
+    badge: 'NEW',
+  },
+  {
+    label: '函数调用',
+    description: '新增用户 李四 女 2000-2-2',
     icon: h('span', { style: { fontSize: '18px' } }, '🧠'),
     badge: 'NEW',
   },
@@ -267,5 +279,8 @@ watch(
 }
 .tr-bubbule__body {
   overflow: auto;
+}
+.tr-prompt__content-label {
+ font-size: 1.2em; 
 }
 </style>
