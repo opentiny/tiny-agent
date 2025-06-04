@@ -153,7 +153,7 @@ class CustomModelProvider extends BaseModelProvider {
       }
       onDone();
     } catch (error) {
-      onError(e);
+      onError(error);
       throw error;
     } finally {
       reader.cancel();
