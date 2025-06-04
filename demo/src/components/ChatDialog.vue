@@ -52,8 +52,82 @@ const props = defineProps({
   memory: { type: Boolean, default: true },
 });
 
+class SimpleToolCallHandler {
+  constructor() {
+    this.initStyles()
+  }
+  handler(extra, handler) {
+    const element = this.getElement(extra);
+    if (!element) {
+      const { onData } = handler;
+      onData({ choices: [{ delta: { content: this.createElement(extra)} }] });
+      this.updateToolTimer = setTimeout(() => {
+        this.updateTool(extra);
+        this.updateToolTimer = null;
+      }, 0);
+    } else {
+      if (this.updateToolTimer) {
+        clearTimeout(this.updateToolTimer);
+      }
+      this.updateTool(extra);   
+    }
+  }
+  updateToolTimer = null
+  createElement(extra) {
+    this.createStyle(extra);
+    return `<div class="tool-call" id="${extra.toolCall.id}"></div>`;
+  }
+  createStyle(extra) {
+    const style = document.createElement('style');
+    style.id = `tool_call_${extra.toolCall.id}`;
+    document.head.appendChild(style);
+  }
+  getStyle(extra) {
+    return document.querySelector(`#tool_call_${extra.toolCall.id}`);
+  }
+  getElement(extra) {
+    return document.querySelector(`div.tool-call#${extra.toolCall.id}`)
+  }
+  updateTool(extra) {
+    const element = this.getElement(extra);
+    const style = this.getStyle(extra);
+    if (!element || !style) {
+      console.warn('no tool call info')
+      return;
+    }
+
+    if (extra.callToolResult) {
+      style.innerHTML = `
+       .tool-call#${extra.toolCall.id}::after {
+         content: '调用工具 ${extra.toolCall.function.name} ${extra.callToolResult.isError ? '失败 ❌': '成功 ✅'}'
+       }
+      `
+    } else {
+      style.innerHTML = `
+       .tool-call#${extra.toolCall.id}::after {
+         content: '正在调用工具 ${extra.toolCall.function.name} ...'
+       }
+         `
+    }
+  }
+  initStyles() {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      div.tool-call {
+        padding: 8px 16px;
+        margin: 12px 0;
+        background: #EFEFEF;
+        border: #EEE 1px solid;
+        border-radius: 10px;
+      }
+    `
+    document.head.appendChild(style);
+  }
+}
+
 // 自定义模型提供者
 class CustomModelProvider extends BaseModelProvider {
+  toolCallHandler = new SimpleToolCallHandler();
   constructor(options) {
     super(options);
   }
@@ -141,6 +215,11 @@ class CustomModelProvider extends BaseModelProvider {
             if (data === '[DONE]') break;
             try {
               const parsed = JSON.parse(data);
+              if (parsed.choices[0].delta.extra?.toolCall) {
+                const extra = parsed.choices[0].delta.extra;
+                this.toolCallHandler.handler(extra, handler);
+                continue;
+              }
               const content = parsed.choices[0].delta.content;
               if (content) {
                 onData({ choices: [{ delta: { content } }] });
