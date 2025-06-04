@@ -8,7 +8,6 @@ on:
   push:
     branches: 
       - main
-      - lhs/add_docs_github_actions
 
   # 允许你从 Actions 选项卡手动运行此工作流程
   workflow_dispatch:
