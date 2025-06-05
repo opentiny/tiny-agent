@@ -49,6 +49,12 @@ export class McpClientChat {
       name: serverName,
       version: '1.0.0',
     });
+
+    if (serverConfig.customTransport) {
+      await client.connect(serverConfig.customTransport);
+      return client;
+    }
+
     const { url } = serverConfig;
     const baseUrl = new URL(url);
 
