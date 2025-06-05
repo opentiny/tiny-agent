@@ -1,4 +1,3 @@
-import { Readable } from 'node:stream';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
@@ -14,6 +13,7 @@ import type {
   NonStreamingChoice,
   ToolCall,
   ToolResults,
+  IChatOptions,
 } from './type.js';
 import { AgentStrategy, Role } from './type.js';
 import { toolPromptTemplate } from './template.js';
@@ -21,10 +21,12 @@ import { extractActions } from './utils.js';
 
 export class McpClientChat {
   protected options: MCPClientOptions;
-  protected iterationSteps: number;
-  protected clientsMap: Map<string, Client> = new Map<string, Client>();
-  protected toolClientMap: Map<string, Client> = new Map<string, Client>();
-  protected messages: Message[] = [];
+  protected iterationSteps;
+  protected clientsMap: Map<string, Client> = new Map();
+  protected toolClientMap: Map<string, Client> = new Map();
+  protected messages: Message[];
+  protected transformStream: TransformStream = new TransformStream();
+  protected chatOptions?: IChatOptions;
 
   constructor(options: MCPClientOptions) {
     this.options = options;
@@ -121,7 +123,9 @@ export class McpClientChat {
     this.messages = [];
   }
 
-  async chat(queryOrMessages: string | Array<Message>): Promise<Readable | Error> {
+  async chat(queryOrMessages: string | Array<Message>, chatOptions?: IChatOptions) {
+    this.chatOptions = chatOptions;
+
     const systemPrompt = await this.initSystemPromptMessages();
 
     this.messages.push({
@@ -142,62 +146,77 @@ export class McpClientChat {
 
     try {
       const toolsCallResults: ToolResults = [];
-
-      while (this.iterationSteps > 0) {
-        const response: ChatCompleteResponse | Error = await this.queryChatComplete({
-          messages: this.messages,
-        });
-
-        if (response.choices?.[0]?.error) {
-          this.organizePromptMessages({
-            role: Role.ASSISTANT,
-            content: response.choices[0].error.message,
-          });
-          this.iterationSteps = 0;
-
-          continue;
-        }
-
-        const [tool_calls, finalAnswer] = this.organizeToolCalls(response.choices[0] as NonStreamingChoice);
-
-        // 工具调用
-        if (tool_calls.length) {
-          this.organizePromptMessages({
-            role: Role.ASSISTANT,
-            content: JSON.stringify({ tool_calls }),
+      const chatIteration = async () => {
+        while (this.iterationSteps > 0) {
+          const response: ChatCompleteResponse | Error = await this.queryChatComplete({
+            messages: this.messages,
+            tools: this.iterationSteps > 1 ? availableTools : [],
           });
 
-          try {
-            const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
-
-            toolsCallResults.push(...toolResults);
-            toolCallMessages.forEach((m) => this.organizePromptMessages(m));
-
-            this.iterationSteps--;
-          } catch (_error) {
+          if (response.choices?.[0]?.error) {
             this.organizePromptMessages({
-              role: Role.ASSISTANT,
-              content: 'call tools failed!',
+              role: 'assistant',
+              content: response.choices[0].error.message,
+            });
+            this.iterationSteps = 0;
+
+            continue;
+          }
+
+          const message = (response.choices[0] as NonStreamingChoice).message;
+          const { tool_calls } = message;
+
+          // 工具调用
+          if (tool_calls) {
+            this.organizePromptMessages({
+              role: 'assistant',
+              content: JSON.stringify({ tool_calls }),
+            });
+
+            try {
+              const { toolResults, toolCallMessages } = await this.callTools({
+                toolCalls: tool_calls,
+              });
+
+              toolsCallResults.push(...toolResults);
+              toolCallMessages.forEach((m) => this.organizePromptMessages(m));
+
+              this.iterationSteps--;
+            } catch (error) {
+              this.organizePromptMessages({
+                role: 'assistant',
+                content: 'call tools failed!',
+              });
+
+              this.iterationSteps = 0;
+            }
+          } else {
+            this.organizePromptMessages({
+              role: 'assistant',
+              content: message.content ?? '',
             });
 
             this.iterationSteps = 0;
           }
-        } else {
-          this.organizePromptMessages({
-            role: Role.ASSISTANT,
-            content: finalAnswer,
-          });
-
-          this.iterationSteps = 0;
         }
+
+        const summaryPrompt = '用简短的话总结！';
+        const result = await this.queryChatCompleteStreaming({
+          messages: [...this.messages, { role: 'user', content: summaryPrompt }],
+        });
+        return result;
       }
 
-      const summaryPrompt = '一句话总结';
-      const result = await this.queryChatCompleteStreaming({
-        messages: [...this.messages, { role: Role.USER, content: summaryPrompt }],
-      });
+      chatIteration()
+        .then(async (result) => {
+          await result.pipeTo(this.transformStream.writable);
+        })
+        .catch((error) => {
+          console.error('Chat iteration failed:', error);
+          this.transformStream!.writable.abort(error);
+        });
 
-      return result;
+      return this.transformStream.readable;
     } catch (error) {
       return error as Error;
     }
@@ -258,6 +277,17 @@ export class McpClientChat {
           toolArgs = {};
         }
 
+        if (this.chatOptions?.toolCallResponse) {
+          await this.writeMessageDelta(
+            `Calling tool : ${toolName}` + '\n\n',
+            'assistant',
+            {
+              toolCall,
+            },
+          );
+        }
+
+
         // 调用工具
         const callToolResult = (await client.callTool({
           name: toolName,
@@ -270,6 +300,16 @@ export class McpClientChat {
           content: callToolContent,
         };
 
+        if (this.chatOptions?.toolCallResponse) {
+          await this.writeMessageDelta(
+            'Tool call result: ' + JSON.stringify(callToolContent) + '\n\n',
+            'assistant',
+            {
+              toolCall,
+              callToolResult,
+            },
+          )
+        }
         toolCallMessages.push(message);
         toolResults.push({
           call: toolName,
@@ -351,9 +391,7 @@ export class McpClientChat {
         throw new Error('Response body is null');
       }
 
-      const readableStream = Readable.fromWeb(response.body as any);
-
-      return readableStream;
+      return response.body;
     } catch (error) {
       console.error('Error calling streaming chat/complete:', error);
 
@@ -361,6 +399,28 @@ export class McpClientChat {
     } finally {
       // TODO: Implement context memory feature, for now clear after each request
       this.clearPromptMessages();
+    }
+  }
+
+  protected async writeMessageDelta(messageDeltaContent: string, role: string = 'assistant', extra?: any) {
+    const writer = this.transformStream.writable.getWriter();
+
+    try {
+      await writer.ready;
+      const messageDelta = {
+        choices: [
+          {
+            delta: {
+              role,
+              content: messageDeltaContent,
+              extra
+            }
+          }
+        ]
+      }
+      await writer.write(new TextEncoder().encode('data: ' + JSON.stringify(messageDelta) + '\n\n'));
+    } finally {
+      writer.releaseLock();
     }
   }
 }

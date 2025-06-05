@@ -208,3 +208,7 @@ export type ChatCompleteRequest = {
   route?: 'fallback';
   // provider?: ProviderPreferences;
 };
+
+export interface IChatOptions {
+  toolCallResponse?: boolean;
+}

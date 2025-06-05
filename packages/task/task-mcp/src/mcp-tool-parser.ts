@@ -64,7 +64,7 @@ export class McpToolParser {
         return accTask;
       }, {
         id: genTaskId(),
-        instructions: task.instructions
+        instructions: structuredClone(task.instructions)
       });
       const result = await this.doTask(realTask)
       return {
