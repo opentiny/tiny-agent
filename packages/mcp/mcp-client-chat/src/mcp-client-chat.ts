@@ -7,24 +7,25 @@ import type {
   AvailableTool,
   ChatBody,
   ChatCompleteResponse,
+  ChatCreatePromptArgs,
+  IChatOptions,
   MCPClientOptions,
   McpServer,
   Message,
   NonStreamingChoice,
   ToolCall,
   ToolResults,
-  IChatOptions,
 } from './type.js';
 import { AgentStrategy, Role } from './type.js';
-import { toolPromptTemplate } from './template.js';
 import { extractActions } from './utils.js';
+import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './ReActSystemPrompt.js';
 
 export class McpClientChat {
   protected options: MCPClientOptions;
   protected iterationSteps;
   protected clientsMap: Map<string, Client> = new Map();
   protected toolClientMap: Map<string, Client> = new Map();
-  protected messages: Message[];
+  protected messages: Message[] = [];
   protected transformStream: TransformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
 
@@ -150,12 +151,11 @@ export class McpClientChat {
         while (this.iterationSteps > 0) {
           const response: ChatCompleteResponse | Error = await this.queryChatComplete({
             messages: this.messages,
-            tools: this.iterationSteps > 1 ? availableTools : [],
           });
 
           if (response.choices?.[0]?.error) {
             this.organizePromptMessages({
-              role: 'assistant',
+              role: Role.ASSISTANT,
               content: response.choices[0].error.message,
             });
             this.iterationSteps = 0;
@@ -163,26 +163,18 @@ export class McpClientChat {
             continue;
           }
 
-          const message = (response.choices[0] as NonStreamingChoice).message;
-          const { tool_calls } = message;
+          const [tool_calls, finalAnswer] = await this.organizeToolCalls(response.choices[0] as NonStreamingChoice);
 
           // 工具调用
-          if (tool_calls) {
-            this.organizePromptMessages({
-              role: 'assistant',
-              content: JSON.stringify({ tool_calls }),
-            });
-
+          if (tool_calls.length) {
             try {
-              const { toolResults, toolCallMessages } = await this.callTools({
-                toolCalls: tool_calls,
-              });
+              const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
 
               toolsCallResults.push(...toolResults);
               toolCallMessages.forEach((m) => this.organizePromptMessages(m));
 
               this.iterationSteps--;
-            } catch (error) {
+            } catch (_error) {
               this.organizePromptMessages({
                 role: 'assistant',
                 content: 'call tools failed!',
@@ -193,7 +185,7 @@ export class McpClientChat {
           } else {
             this.organizePromptMessages({
               role: 'assistant',
-              content: message.content ?? '',
+              content: finalAnswer,
             });
 
             this.iterationSteps = 0;
@@ -205,7 +197,7 @@ export class McpClientChat {
           messages: [...this.messages, { role: 'user', content: summaryPrompt }],
         });
         return result;
-      }
+      };
 
       chatIteration()
         .then(async (result) => {
@@ -222,7 +214,7 @@ export class McpClientChat {
     }
   }
 
-  protected organizeToolCalls(choice: NonStreamingChoice): [ToolCall[], string] {
+  protected async organizeToolCalls(choice: NonStreamingChoice): Promise<[ToolCall[], string]> {
     if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
       return this.extractFunctionCalls(choice);
     }
@@ -241,19 +233,22 @@ export class McpClientChat {
     return [toolCalls, finalAnswer];
   }
 
-  protected async initSystemPromptMessages(): Promise<string> {
+  protected async createReActSystemPrompt(args?: ChatCreatePromptArgs): Promise<string> {
+    const tools = await this.fetchToolsList();
+
+    const toolStrings = JSON.stringify(tools);
+    const { prefix = PREFIX, suffix = SUFFIX, formatInstructions = FORMAT_INSTRUCTIONS } = args ?? {};
+    const prompt = [prefix, toolStrings, formatInstructions, suffix].join('\n\n');
+
+    return prompt;
+  }
+
+  protected async initSystemPromptMessages(args?: ChatCreatePromptArgs): Promise<string> {
     if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
       return this.options.llmConfig.systemPrompt;
     }
 
-    const tools = await this.fetchToolsList();
-
-    const systemPrompt = toolPromptTemplate
-      .replace('{{instruction}}', this.options.llmConfig.systemPrompt)
-      .replace('{{tools}}', tools.map((tool) => JSON.stringify(tool.function)).join(','))
-      .replace('{{tool_names}}', tools.map((item) => item.function.name).join(','));
-
-    return systemPrompt;
+    return this.createReActSystemPrompt(args);
   }
 
   protected async callTools(toolCalls: ToolCall[]): Promise<{ toolResults: ToolResults; toolCallMessages: Message[] }> {
@@ -272,21 +267,16 @@ export class McpClientChat {
         let toolArgs = {};
 
         try {
-          toolArgs = JSON.parse(toolCall.function.arguments || '{}');
+          toolArgs = toolCall.function.arguments;
         } catch (_error) {
           toolArgs = {};
         }
 
         if (this.chatOptions?.toolCallResponse) {
-          await this.writeMessageDelta(
-            `Calling tool : ${toolName}` + '\n\n',
-            'assistant',
-            {
-              toolCall,
-            },
-          );
+          await this.writeMessageDelta(`Calling tool : ${toolName}` + '\n\n', 'assistant', {
+            toolCall,
+          });
         }
-
 
         // 调用工具
         const callToolResult = (await client.callTool({
@@ -301,14 +291,10 @@ export class McpClientChat {
         };
 
         if (this.chatOptions?.toolCallResponse) {
-          await this.writeMessageDelta(
-            'Tool call result: ' + JSON.stringify(callToolContent) + '\n\n',
-            'assistant',
-            {
-              toolCall,
-              callToolResult,
-            },
-          )
+          await this.writeMessageDelta('Tool call result: ' + JSON.stringify(callToolContent) + '\n\n', 'assistant', {
+            toolCall,
+            callToolResult,
+          });
         }
         toolCallMessages.push(message);
         toolResults.push({
@@ -413,11 +399,11 @@ export class McpClientChat {
             delta: {
               role,
               content: messageDeltaContent,
-              extra
-            }
-          }
-        ]
-      }
+              extra,
+            },
+          },
+        ],
+      };
       await writer.write(new TextEncoder().encode('data: ' + JSON.stringify(messageDelta) + '\n\n'));
     } finally {
       writer.releaseLock();

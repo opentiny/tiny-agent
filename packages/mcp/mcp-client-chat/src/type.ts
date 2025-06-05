@@ -60,7 +60,7 @@ export enum Role {
   ASSISTANT = 'assistant',
   DEVELOPER = 'developer',
   SYSTEM = 'system',
-  TOOL = 'tool'
+  TOOL = 'tool',
 }
 
 export type ErrorResponse = {
@@ -119,7 +119,7 @@ export type ResponseUsage = {
 
 export type ChatCompleteResponse = {
   id: string;
-  choices: (NonStreamingChoice | StreamingChoice  | NonChatChoice)[];
+  choices: (NonStreamingChoice | StreamingChoice | NonChatChoice)[];
   // choices: NonStreamingChoice[];
   created: number;
   model: string;
@@ -211,4 +211,20 @@ export type ChatCompleteRequest = {
 
 export interface IChatOptions {
   toolCallResponse?: boolean;
+}
+
+/**
+ * Interface for arguments used to create a chat prompt.
+ */
+export interface ChatCreatePromptArgs {
+  /** String to put after the list of tools. */
+  suffix?: string;
+  /** String to put before the list of tools. */
+  prefix?: string;
+  /** String to use directly as the human message template. */
+  humanMessageTemplate?: string;
+  /** Formattable string to use as the instructions template. */
+  formatInstructions?: string;
+  /** List of input variables the final prompt will expect. */
+  inputVariables?: string[];
 }

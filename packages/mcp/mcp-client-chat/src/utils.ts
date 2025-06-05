@@ -21,33 +21,38 @@ const matchReAct = (str: string): Array<{ action: string; action_input: string }
   return results;
 };
 
+export const FINAL_ANSWER_ACTION = 'Final Answer:';
+
 /**
  * 从字符串中提取 action 和 action_input
  * @param str 包含 action 和 action_input 的字符串
  * @returns 包含 action 和 action_input 的对象数组
  */
-export function extractActions(str: string): [ToolCall[], string] {
-  let finalAnswer = '';
-  const toolCalls: ToolCall[] = [];
+export async function extractActions(text: string): Promise<[ToolCall[], string]> {
+  if (text.includes(FINAL_ANSWER_ACTION) || !text.includes(`"action":`)) {
+    const parts = text.split(FINAL_ANSWER_ACTION);
+    const output = parts[parts.length - 1].trim();
+    return [[], output];
+  }
 
-  const actions: Array<{ action: string; action_input: string }> = matchReAct(str);
+  const action = text.includes('```') ? text.trim().split(/```(?:json)?/)[1] : text.trim();
+  try {
+    const response = JSON.parse(action.trim());
 
-  actions.forEach(({ action, action_input }) => {
-    if (action === 'Final Answer') {
-      finalAnswer = action_input;
-
-      return;
-    }
-
-    toolCalls.push({
-      id: action,
-      type: 'function',
-      function: {
-        name: action,
-        arguments: JSON.stringify(action_input),
-      },
-    });
-  });
-
-  return [toolCalls, finalAnswer];
+    return [
+      [
+        {
+          id: response.action,
+          type: 'function',
+          function: {
+            name: response.action,
+            arguments: response.action_input,
+          },
+        },
+      ],
+      '',
+    ];
+  } catch {
+    throw new Error(`Unable to parse JSON response from chat agent.\n\n${text}`);
+  }
 }
