@@ -5,62 +5,49 @@
     </template>
     <template #operations> </template>
     <template v-if="messages.length === 0">
-      <tr-prompts
-        :items="promptItems"
-        :wrap="true"
-        item-class="prompt-item"
-        class="tiny-prompts"
-        @item-click="handlePromptItemClick"
-      ></tr-prompts>
+      <tr-prompts :items="promptItems" :wrap="true" item-class="prompt-item" class="tiny-prompts"
+        @item-click="handlePromptItemClick"></tr-prompts>
     </template>
     <tr-bubble-list v-else :items="showMessages" :roles="roles"> </tr-bubble-list>
     <template #footer>
-      <tr-sender
-        class="chat-input"
-        mode="multiple"
-        :maxLength="10000"
-        v-model="inputMessage"
-        :showWordLimit="true"
-        ref="senderRef"
-        :placeholder="messageState.status === STATUS.PROCESSING ? '正在思考中...' : '请输入您的问题'"
-        :clearable="true"
-        :loading="GeneratingStatus.includes(messageState.status)"
-        @submit="sendMessage"
-        @cancel="abortRequest"
-      ></tr-sender>
+      <tr-sender class="chat-input" mode="multiple" :maxLength="10000" v-model="inputMessage" :showWordLimit="true"
+        ref="senderRef" :placeholder="messageState.status === STATUS.PROCESSING ? '正在思考中...' : '请输入您的问题'"
+        :clearable="true" :loading="GeneratingStatus.includes(messageState.status)" @submit="sendMessage"
+        @cancel="abortRequest"></tr-sender>
     </template>
   </tr-container>
-  <div
-    @click="
-      show = !show;
-      senderRef?.focus();
-    "
-  >
+  <div @click="
+    show = !show;
+  senderRef?.focus();
+  ">
     <slot></slot>
   </div>
 </template>
 
 <script setup>
 import { IconAi, IconUser } from '@opentiny/tiny-robot-svgs';
-import { h, ref, watch, nextTick, computed } from 'vue';
+import { h, ref, watch, nextTick, computed, onUnmounted } from 'vue';
 import { BaseModelProvider, AIClient, useMessage, STATUS, GeneratingStatus } from '@opentiny/tiny-robot-kit';
 
 const props = defineProps({
   clientId: { type: String, default: () => '' },
-  genCode: { type: Function, default: () => () => {} },
-  clearCode: { type: Function, default: () => () => {} },
+  genCode: { type: Function, default: () => () => { } },
+  clearCode: { type: Function, default: () => () => { } },
   memory: { type: Boolean, default: true },
 });
 
 class SimpleToolCallHandler {
   constructor() {
-    this.initStyles()
+    this.styleElementIds = new Set();
+    this.initStyles();
+    this.updateToolTimer = null;
   }
+
   handler(extra, handler) {
     const element = this.getElement(extra);
     if (!element) {
       const { onData } = handler;
-      onData({ choices: [{ delta: { content: this.createElement(extra)} }] });
+      onData({ choices: [{ delta: { content: this.createElement(extra) } }] });
       this.updateToolTimer = setTimeout(() => {
         this.updateTool(extra);
         this.updateToolTimer = null;
@@ -68,26 +55,32 @@ class SimpleToolCallHandler {
     } else {
       if (this.updateToolTimer) {
         clearTimeout(this.updateToolTimer);
+        this.updateToolTimer = null;
       }
-      this.updateTool(extra);   
+      this.updateTool(extra);
     }
   }
-  updateToolTimer = null
+
   createElement(extra) {
     this.createStyle(extra);
     return `<div class="tool-call" id="${extra.toolCall.id}"></div>`;
   }
+
   createStyle(extra) {
     const style = document.createElement('style');
     style.id = `tool_call_${extra.toolCall.id}`;
     document.head.appendChild(style);
+    this.styleElementIds.add(style.id);
   }
+
   getStyle(extra) {
     return document.querySelector(`#tool_call_${extra.toolCall.id}`);
   }
+
   getElement(extra) {
     return document.querySelector(`div.tool-call#${extra.toolCall.id}`)
   }
+
   updateTool(extra) {
     const element = this.getElement(extra);
     const style = this.getStyle(extra);
@@ -99,7 +92,7 @@ class SimpleToolCallHandler {
     if (extra.callToolResult) {
       style.innerHTML = `
        .tool-call#${extra.toolCall.id}::after {
-         content: '调用工具 ${extra.toolCall.function.name} ${extra.callToolResult.isError ? '失败 ❌': '成功 ✅'}'
+         content: '调用工具 ${extra.toolCall.function.name} ${extra.callToolResult.isError ? '失败 ❌' : '成功 ✅'}'
        }
       `
     } else {
@@ -112,8 +105,9 @@ class SimpleToolCallHandler {
   }
   initStyles() {
     const style = document.createElement('style');
+    style.id = 'simple-tool-call-handler-base-styles';
     style.innerHTML = `
-      div.tool-call {
+      .chat-dialog div.tool-call {
         padding: 8px 16px;
         margin: 12px 0;
         background: #EFEFEF;
@@ -122,6 +116,20 @@ class SimpleToolCallHandler {
       }
     `
     document.head.appendChild(style);
+    this.styleElementIds.add(style.id);
+  }
+
+  cleanup() {
+    if (this.updateToolTimer) {
+      clearTimeout(this.updateToolTimer);
+      this.updateToolTimer = null;
+    }
+
+    this.styleElements.forEach(styleId => {
+      const element = document.getElementById(styleId);
+      element?.remove();
+    });
+    this.styleElements.clear();
   }
 }
 
@@ -131,7 +139,7 @@ class CustomModelProvider extends BaseModelProvider {
   constructor(options) {
     super(options);
   }
-  validateRequest() {}
+  validateRequest() { }
   async getData(request) {
     this.validateRequest(request);
 
@@ -239,9 +247,15 @@ class CustomModelProvider extends BaseModelProvider {
       props.clearCode();
     }
   }
+
+  destroy() {
+    this.toolCallHandler.cleanup();
+  }
+
 }
 
 const customModelProvider = new CustomModelProvider();
+onUnmounted(() => { customModelProvider.destroy(); });
 
 const client = new AIClient({
   provider: 'custom',
@@ -343,23 +357,29 @@ watch(
   margin: 0;
   text-align: left;
 }
+
 .tr-container__footer {
   padding: 0 16px;
   margin-bottom: 16px;
 }
+
 .tr-prompts {
   padding: 0 16px;
 }
+
 .prompt-item {
   width: calc(100% - 48px);
 }
+
 .tr-bubble__content-wrapper {
   max-width: calc(100% - 56px);
 }
+
 .tr-bubbule__body {
   overflow: auto;
 }
+
 .tr-prompt__content-label {
- font-size: 1.2em; 
+  font-size: 1.2em;
 }
 </style>
