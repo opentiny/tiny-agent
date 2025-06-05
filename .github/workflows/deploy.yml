@@ -8,6 +8,8 @@ on:
   push:
     branches: 
       - main
+    paths:
+      - 'docs/**'  # 只有 `docs` 目录下的文件变化时才触发
 
   # 允许你从 Actions 选项卡手动运行此工作流程
   workflow_dispatch:
