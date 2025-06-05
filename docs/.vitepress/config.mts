@@ -6,8 +6,7 @@ export default defineConfig({
   title: 'TinyAgent',
   description: 'A VitePress Site',
   srcDir: 'src',
-  outDir: 'dist',
-  base: '/docs/tiny-agent/',
+  base: '/tiny-agent/',
   ignoreDeadLinks: true,
   markdown: {
     config(md) {
