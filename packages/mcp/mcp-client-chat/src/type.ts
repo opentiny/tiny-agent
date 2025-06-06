@@ -18,7 +18,7 @@ export enum AgentStrategy {
 }
 
 export interface MCPClientOptions {
-  agentStrategy: AgentStrategy;
+  agentStrategy?: AgentStrategy;
   llmConfig: {
     // 模型配置
     url: string; // ai 接口地址
@@ -48,6 +48,7 @@ export interface CallToolsParams {
 }
 
 export interface ChatBody {
+  stream?: boolean;
   model: string;
   messages: Message[];
   tools?: AvailableTool[];
