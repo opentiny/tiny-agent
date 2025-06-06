@@ -10,6 +10,7 @@ export async function extractActions(text: string): Promise<[ToolCall[], string]
   }
 
   const toolCalls: ToolCall[] = [];
+  let finalAnswer = '';
 
   if (text.includes('```')) {
     const actionBlocks = text
@@ -19,20 +20,25 @@ export async function extractActions(text: string): Promise<[ToolCall[], string]
 
     actionBlocks.forEach((block) => {
       try {
-        const response = JSON.parse(block.trim());
+        const { action, action_input } = JSON.parse(block.trim());
+
+        if (action === FINAL_ANSWER_ACTION) {
+          finalAnswer = action_input;
+
+          return;
+        }
 
         toolCalls.push({
-          id: response.action,
+          id: action,
           type: 'function',
           function: {
-            name: response.action,
-            arguments:
-              typeof response.action_input === 'string' ? response.action_input : JSON.stringify(response.action_input),
+            name: action,
+            arguments: typeof action_input === 'string' ? action_input : JSON.stringify(action_input),
           },
         });
       } catch (_error) {}
     });
   }
 
-  return [toolCalls, ''];
+  return [toolCalls, finalAnswer];
 }
