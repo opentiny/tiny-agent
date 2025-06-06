@@ -1,8 +1,12 @@
+import type { ReadableStream } from 'node:stream/web';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-
 import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
+import { extractActions } from './utils.js';
+import { AgentStrategy, Role } from './type.js';
+
+import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './ReActSystemPrompt.js';
 import type {
   AvailableTool,
   ChatBody,
@@ -16,10 +20,8 @@ import type {
   ToolCall,
   ToolResults,
 } from './type.js';
-import { AgentStrategy, Role } from './type.js';
-import { extractActions } from './utils.js';
-import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './ReActSystemPrompt.js';
 
+const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
 export class McpClientChat {
   protected options: MCPClientOptions;
   protected iterationSteps;
@@ -30,7 +32,10 @@ export class McpClientChat {
   protected chatOptions?: IChatOptions;
 
   constructor(options: MCPClientOptions) {
-    this.options = options;
+    this.options = {
+      ...options,
+      agentStrategy: options.agentStrategy ?? DEFAULT_AGENT_STRATEGY,
+    };
     this.iterationSteps = options.maxIterationSteps || 1;
   }
 
@@ -124,7 +129,7 @@ export class McpClientChat {
     this.messages = [];
   }
 
-  async chat(queryOrMessages: string | Array<Message>, chatOptions?: IChatOptions) {
+  async chat(queryOrMessages: string | Array<Message>, chatOptions?: IChatOptions): Promise<ReadableStream | Error> {
     this.chatOptions = chatOptions;
 
     const systemPrompt = await this.initSystemPromptMessages();
@@ -149,9 +154,8 @@ export class McpClientChat {
       const toolsCallResults: ToolResults = [];
       const chatIteration = async () => {
         while (this.iterationSteps > 0) {
-          const response: ChatCompleteResponse | Error = await this.queryChatComplete({
-            messages: this.messages,
-          });
+          const chatBody = await this.getChatBody();
+          const response: ChatCompleteResponse | Error = await this.queryChatComplete(chatBody);
 
           if (response.choices?.[0]?.error) {
             this.organizePromptMessages({
@@ -214,6 +218,22 @@ export class McpClientChat {
     }
   }
 
+  protected async getChatBody(): Promise<ChatBody> {
+    const { model } = this.options.llmConfig;
+    const chatBody: ChatBody = {
+      model,
+      messages: this.messages,
+    };
+
+    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
+      const tools = await this.fetchToolsList();
+
+      chatBody.tools = this.iterationSteps > 0 ? tools : [];
+    }
+
+    return chatBody;
+  }
+
   protected async organizeToolCalls(choice: NonStreamingChoice): Promise<[ToolCall[], string]> {
     if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
       return this.extractFunctionCalls(choice);
@@ -267,8 +287,12 @@ export class McpClientChat {
         let toolArgs = {};
 
         try {
-          toolArgs = toolCall.function.arguments;
+          toolArgs =
+            typeof toolCall.function.arguments === 'string'
+              ? JSON.parse(toolCall.function.arguments)
+              : toolCall.function.arguments;
         } catch (_error) {
+          console.error(`Failed to parse tool arguments for ${toolName}:`, _error);
           toolArgs = {};
         }
 
@@ -333,7 +357,8 @@ export class McpClientChat {
   }
 
   protected async queryChatComplete(body: ChatBody): Promise<ChatCompleteResponse> {
-    const { url, apiKey, model } = this.options.llmConfig;
+    const { url, apiKey } = this.options.llmConfig;
+
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -341,7 +366,7 @@ export class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model, ...body }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
