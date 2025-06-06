@@ -17,16 +17,14 @@ import type {
   ToolResults,
 } from './type.js';
 import { AgentStrategy, Role } from './type.js';
-import { extractActions } from './utils.js';
-import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './ReActSystemPrompt.js';
 
 export class McpClientChat {
   protected options: MCPClientOptions;
-  protected iterationSteps;
-  protected clientsMap: Map<string, Client> = new Map();
-  protected toolClientMap: Map<string, Client> = new Map();
+  protected iterationSteps: number;
+  protected clientsMap = new Map<string, Client>();
+  protected toolClientMap = new Map<string, Client>();
   protected messages: Message[] = [];
-  protected transformStream: TransformStream = new TransformStream();
+  protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
 
   constructor(options: MCPClientOptions) {
@@ -149,9 +147,8 @@ export class McpClientChat {
       const toolsCallResults: ToolResults = [];
       const chatIteration = async () => {
         while (this.iterationSteps > 0) {
-          const response: ChatCompleteResponse | Error = await this.queryChatComplete({
-            messages: this.messages,
-          });
+          const chatBody = await this.getChatBody();
+          const response: ChatCompleteResponse | Error = await this.queryChatComplete(chatBody);
 
           if (response.choices?.[0]?.error) {
             this.organizePromptMessages({
@@ -163,7 +160,7 @@ export class McpClientChat {
             continue;
           }
 
-          const [tool_calls, finalAnswer] = await this.organizeToolCalls(response.choices[0] as NonStreamingChoice);
+          const [tool_calls, finalAnswer] = await this.organizeToolCalls(response);
 
           // 工具调用
           if (tool_calls.length) {
@@ -196,6 +193,7 @@ export class McpClientChat {
         const result = await this.queryChatCompleteStreaming({
           messages: [...this.messages, { role: 'user', content: summaryPrompt }],
         });
+
         return result;
       };
 
@@ -214,42 +212,22 @@ export class McpClientChat {
     }
   }
 
-  protected async organizeToolCalls(choice: NonStreamingChoice): Promise<[ToolCall[], string]> {
+  protected async getChatBody(): Promise<ChatBody> {
+    const { model } = this.options.llmConfig;
+    const chatBody: ChatBody = { model, messages: this.messages };
+
     if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
-      return this.extractFunctionCalls(choice);
+      const availableTools = await this.fetchToolsList();
+
+      chatBody.tools = this.iterationSteps > 1 ? availableTools : [];
     }
 
-    return extractActions(choice.message.content || '');
+    return chatBody;
   }
 
-  protected extractFunctionCalls(choice: NonStreamingChoice): [ToolCall[], string] {
-    const toolCalls = choice.message.tool_calls || [];
-    let finalAnswer = '';
+  protected async organizeToolCalls(choice: NonStreamingChoice): Promise<[ToolCall[], string]> {}
 
-    if (!toolCalls.length) {
-      finalAnswer = choice.message.content ?? '';
-    }
-
-    return [toolCalls, finalAnswer];
-  }
-
-  protected async createReActSystemPrompt(args?: ChatCreatePromptArgs): Promise<string> {
-    const tools = await this.fetchToolsList();
-
-    const toolStrings = JSON.stringify(tools);
-    const { prefix = PREFIX, suffix = SUFFIX, formatInstructions = FORMAT_INSTRUCTIONS } = args ?? {};
-    const prompt = [prefix, toolStrings, formatInstructions, suffix].join('\n\n');
-
-    return prompt;
-  }
-
-  protected async initSystemPromptMessages(args?: ChatCreatePromptArgs): Promise<string> {
-    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
-      return this.options.llmConfig.systemPrompt;
-    }
-
-    return this.createReActSystemPrompt(args);
-  }
+  protected async initSystemPromptMessages(): Promise<string> {}
 
   protected async callTools(toolCalls: ToolCall[]): Promise<{ toolResults: ToolResults; toolCallMessages: Message[] }> {
     try {
