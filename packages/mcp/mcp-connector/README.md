@@ -46,7 +46,7 @@ connectorCenter.removeClient('clientId');
 
 ### ConnectorEndpoint
 
-基于IConnectorEndpoint协议标准的通信层，用于ClientI注册以及任务调度通信，接下来以WebSocket通信为例子介绍
+基于IConnectorEndpoint协议标准的通信层，用于ClientID注册以及任务调度通信，接下来以WebSocket通信为例子介绍
 
 #### WebsocketClientEndpoint
 
