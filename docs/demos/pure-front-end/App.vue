@@ -41,7 +41,7 @@ const chatConfig = {
     },
   },
 };
-const getLLMConfig = (config) => {
+const setLLMConfig = (config) => {
   chatConfig.llmConfig = config;
 };
 const chatFactory = () => createMCPClientChat(chatConfig);
@@ -50,7 +50,7 @@ provide('chat-factory', chatFactory);
 
 <template>
   <div class="header">
-    <LLMConfig @getLLMConfig="getLLMConfig" />
+    <LLMConfig @LLMConfigChange="setLLMConfig" />
     <tiny-button :disabled="showChat" @click="showChat = true">打开AI对话框</tiny-button>
   </div>
 

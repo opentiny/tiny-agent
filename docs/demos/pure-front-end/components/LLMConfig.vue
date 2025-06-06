@@ -50,7 +50,7 @@ import { ref, onMounted } from 'vue';
 import { TinyButton, TinyDialogBox, TinyForm, TinyFormItem, TinyInput, TinyCheckbox } from '@opentiny/vue';
 
 
-const emit = defineEmits(['getLLMConfig'])
+const emit = defineEmits(['LLMConfigChange'])
 // 响应式状态
 const dialogVisible = ref(false);
 const formData = ref({
@@ -75,14 +75,13 @@ const loadFromLocalStorage = () => {
     systemPrompt: localStorage.getItem('systemPrompt') || 'You are a helpful assistant',
     isPersistent: !!localStorage.getItem('isPersistent') // 转换为布尔值
   };
-  emit('getLLMConfig', formData.value)
+  emit('LLMConfigChange', formData.value)
 };
 
 // 保存配置
 const saveConfig = () => {
   // 这里可以添加表单验证逻辑（例如使用 v-if 或 TinyVue 的 rules 校验）
-  console.log('保存的配置:', formData.value);
-  emit('getLLMConfig', formData.value)
+  emit('LLMConfigChange', formData.value)
   // 处理持久化存储
   if (formData.value.isPersistent) {
     saveToLocalStorage();
