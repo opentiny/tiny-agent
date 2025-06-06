@@ -19,7 +19,7 @@ const showChat = ref(true);
 
 <template>
   <AddUser />
-  <ChatDialog :get-client-id="() => endpointTransport.clientId" :genCode="mcpValidator.genVerifyCode"
+  <ChatDialog :get-client-id="() => endpointTransport?.clientId || ''" :genCode="mcpValidator.genVerifyCode"
     :clearCode="mcpValidator.clearVerifyCode" v-model:show="showChat" />
   <div class="ai-chat-toggle" title="打开AI对话框" v-show="!showChat" @click="showChat = true">
     <img :src="AiChatSvg" />
