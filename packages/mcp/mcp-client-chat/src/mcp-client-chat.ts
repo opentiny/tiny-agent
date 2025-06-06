@@ -1,4 +1,5 @@
 import type { ReadableStream } from 'node:stream/web';
+import { TransformStream } from 'node:stream/web';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
@@ -24,9 +25,9 @@ import type {
 const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
 export class McpClientChat {
   protected options: MCPClientOptions;
-  protected iterationSteps;
-  protected clientsMap: Map<string, Client> = new Map();
-  protected toolClientMap: Map<string, Client> = new Map();
+  protected iterationSteps: number;
+  protected clientsMap: Map<string, Client> = new Map<string, Client>();
+  protected toolClientMap: Map<string, Client> = new Map<string, Client>();
   protected messages: Message[] = [];
   protected transformStream: TransformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
@@ -385,7 +386,7 @@ export class McpClientChat {
     }
   }
 
-  protected async queryChatCompleteStreaming(chatBody: ChatBody): Promise<Readable> {
+  protected async queryChatCompleteStreaming(chatBody: ChatBody): Promise<ReadableStream> {
     const { url, apiKey } = this.options.llmConfig;
 
     try {
