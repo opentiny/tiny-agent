@@ -1,5 +1,7 @@
 import { defineConfig } from 'vitepress';
 import { vitepressDemoPlugin } from 'vitepress-demo-plugin';
+import jsconfigPaths from 'vite-jsconfig-paths';
+import type { Plugin } from 'vitepress';
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -14,6 +16,13 @@ export default defineConfig({
     },
   },
   vite: {
+    plugins: [
+      jsconfigPaths({
+        projects: [
+          '../jsconfig.dev.json'
+        ]
+      }) as Plugin // TODO: 似乎不生效
+    ],
     server: {
       host: '0.0.0.0', // 允许外部访问
       open: true, // 开发时自动打开浏览器
@@ -128,7 +137,7 @@ export default defineConfig({
           items: [],
         },
         {
-          text: '验证器扩展', 
+          text: '验证器扩展',
           base: '/extension/',
           items: [],
         },

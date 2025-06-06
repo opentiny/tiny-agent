@@ -1,7 +1,10 @@
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+
 export interface McpServer {
   url: string;
   headers?: Record<string, string>;
   timeout?: number;
+  customTransport?: Transport;
 }
 
 export type McpServers = Record<string, McpServer>;

@@ -9,9 +9,22 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "@opentiny/tiny-agent-mcp-client-chat": "workspace:~",
+    "@opentiny/tiny-agent-mcp-service": "workspace:~",
+    "@opentiny/tiny-agent-mcp-service-vue": "workspace:~",
+    "@opentiny/tiny-agent-task-action-lib": "workspace:~",
+    "@opentiny/tiny-agent-task-mcp": "workspace:~",
+    "@opentiny/tiny-agent-task-runtime-service": "workspace:~",
+    "@opentiny/tiny-robot": "0.2.0-alpha.6",
+    "@opentiny/tiny-robot-kit": "0.2.0-alpha.6",
+    "@opentiny/tiny-robot-svgs": "0.2.0-alpha.6",
+    "@opentiny/vue": "^3.23.0",
     "vitepress": "^1.6.3",
-    "vitepress-demo-plugin": "^1.4.1"
+    "vitepress-demo-plugin": "^1.4.1",
+    "vite-jsconfig-paths": "^2.0.1",
+    "zod": "^3.25.13"
   }
 }
