@@ -1,50 +1,56 @@
+import type { ReadableStream } from 'node:stream/web';
+import { TransformStream } from 'node:stream/web';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
+import { extractActions } from './utils.js';
+import { AgentStrategy, Role } from './type.js';
 
-import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './ReActSystemPrompt.js';
 import type {
-  MCPClientOptions,
+  AvailableTool,
   ChatBody,
-  CallToolsParams,
-  ToolResults,
-  McpServer,
   ChatCompleteResponse,
-  NonStreamingChoice,
-  Message,
+  ChatCreatePromptArgs,
   IChatOptions,
+  MCPClientOptions,
+  McpServer,
+  Message,
+  NonStreamingChoice,
+  ToolCall,
+  ToolResults,
 } from './type.js';
 
+const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
 export class McpClientChat {
   protected options: MCPClientOptions;
-  protected iterationSteps;
-  protected clientsMap: Map<string, Client> = new Map();
-  protected toolClientMap: Map<string, Client> = new Map();
-  protected messages: Message[];
+  protected iterationSteps: number;
+  protected clientsMap: Map<string, Client> = new Map<string, Client>();
+  protected toolClientMap: Map<string, Client> = new Map<string, Client>();
+  protected messages: Message[] = [];
   protected transformStream: TransformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
 
   constructor(options: MCPClientOptions) {
-    this.options = options;
+    this.options = {
+      ...options,
+      agentStrategy: options.agentStrategy ?? DEFAULT_AGENT_STRATEGY,
+    };
     this.iterationSteps = options.maxIterationSteps || 1;
-    this.messages = [
-      {
-        role: 'system',
-        content: this.options.llmConfig.systemPrompt,
-      },
-    ];
   }
 
-  async init() {
+  async init(): Promise<void> {
     const { mcpServers = {} } = this.options.mcpServersConfig;
 
     for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
       const client = await this.initClients(serverName, serverConfig as McpServer);
+
       this.clientsMap.set(serverName, client);
     }
   }
 
-  protected async initClients(serverName: string, serverConfig: McpServer) {
+  protected async initClients(serverName: string, serverConfig: McpServer): Promise<Client> {
     const client = new Client({
       name: serverName,
       version: '1.0.0',
@@ -55,13 +61,11 @@ export class McpClientChat {
     try {
       const transport = new StreamableHTTPClientTransport(baseUrl, {
         requestInit: {
-          headers: serverConfig.headers
-        }
+          headers: serverConfig.headers,
+        },
       });
-
       await client.connect(transport);
-    } catch (error) {
-      // SSEClientTransport will dump requestInit.headers (version 1.11.4)
+    } catch (_error) {
       const sseTransport = new SSEClientTransport(baseUrl);
 
       await client.connect(sseTransport);
@@ -70,11 +74,11 @@ export class McpClientChat {
     return client;
   }
 
-  protected async fetchToolsList() {
+  protected async fetchToolsList(): Promise<AvailableTool[]> {
     const availableTools = [];
     const toolClientMap = new Map();
 
-    for (const [serverName, client] of this.clientsMap) {
+    for (const [, client] of this.clientsMap) {
       const tools = (await client.listTools()).tools as unknown as Tool[];
       const openaiTools = tools.map((tool) => ({
         type: 'function' as const,
@@ -109,7 +113,7 @@ export class McpClientChat {
     }
 
     const defaultUserMessage: Message = {
-      role: 'user',
+      role: Role.USER,
       content: [],
     };
 
@@ -118,16 +122,24 @@ export class McpClientChat {
     return defaultUserMessage;
   }
 
-  protected organizePromptMessages(message: Message) {
+  protected organizePromptMessages(message: Message): void {
     this.messages.push(message);
   }
 
-  protected clearPromptMessages() {
+  protected clearPromptMessages(): void {
     this.messages = [];
   }
 
-  async chat(queryOrMessages: string | Array<Message>, chatOptions?: IChatOptions) {
+  async chat(queryOrMessages: string | Array<Message>, chatOptions?: IChatOptions): Promise<ReadableStream | Error> {
     this.chatOptions = chatOptions;
+
+    const systemPrompt = await this.initSystemPromptMessages();
+
+    this.messages.push({
+      role: Role.SYSTEM,
+      content: systemPrompt,
+    });
+
     if (typeof queryOrMessages === 'string') {
       this.organizePromptMessages({
         role: 'user',
@@ -140,18 +152,15 @@ export class McpClientChat {
     this.iterationSteps = this.options.maxIterationSteps || 1;
 
     try {
-      const availableTools = await this.fetchToolsList();
       const toolsCallResults: ToolResults = [];
       const chatIteration = async () => {
         while (this.iterationSteps > 0) {
-          const response: ChatCompleteResponse | Error = await this.queryChatComplete({
-            messages: this.messages,
-            tools: this.iterationSteps > 1 ? availableTools : [],
-          });
+          const chatBody = await this.getChatBody();
+          const response: ChatCompleteResponse | Error = await this.queryChatComplete(chatBody);
 
           if (response.choices?.[0]?.error) {
             this.organizePromptMessages({
-              role: 'assistant',
+              role: Role.ASSISTANT,
               content: response.choices[0].error.message,
             });
             this.iterationSteps = 0;
@@ -159,26 +168,18 @@ export class McpClientChat {
             continue;
           }
 
-          const message = (response.choices[0] as NonStreamingChoice).message;
-          const { tool_calls } = message;
+          const [tool_calls, finalAnswer] = await this.organizeToolCalls(response.choices[0] as NonStreamingChoice);
 
           // 工具调用
-          if (tool_calls) {
-            this.organizePromptMessages({
-              role: 'assistant',
-              content: JSON.stringify({ tool_calls }),
-            });
-
+          if (tool_calls.length) {
             try {
-              const { toolResults, toolCallMessages } = await this.callTools({
-                toolCalls: tool_calls,
-              });
+              const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
 
               toolsCallResults.push(...toolResults);
               toolCallMessages.forEach((m) => this.organizePromptMessages(m));
 
               this.iterationSteps--;
-            } catch (error) {
+            } catch (_error) {
               this.organizePromptMessages({
                 role: 'assistant',
                 content: 'call tools failed!',
@@ -189,7 +190,7 @@ export class McpClientChat {
           } else {
             this.organizePromptMessages({
               role: 'assistant',
-              content: message.content ?? '',
+              content: finalAnswer,
             });
 
             this.iterationSteps = 0;
@@ -197,11 +198,11 @@ export class McpClientChat {
         }
 
         const summaryPrompt = '用简短的话总结！';
-        const result = await this.queryChatCompleteStreaming({
-          messages: [...this.messages, { role: 'user', content: summaryPrompt }],
-        });
+        this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
+        const chatBody = await this.getChatBody(true);
+        const result = await this.queryChatCompleteStreaming(chatBody);
         return result;
-      }
+      };
 
       chatIteration()
         .then(async (result) => {
@@ -214,14 +215,68 @@ export class McpClientChat {
 
       return this.transformStream.readable;
     } catch (error) {
-      return {
-        code: 500,
-        message: error instanceof Error ? error.message : String(error),
-      };
+      return error as Error;
     }
   }
 
-  protected async callTools({ toolCalls }: CallToolsParams) {
+  protected async getChatBody(stream = false): Promise<ChatBody> {
+    const { model } = this.options.llmConfig;
+    const chatBody: ChatBody = {
+      model,
+      messages: this.messages,
+    };
+
+    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
+      const tools = await this.fetchToolsList();
+
+      chatBody.tools = this.iterationSteps > 0 ? tools : [];
+    }
+
+    if (stream) {
+      chatBody.stream = stream;
+    }
+
+    return chatBody;
+  }
+
+  protected async organizeToolCalls(choice: NonStreamingChoice): Promise<[ToolCall[], string]> {
+    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
+      return this.extractFunctionCalls(choice);
+    }
+
+    return extractActions(choice.message.content || '');
+  }
+
+  protected extractFunctionCalls(choice: NonStreamingChoice): [ToolCall[], string] {
+    const toolCalls = choice.message.tool_calls || [];
+    let finalAnswer = '';
+
+    if (!toolCalls.length) {
+      finalAnswer = choice.message.content ?? '';
+    }
+
+    return [toolCalls, finalAnswer];
+  }
+
+  protected async createReActSystemPrompt(args?: ChatCreatePromptArgs): Promise<string> {
+    const tools = await this.fetchToolsList();
+
+    const toolStrings = JSON.stringify(tools);
+    const { prefix = PREFIX, suffix = SUFFIX, formatInstructions = FORMAT_INSTRUCTIONS } = args ?? {};
+    const prompt = [prefix, toolStrings, formatInstructions, suffix].join('\n\n');
+
+    return prompt;
+  }
+
+  protected async initSystemPromptMessages(args?: ChatCreatePromptArgs): Promise<string> {
+    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
+      return this.options.llmConfig.systemPrompt;
+    }
+
+    return this.createReActSystemPrompt(args);
+  }
+
+  protected async callTools(toolCalls: ToolCall[]): Promise<{ toolResults: ToolResults; toolCallMessages: Message[] }> {
     try {
       const toolResults: ToolResults = [];
       const toolCallMessages: Message[] = [];
@@ -237,21 +292,20 @@ export class McpClientChat {
         let toolArgs = {};
 
         try {
-          toolArgs = JSON.parse(toolCall.function.arguments || '{}');
-        } catch (error) {
+          toolArgs =
+            typeof toolCall.function.arguments === 'string'
+              ? JSON.parse(toolCall.function.arguments)
+              : toolCall.function.arguments;
+        } catch (_error) {
+          console.error(`Failed to parse tool arguments for ${toolName}:`, _error);
           toolArgs = {};
         }
 
         if (this.chatOptions?.toolCallResponse) {
-          await this.writeMessageDelta(
-            `Calling tool : ${toolName}` + '\n\n',
-            'assistant',
-            {
-              toolCall,
-            },
-          );
+          await this.writeMessageDelta(`Calling tool : ${toolName}` + '\n\n', 'assistant', {
+            toolCall,
+          });
         }
-
 
         // 调用工具
         const callToolResult = (await client.callTool({
@@ -260,20 +314,16 @@ export class McpClientChat {
         })) as CallToolResult;
         const callToolContent = this.getToolCallMessage(callToolResult);
         const message: Message = {
-          role: 'tool',
+          role: Role.TOOL,
           tool_call_id: toolCall.id,
           content: callToolContent,
         };
 
         if (this.chatOptions?.toolCallResponse) {
-          await this.writeMessageDelta(
-            'Tool call result: ' + JSON.stringify(callToolContent) + '\n\n',
-            'assistant',
-            {
-              toolCall,
-              callToolResult,
-            },
-          )
+          await this.writeMessageDelta('Tool call result: ' + JSON.stringify(callToolContent) + '\n\n', 'assistant', {
+            toolCall,
+            callToolResult,
+          });
         }
         toolCallMessages.push(message);
         toolResults.push({
@@ -286,11 +336,11 @@ export class McpClientChat {
     } catch (error) {
       console.error('Error calling tools:', error);
 
-      throw error;
+      return { toolResults: [], toolCallMessages: [{ role: Role.ASSISTANT, content: 'call tools failed!' }] };
     }
   }
 
-  protected getToolCallMessage(toolCallResult: CallToolResult) {
+  protected getToolCallMessage(toolCallResult: CallToolResult): string {
     let str = '';
 
     if (toolCallResult.content?.length) {
@@ -312,7 +362,8 @@ export class McpClientChat {
   }
 
   protected async queryChatComplete(body: ChatBody): Promise<ChatCompleteResponse> {
-    const { url, apiKey, model } = this.options.llmConfig;
+    const { url, apiKey } = this.options.llmConfig;
+
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -320,7 +371,7 @@ export class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model, ...body }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -335,8 +386,8 @@ export class McpClientChat {
     }
   }
 
-  protected async queryChatCompleteStreaming(body: ChatBody, stream = true) {
-    const { url, apiKey, model } = this.options.llmConfig;
+  protected async queryChatCompleteStreaming(chatBody: ChatBody): Promise<ReadableStream> {
+    const { url, apiKey } = this.options.llmConfig;
 
     try {
       const response = await fetch(url, {
@@ -345,7 +396,7 @@ export class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model, stream, ...body }),
+        body: JSON.stringify(chatBody),
       });
 
       if (!response.ok) {
@@ -378,11 +429,11 @@ export class McpClientChat {
             delta: {
               role,
               content: messageDeltaContent,
-              extra
-            }
-          }
-        ]
-      }
+              extra,
+            },
+          },
+        ],
+      };
       await writer.write(new TextEncoder().encode('data: ' + JSON.stringify(messageDelta) + '\n\n'));
     } finally {
       writer.releaseLock();

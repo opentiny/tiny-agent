@@ -12,7 +12,13 @@ export interface McpServerConfig {
 
 export type McpServersConfig = Record<string, McpServerConfig | any>;
 
+export enum AgentStrategy {
+  FUNCTION_CALLING = 'Function Calling',
+  RE_ACT = 'ReAct',
+}
+
 export interface MCPClientOptions {
+  agentStrategy?: AgentStrategy;
   llmConfig: {
     // 模型配置
     url: string; // ai 接口地址
@@ -38,23 +44,26 @@ export interface AvailableTool {
 }
 
 export interface CallToolsParams {
-  toolCalls: {
-    id: string;
-    function: {
-      name: string;
-      arguments: string;
-    };
-  }[];
+  toolCalls: ToolCall[];
 }
 
 export interface ChatBody {
+  stream?: boolean;
+  model: string;
   messages: Message[];
   tools?: AvailableTool[];
 }
 
 export type ToolResults = Array<{ call: string; result: any }>;
 
-export type Role = 'function' | 'user' | 'assistant' | 'developer' | 'system' | 'tool';
+export enum Role {
+  FUNCTION = 'function',
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  DEVELOPER = 'developer',
+  SYSTEM = 'system',
+  TOOL = 'tool',
+}
 
 export type ErrorResponse = {
   code: number; // See "Error Handling" section
@@ -112,7 +121,7 @@ export type ResponseUsage = {
 
 export type ChatCompleteResponse = {
   id: string;
-  choices: (NonStreamingChoice | NonChatChoice)[];
+  choices: (NonStreamingChoice | StreamingChoice | NonChatChoice)[];
   // choices: NonStreamingChoice[];
   created: number;
   model: string;
@@ -204,4 +213,20 @@ export type ChatCompleteRequest = {
 
 export interface IChatOptions {
   toolCallResponse?: boolean;
+}
+
+/**
+ * Interface for arguments used to create a chat prompt.
+ */
+export interface ChatCreatePromptArgs {
+  /** String to put after the list of tools. */
+  suffix?: string;
+  /** String to put before the list of tools. */
+  prefix?: string;
+  /** String to use directly as the human message template. */
+  humanMessageTemplate?: string;
+  /** Formattable string to use as the instructions template. */
+  formatInstructions?: string;
+  /** List of input variables the final prompt will expect. */
+  inputVariables?: string[];
 }
