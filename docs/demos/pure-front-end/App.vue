@@ -5,16 +5,14 @@ import { createMCPClientChat } from '@opentiny/tiny-agent-mcp-client-chat';
 import { McpToolParser } from '@opentiny/tiny-agent-task-mcp';
 import ChatDialog from './components/ChatDialog.vue';
 import AddUser from './components/AddUser.vue';
+import LLMConfig from './components/LLMConfig.vue';
 import mcpToolJson from './mcp-tool.json';
 import { taskScheduler } from './scheduler.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import {
-  TinyButton,
-  TinyModal
-} from '@opentiny/vue';
+import { TinyButton } from '@opentiny/vue';
 
 // Transports
-const [ clientTransport, serverTransport ] = InMemoryTransport.createLinkedPair();
+const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
 
 // MCP Service
 const mcp = setupMcpService();
@@ -33,36 +31,31 @@ const showChat = ref(true);
 
 // MCP Client Chat
 const chatConfig = {
-  llmConfig: {
-    url: 'http://localhost:11434/v1/chat/completions',
-    apiKey: '',
-    model: 'qwen2.5:7b',
-    systemPrompt: 'You are a helpful assistant',
-  },
+  llmConfig: {},
   maxIterationSteps: 3,
   mcpServersConfig: {
     mcpServers: {
       'current-page': {
-        customTransport: clientTransport
-      }
+        customTransport: clientTransport,
+      },
     },
   },
-}
+};
+const getLLMConfig = (config) => {
+  chatConfig.llmConfig = config;
+};
 const chatFactory = () => createMCPClientChat(chatConfig);
 provide('chat-factory', chatFactory);
-
-
 </script>
 
 <template>
   <div class="header">
-    <tiny-button>配置 LLM</tiny-button>
+    <LLMConfig @getLLMConfig="getLLMConfig" />
     <tiny-button :disabled="showChat" @click="showChat = true">打开AI对话框</tiny-button>
   </div>
 
   <AddUser />
   <ChatDialog v-model:show="showChat" />
-
 </template>
 
 <style>
