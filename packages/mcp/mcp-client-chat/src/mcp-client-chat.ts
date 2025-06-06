@@ -197,9 +197,9 @@ export class McpClientChat {
         }
 
         const summaryPrompt = '用简短的话总结！';
-        const result = await this.queryChatCompleteStreaming({
-          messages: [...this.messages, { role: 'user', content: summaryPrompt }],
-        });
+        this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
+        const chatBody = await this.getChatBody(true);
+        const result = await this.queryChatCompleteStreaming(chatBody);
         return result;
       };
 
@@ -218,7 +218,7 @@ export class McpClientChat {
     }
   }
 
-  protected async getChatBody(): Promise<ChatBody> {
+  protected async getChatBody(stream = false): Promise<ChatBody> {
     const { model } = this.options.llmConfig;
     const chatBody: ChatBody = {
       model,
@@ -229,6 +229,10 @@ export class McpClientChat {
       const tools = await this.fetchToolsList();
 
       chatBody.tools = this.iterationSteps > 0 ? tools : [];
+    }
+
+    if (stream) {
+      chatBody.stream = stream;
     }
 
     return chatBody;
@@ -381,8 +385,8 @@ export class McpClientChat {
     }
   }
 
-  protected async queryChatCompleteStreaming(body: ChatBody, stream = true): Promise<Readable> {
-    const { url, apiKey, model } = this.options.llmConfig;
+  protected async queryChatCompleteStreaming(chatBody: ChatBody): Promise<Readable> {
+    const { url, apiKey } = this.options.llmConfig;
 
     try {
       const response = await fetch(url, {
@@ -391,7 +395,7 @@ export class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ model, stream, ...body }),
+        body: JSON.stringify(chatBody),
       });
 
       if (!response.ok) {

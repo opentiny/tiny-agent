@@ -48,6 +48,7 @@ export interface CallToolsParams {
 }
 
 export interface ChatBody {
+  stream?: boolean;
   model: string;
   messages: Message[];
   tools?: AvailableTool[];
