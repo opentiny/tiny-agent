@@ -209,9 +209,14 @@ export class McpClientChat {
         return result;
       }
 
-      chatIteration().then(async (result) => {
-        result.pipeTo(this.transformStream.writable);
-      })
+      chatIteration()
+        .then(async (result) => {
+          await result.pipeTo(this.transformStream.writable);
+        })
+        .catch((error) => {
+          console.error('Chat iteration failed:', error);
+          this.transformStream!.writable.abort(error);
+        });
 
       return this.transformStream.readable;
     } catch (error) {
@@ -369,20 +374,24 @@ export class McpClientChat {
   }
 
   protected async writeMessageDelta(messageDeltaContent: string, role: string = 'assistant', extra?: any) {
-    const writer = this.transformStream.writable.getWriter()
-    await writer.ready;
-    const messageDelta = {
-      choices: [
-        {
-          delta: {
-            role,
-            content: messageDeltaContent,
-            extra
+    const writer = this.transformStream.writable.getWriter();
+
+    try {
+      await writer.ready;
+      const messageDelta = {
+        choices: [
+          {
+            delta: {
+              role,
+              content: messageDeltaContent,
+              extra
+            }
           }
-        }
-      ]
+        ]
+      }
+      await writer.write(new TextEncoder().encode('data: ' + JSON.stringify(messageDelta) + '\n\n'));
+    } finally {
+      writer.releaseLock();
     }
-    await writer.write(new TextEncoder().encode('data: ' + JSON.stringify(messageDelta) + '\n\n'));
-    writer.releaseLock();
   }
 }
