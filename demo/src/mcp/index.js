@@ -23,8 +23,8 @@ export function initMcp() {
   const doTask = async (task) => taskScheduler.pushTask(task);
   
   // MCP Tool Parser & mcp-tool.json
-  const ncpToolParser = new McpToolParser(doTask);
-  ncpToolParser.extractAllTools(mcpToolJson).forEach((tool) => {
+  const mcpToolParser = new McpToolParser(doTask);
+  mcpToolParser.extractAllTools(mcpToolJson).forEach((tool) => {
     mcpService.mcpServer.registerTool(tool.name, tool.config, tool.cb);
   });
 
@@ -35,6 +35,6 @@ export function initMcp() {
     mcpValidator,
     taskScheduler,
     actionManager,
-    ncpToolParser
+    mcpToolParser
   }
 }

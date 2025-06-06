@@ -51,7 +51,7 @@ export class CustomModelProvider extends BaseModelProvider {
         try {
           const message = JSON.parse(chunk.slice(6));
 
-          const extra = parsed.choices[0].delta.extra;
+          const extra = message.choices[0].delta.extra;
           if (this.toolCallHandler && extra && this.toolCallHandler.shouldHandle(extra)) {
             text += this.toolCallHandler.handlerStatic(extra);
             continue;
@@ -116,7 +116,7 @@ export class CustomModelProvider extends BaseModelProvider {
       onError(error);
       throw error;
     } finally {
-      reader.cancel();
+      reader?.cancel();
       this.validator?.clearCode();
     }
   }

@@ -29,7 +29,7 @@ export class SimpleToolCallHandler {
   }
 
   handlerStatic(extra) {
-    if(extra.toolCall & extra.callToolResult) {
+    if(extra.toolCall && extra.callToolResult) {
       this.updateTool(extra);
       return this.createElement(extra);
     }
@@ -63,16 +63,19 @@ export class SimpleToolCallHandler {
       return;
     }
 
+    // Sanitize tool name to prevent CSS injection
+    const sanitizedToolName = extra.toolCall.function.name.replace(/['"\\]/g, '\\$&');
+
     if (extra.callToolResult) {
       style.innerHTML = `
        .tool-call#${extra.toolCall.id}::after {
-         content: '调用工具 ${extra.toolCall.function.name} ${extra.callToolResult.isError ? '失败 ❌' : '成功 ✅'}'
+         content: '调用工具 ${sanitizedToolName} ${extra.callToolResult.isError ? '失败 ❌' : '成功 ✅'}'
        }
       `
     } else {
       style.innerHTML = `
        .tool-call#${extra.toolCall.id}::after {
-         content: '正在调用工具 ${extra.toolCall.function.name} ...'
+         content: '正在调用工具 ${sanitizedToolName} ...'
        }
          `
     }

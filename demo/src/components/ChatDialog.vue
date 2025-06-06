@@ -32,7 +32,7 @@ import { SimpleToolCallHandler } from './chat-config/simple-tool-call-handler';
 import { roles, promptItems } from './chat-config/chat-config';
 
 const props = defineProps({
-  getClientId: { type: String, default: () => () => '' },
+  getClientId: { type: Function, default: () => () => '' },
   genCode: { type: Function, default: () => () => { } },
   clearCode: { type: Function, default: () => () => { } },
   memory: { type: Boolean, default: true },
