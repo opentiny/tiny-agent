@@ -53,10 +53,9 @@ export class CustomModelProvider extends BaseModelProvider {
 
           const extra = parsed.choices[0].delta.extra;
           if (this.toolCallHandler && extra && this.toolCallHandler.shouldHandle(extra)) {
-            text += this.toolCallHandler.handler(extra, handler);
+            text += this.toolCallHandler.handlerStatic(extra);
             continue;
           }
-
           text += message.choices[0].delta.content;
         } catch (error) {
           text += '';

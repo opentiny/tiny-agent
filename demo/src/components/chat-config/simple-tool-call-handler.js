@@ -11,8 +11,8 @@ export class SimpleToolCallHandler {
   }
 
   handler(extra, handler) {
-    const element = this.getElement(extra);
-    if (!element) {
+    const styleElement = this.getStyle(extra);
+    if (!styleElement) {
       const { onData } = handler;
       onData({ choices: [{ delta: { content: this.createElement(extra) } }] });
       this.updateToolTimer = setTimeout(() => {
@@ -28,7 +28,7 @@ export class SimpleToolCallHandler {
     }
   }
 
-  handler(extra) {
+  handlerStatic(extra) {
     if(extra.toolCall & extra.callToolResult) {
       this.updateTool(extra);
       return this.createElement(extra);
@@ -57,9 +57,8 @@ export class SimpleToolCallHandler {
   }
 
   updateTool(extra) {
-    const element = this.getElement(extra);
     const style = this.getStyle(extra);
-    if (!element || !style) {
+    if (!style) {
       console.warn('no tool call info')
       return;
     }
