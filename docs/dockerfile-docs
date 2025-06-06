@@ -9,6 +9,6 @@ RUN npm config set strict-ssl false \
 # 安装依赖 
 FROM nginx:latest
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY --from=build /builder/dist/ /usr/share/nginx/html
+COPY --from=build /builder/.vitepress/dist/ /usr/share/nginx/html
 EXPOSE 5174
 
