@@ -9,7 +9,7 @@ export async function extractActions(text: string): Promise<[ToolCall[], string]
     return [[], output];
   }
 
-  const tollCalls: ToolCall[] = [];
+  const toolCalls: ToolCall[] = [];
 
   if (text.includes('```')) {
     const actionBlocks = text
@@ -21,7 +21,7 @@ export async function extractActions(text: string): Promise<[ToolCall[], string]
       try {
         const response = JSON.parse(block.trim());
 
-        tollCalls.push({
+        toolCalls.push({
           id: response.action,
           type: 'function',
           function: {
@@ -34,5 +34,5 @@ export async function extractActions(text: string): Promise<[ToolCall[], string]
     });
   }
 
-  return [tollCalls, ''];
+  return [toolCalls, ''];
 }
