@@ -1,3 +1,5 @@
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+
 export interface McpServer {
   url: string;
   headers?: Record<string, string>;
@@ -54,7 +56,7 @@ export interface ChatBody {
   tools?: AvailableTool[];
 }
 
-export type ToolResults = Array<{ call: string; result: any }>;
+export type ToolResults = Array<{ call: string; result: CallToolResult }>;
 
 export enum Role {
   FUNCTION = 'function',

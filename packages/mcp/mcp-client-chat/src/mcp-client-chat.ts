@@ -135,71 +135,71 @@ export abstract class McpClientChat {
     this.iterationSteps = this.options.maxIterationSteps || 1;
 
     try {
-      const toolsCallResults: ToolResults = [];
-      const chatIteration = async () => {
-        while (this.iterationSteps > 0) {
-          const chatBody = await this.getChatBody();
-          const response: ChatCompleteResponse | Error = await this.queryChatComplete(chatBody);
-
-          if (response.choices?.[0]?.error) {
-            this.organizePromptMessages({
-              role: Role.ASSISTANT,
-              content: response.choices[0].error.message,
-            });
-            this.iterationSteps = 0;
-
-            continue;
-          }
-
-          const [tool_calls, finalAnswer] = await this.organizeToolCalls(response as ChatCompleteResponse);
-
-          // 工具调用
-          if (tool_calls.length) {
-            try {
-              const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
-
-              toolsCallResults.push(...toolResults);
-              toolCallMessages.forEach((m) => this.organizePromptMessages(m));
-
-              this.iterationSteps--;
-            } catch (_error) {
-              this.organizePromptMessages({
-                role: Role.ASSISTANT,
-                content: 'call tools failed!',
-              });
-
-              this.iterationSteps = 0;
-            }
-          } else {
-            this.organizePromptMessages({
-              role: Role.ASSISTANT,
-              content: finalAnswer,
-            });
-
-            this.iterationSteps = 0;
-          }
-        }
-
-        this.organizePromptMessages({ role: Role.USER, content: '用简短的话总结！' });
-
-        const chatBody = await this.getChatBody();
-        const result = await this.queryChatCompleteStreaming(chatBody);
-
-        return result;
-      };
-
-      chatIteration()
-        .then(async (result) => {
-          await result.pipeTo(this.transformStream.writable);
-        })
-        .catch((error) => {
-          console.error('Chat iteration failed:', error);
-          this.transformStream!.writable.abort(error);
-        });
+      this.chatIteration();
 
       return this.transformStream.readable;
     } catch (error) {
+      console.error('Chat failed:', error);
+      this.transformStream!.writable.abort(error);
       return error as Error;
+    }
+  }
+
+  protected async chatIteration(): Promise<ReadableStream> {
+    try {
+      const toolsCallResults: ToolResults = [];
+
+      while (this.iterationSteps > 0) {
+        const response: ChatCompleteResponse | Error = await this.queryChatComplete();
+
+        if (response.choices?.[0]?.error) {
+          this.organizePromptMessages({
+            role: Role.ASSISTANT,
+            content: response.choices[0].error.message,
+          });
+          this.iterationSteps = 0;
+
+          continue;
+        }
+
+        const [tool_calls, finalAnswer] = await this.organizeToolCalls(response as ChatCompleteResponse);
+
+        // 工具调用
+        if (tool_calls.length) {
+          try {
+            const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
+
+            toolsCallResults.push(...toolResults);
+            toolCallMessages.forEach((m) => this.organizePromptMessages(m));
+
+            this.iterationSteps--;
+          } catch (_error) {
+            this.organizePromptMessages({
+              role: Role.ASSISTANT,
+              content: 'call tools failed!',
+            });
+
+            this.iterationSteps = 0;
+          }
+        } else {
+          this.organizePromptMessages({
+            role: Role.ASSISTANT,
+            content: finalAnswer,
+          });
+
+          this.iterationSteps = 0;
+        }
+      }
+
+      this.organizePromptMessages({ role: Role.USER, content: '用简短的话总结！' });
+      const result = await this.queryChatCompleteStreaming();
+
+      result.pipeTo(this.transformStream.writable);
+
+      return result;
+    } catch (error) {
+      console.error('Chat iteration failed:', error);
+      throw error;
     }
   }
 
@@ -294,8 +294,9 @@ export abstract class McpClientChat {
     return str;
   }
 
-  protected async queryChatComplete(body: ChatBody): Promise<ChatCompleteResponse> {
+  protected async queryChatComplete(): Promise<ChatCompleteResponse> {
     const { url, apiKey } = this.options.llmConfig;
+    const chatBody = await this.getChatBody();
 
     try {
       const response = await fetch(url, {
@@ -304,7 +305,7 @@ export abstract class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(chatBody),
       });
 
       if (!response.ok) {
@@ -319,8 +320,10 @@ export abstract class McpClientChat {
     }
   }
 
-  protected async queryChatCompleteStreaming(chatBody: ChatBody): Promise<ReadableStream> {
+  protected async queryChatCompleteStreaming(): Promise<ReadableStream> {
     const { url, apiKey } = this.options.llmConfig;
+
+    const chatBody = await this.getChatBody();
 
     try {
       const response = await fetch(url, {
@@ -329,7 +332,7 @@ export abstract class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(chatBody),
+        body: JSON.stringify({ ...chatBody, stream: true }),
       });
 
       if (!response.ok) {
