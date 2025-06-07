@@ -4,26 +4,22 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
-import { extractActions } from './utils.js';
 import { AgentStrategy, Role } from './type.js';
 
-import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './ReActSystemPrompt.js';
 import type {
   AvailableTool,
   ChatBody,
   ChatCompleteResponse,
-  ChatCreatePromptArgs,
   IChatOptions,
   MCPClientOptions,
   McpServer,
   Message,
-  NonStreamingChoice,
   ToolCall,
   ToolResults,
 } from './type.js';
 
 const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
-export class McpClientChat {
+export abstract class McpClientChat {
   protected options: MCPClientOptions;
   protected iterationSteps: number;
   protected clientsMap: Map<string, Client> = new Map<string, Client>();
@@ -66,7 +62,11 @@ export class McpClientChat {
       });
       await client.connect(transport);
     } catch (_error) {
-      const sseTransport = new SSEClientTransport(baseUrl);
+      const sseTransport = new SSEClientTransport(baseUrl, {
+        requestInit: {
+          headers: serverConfig.headers,
+        },
+      });
 
       await client.connect(sseTransport);
     }
@@ -105,23 +105,6 @@ export class McpClientChat {
     return availableTools;
   }
 
-  protected getUserMessages(): Message {
-    const userMessage = this.messages.find((m) => m.role === 'user');
-
-    if (userMessage) {
-      return userMessage;
-    }
-
-    const defaultUserMessage: Message = {
-      role: Role.USER,
-      content: [],
-    };
-
-    this.messages.push(defaultUserMessage);
-
-    return defaultUserMessage;
-  }
-
   protected organizePromptMessages(message: Message): void {
     this.messages.push(message);
   }
@@ -135,14 +118,14 @@ export class McpClientChat {
 
     const systemPrompt = await this.initSystemPromptMessages();
 
-    this.messages.push({
+    this.organizePromptMessages({
       role: Role.SYSTEM,
       content: systemPrompt,
     });
 
     if (typeof queryOrMessages === 'string') {
       this.organizePromptMessages({
-        role: 'user',
+        role: Role.USER,
         content: queryOrMessages,
       });
     } else {
@@ -168,7 +151,7 @@ export class McpClientChat {
             continue;
           }
 
-          const [tool_calls, finalAnswer] = await this.organizeToolCalls(response);
+          const [tool_calls, finalAnswer] = await this.organizeToolCalls(response as ChatCompleteResponse);
 
           // 工具调用
           if (tool_calls.length) {
@@ -181,7 +164,7 @@ export class McpClientChat {
               this.iterationSteps--;
             } catch (_error) {
               this.organizePromptMessages({
-                role: 'assistant',
+                role: Role.ASSISTANT,
                 content: 'call tools failed!',
               });
 
@@ -189,7 +172,7 @@ export class McpClientChat {
             }
           } else {
             this.organizePromptMessages({
-              role: 'assistant',
+              role: Role.ASSISTANT,
               content: finalAnswer,
             });
 
@@ -197,10 +180,11 @@ export class McpClientChat {
           }
         }
 
-        const summaryPrompt = '用简短的话总结！';
-        this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
-        const chatBody = await this.getChatBody(true);
+        this.organizePromptMessages({ role: Role.USER, content: '用简短的话总结！' });
+
+        const chatBody = await this.getChatBody();
         const result = await this.queryChatCompleteStreaming(chatBody);
+
         return result;
       };
 
@@ -219,39 +203,11 @@ export class McpClientChat {
     }
   }
 
-  protected async getChatBody(stream = false): Promise<ChatBody> {
-    const { model } = this.options.llmConfig;
-    const chatBody: ChatBody = {
-      model,
-      messages: this.messages,
-    };
+  protected abstract getChatBody(): Promise<ChatBody>;
 
-    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
-      const tools = await this.fetchToolsList();
+  protected abstract organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]>;
 
-      chatBody.tools = this.iterationSteps > 0 ? tools : [];
-    }
-
-    if (stream) {
-      chatBody.stream = stream;
-    }
-
-    return chatBody;
-  }
-
-  protected async organizeToolCalls(choice: NonStreamingChoice): Promise<[ToolCall[], string]> {
-    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
-      const availableTools = await this.fetchToolsList();
-
-      chatBody.tools = this.iterationSteps > 1 ? availableTools : [];
-    }
-
-    return chatBody;
-  }
-
-  protected async organizeToolCalls(choice: NonStreamingChoice): Promise<[ToolCall[], string]> {}
-
-  protected async initSystemPromptMessages(): Promise<string> {}
+  protected abstract initSystemPromptMessages(): Promise<string>;
 
   protected async callTools(toolCalls: ToolCall[]): Promise<{ toolResults: ToolResults; toolCallMessages: Message[] }> {
     try {
@@ -284,7 +240,6 @@ export class McpClientChat {
           });
         }
 
-        // 调用工具
         const callToolResult = (await client.callTool({
           name: toolName,
           arguments: toolArgs,
@@ -302,6 +257,7 @@ export class McpClientChat {
             callToolResult,
           });
         }
+
         toolCallMessages.push(message);
         toolResults.push({
           call: toolName,
@@ -395,7 +351,11 @@ export class McpClientChat {
     }
   }
 
-  protected async writeMessageDelta(messageDeltaContent: string, role: string = 'assistant', extra?: any) {
+  protected async writeMessageDelta(
+    messageDeltaContent: string,
+    role: string = 'assistant',
+    extra?: any,
+  ): Promise<void> {
     const writer = this.transformStream.writable.getWriter();
 
     try {

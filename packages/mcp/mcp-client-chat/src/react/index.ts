@@ -1,25 +1,15 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './ReActSystemPrompt.js';
 
-import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
-import type {
-  AvailableTool,
-  ChatBody,
-  ChatCompleteResponse,
-  ChatCreatePromptArgs,
-  IChatOptions,
-  MCPClientOptions,
-  McpServer,
-  Message,
-  NonStreamingChoice,
-  ToolCall,
-  ToolResults,
-} from './type.js';
-import { AgentStrategy, Role } from './type.js';
+import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
+import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './systemPrompt.js';
 
 const FINAL_ANSWER_ACTION = 'Final Answer:';
 
 export class ReActChat extends McpClientChat {
+  constructor(options: MCPClientOptions) {
+    super(options);
+  }
+
   protected async initSystemPromptMessages(): Promise<string> {
     return this.createReActSystemPrompt();
   }
@@ -33,13 +23,8 @@ export class ReActChat extends McpClientChat {
     return prompt;
   }
 
-  /**
-   * 从字符串中提取 action 和 action_input
-   * @param str 包含 action 和 action_input 的字符串
-   * @returns 包含 action 和 action_input 的对象数组
-   */
-  async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
-    const text = response.choice[0].message.content;
+  protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
+    const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
 
     if (text.includes(FINAL_ANSWER_ACTION) || !text.includes(`"action":`)) {
       const parts = text.split(FINAL_ANSWER_ACTION);
@@ -53,9 +38,9 @@ export class ReActChat extends McpClientChat {
       const actionBlocks = text
         .trim()
         .split(/```(?:json)?/)
-        .filter((block) => block.includes(`"action":`));
+        .filter((block: string) => block.includes(`"action":`));
 
-      actionBlocks.forEach((block) => {
+      actionBlocks.forEach((block: string) => {
         try {
           const { action, action_input } = JSON.parse(block.trim());
 
@@ -72,5 +57,19 @@ export class ReActChat extends McpClientChat {
     }
 
     return [tollCalls, ''];
+  }
+
+  protected async getChatBody(): Promise<ChatBody> {
+    const { model } = this.options.llmConfig;
+    const chatBody: ChatBody = {
+      model,
+      messages: this.messages,
+    };
+
+    return chatBody;
+  }
+
+  protected clearPromptMessages(): void {
+    this.messages = [];
   }
 }
