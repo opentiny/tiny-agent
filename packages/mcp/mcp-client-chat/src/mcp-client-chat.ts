@@ -13,8 +13,12 @@ import type {
   NonStreamingChoice,
   Message,
   IChatOptions,
+  CustomTransportMcpServer,
 } from './type.js';
 
+export function isCustomTransportMcpServer(serverConfig: McpServer | CustomTransportMcpServer): serverConfig is CustomTransportMcpServer {
+  return !!serverConfig.customTransport;
+}
 export class McpClientChat {
   protected options: MCPClientOptions;
   protected iterationSteps;
@@ -44,14 +48,20 @@ export class McpClientChat {
     }
   }
 
-  protected async initClients(serverName: string, serverConfig: McpServer) {
+  protected async initClients(serverName: string, serverConfig: McpServer | CustomTransportMcpServer) {
     const client = new Client({
       name: serverName,
       version: '1.0.0',
     });
 
-    if (serverConfig.customTransport) {
-      await client.connect(serverConfig.customTransport);
+    if (isCustomTransportMcpServer(serverConfig)) {
+      let clientTransport;
+      if (typeof serverConfig.customTransport === 'function') {
+        clientTransport = serverConfig.customTransport(serverConfig);
+      } else {
+        clientTransport = serverConfig.customTransport
+      }
+      await client.connect(clientTransport);
       return client;
     }
 

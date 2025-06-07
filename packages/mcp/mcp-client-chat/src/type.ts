@@ -4,10 +4,15 @@ export interface McpServer {
   url: string;
   headers?: Record<string, string>;
   timeout?: number;
-  customTransport?: Transport;
+  customTransport: never;
 }
 
-export type McpServers = Record<string, McpServer>;
+export interface CustomTransportMcpServer<T = any> {
+  config: T;
+  customTransport: Transport | ((config: T) => Transport);
+}
+
+export type McpServers = Record<string, McpServer | CustomTransportMcpServer>;
 
 export interface McpServerConfig {
   mcpServers: McpServers;
