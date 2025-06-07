@@ -119,17 +119,19 @@ export default defineConfig({
       '/extensions/': [
         {
           text: '连接器扩展',
-          base: '/extension/',
+          base: '/extensions/',
           items: [],
         },
         {
           text: '操作库扩展',
-          base: '/extension/',
-          items: [],
+          base: '/extensions/',
+          items: [
+            {text: '扩展思路', link: 'actions'}
+          ],
         },
         {
           text: '验证器扩展', 
-          base: '/extension/',
+          base: '/extensions/',
           items: [],
         },
       ],
