@@ -1,5 +1,5 @@
 
-# 扩展思路
+# 自定义Action
 
 用户可以根据自己的需求创建自定义 `Action`。一个 `Action` 本质上是一个包含 `name` 和 `execute` 方法的对象。`name` 是 `Action` 的**唯一标识符**，`execute` 方法是 `Action` 的具体执行逻辑。
 

@@ -126,7 +126,7 @@ export default defineConfig({
           text: '操作库扩展',
           base: '/extensions/',
           items: [
-            {text: '扩展思路', link: 'actions'}
+            {text: '自定义Action', link: 'actions'}
           ],
         },
         {
