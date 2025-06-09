@@ -324,6 +324,9 @@ export abstract class McpClientChat {
     const { url, apiKey } = this.options.llmConfig;
 
     const chatBody = await this.getChatBody();
+    const { messages, ...rest } = chatBody;
+    // Filter out system messages to only include user and assistant messages for summarization
+    const filterMessages = messages.filter((item) => item.role !== Role.SYSTEM);
 
     try {
       const response = await fetch(url, {
@@ -332,7 +335,7 @@ export abstract class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...chatBody, stream: true }),
+        body: JSON.stringify({ stream: true, messages: filterMessages, ...rest }),
       });
 
       if (!response.ok) {
