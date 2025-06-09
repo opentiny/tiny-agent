@@ -1,11 +1,12 @@
 import { McpClientChat } from '../mcp-client-chat.js';
 import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
-import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './systemPrompt.js';
+import { DEFAULT_SUMMARY_SYSTEM_PROMPT, FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './systemPrompt.js';
 
 const FINAL_ANSWER_ACTION = 'Final Answer:';
 
 export default class ReActChat extends McpClientChat {
   constructor(options: MCPClientOptions) {
+    options.llmConfig.summarySystemPrompt = options.llmConfig.summarySystemPrompt ?? DEFAULT_SUMMARY_SYSTEM_PROMPT;
     super(options);
   }
 

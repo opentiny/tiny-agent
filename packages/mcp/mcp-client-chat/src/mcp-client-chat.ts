@@ -187,8 +187,7 @@ export abstract class McpClientChat {
         }
       }
 
-      const summaryPrompt = 'Please provide a brief summary!';
-      this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
+      this.organizePromptMessages({ role: Role.USER, content: this.options.llmConfig.summarySystemPrompt as string });
 
       const result = await this.queryChatCompleteStreaming();
 
