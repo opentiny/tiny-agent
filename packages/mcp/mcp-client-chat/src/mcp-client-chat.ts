@@ -1,5 +1,3 @@
-import type { ReadableStream } from 'node:stream/web';
-import { TransformStream } from 'node:stream/web';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
