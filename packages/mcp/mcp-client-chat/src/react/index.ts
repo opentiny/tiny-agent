@@ -1,11 +1,10 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-
 import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
 import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './systemPrompt.js';
 
 const FINAL_ANSWER_ACTION = 'Final Answer:';
 
-export class ReActChat extends McpClientChat {
+export default class ReActChat extends McpClientChat {
   constructor(options: MCPClientOptions) {
     super(options);
   }
@@ -32,7 +31,7 @@ export class ReActChat extends McpClientChat {
       return [[], output];
     }
 
-    const tollCalls: ToolCall[] = [];
+    const toolCalls: ToolCall[] = [];
 
     if (text.includes('```')) {
       const actionBlocks = text
@@ -44,7 +43,7 @@ export class ReActChat extends McpClientChat {
         try {
           const { action, action_input } = JSON.parse(block.trim());
 
-          tollCalls.push({
+          toolCalls.push({
             id: action,
             type: 'function',
             function: {
@@ -56,7 +55,7 @@ export class ReActChat extends McpClientChat {
       });
     }
 
-    return [tollCalls, ''];
+    return [toolCalls, ''];
   }
 
   protected async getChatBody(): Promise<ChatBody> {

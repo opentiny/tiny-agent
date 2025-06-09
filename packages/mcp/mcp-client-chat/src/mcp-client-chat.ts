@@ -133,19 +133,15 @@ export abstract class McpClientChat {
     }
 
     this.iterationSteps = this.options.maxIterationSteps || 1;
-
-    try {
-      this.chatIteration();
-
-      return this.transformStream.readable;
-    } catch (error) {
+    this.chatIteration().catch((error) => {
       console.error('Chat failed:', error);
-      this.transformStream!.writable.abort(error);
-      return error as Error;
-    }
+      this.transformStream.writable.abort(error);
+    });
+
+    return this.transformStream.readable;
   }
 
-  protected async chatIteration(): Promise<ReadableStream> {
+  protected async chatIteration(): Promise<void> {
     try {
       const toolsCallResults: ToolResults = [];
 
@@ -191,23 +187,17 @@ export abstract class McpClientChat {
         }
       }
 
-      this.organizePromptMessages({ role: Role.USER, content: '用简短的话总结！' });
+      const summaryPrompt = 'Please provide a brief summary!';
+      this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
+
       const result = await this.queryChatCompleteStreaming();
 
       result.pipeTo(this.transformStream.writable);
-
-      return result;
     } catch (error) {
       console.error('Chat iteration failed:', error);
       throw error;
     }
   }
-
-  protected abstract getChatBody(): Promise<ChatBody>;
-
-  protected abstract organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]>;
-
-  protected abstract initSystemPromptMessages(): Promise<string>;
 
   protected async callTools(toolCalls: ToolCall[]): Promise<{ toolResults: ToolResults; toolCallMessages: Message[] }> {
     try {
@@ -322,11 +312,7 @@ export abstract class McpClientChat {
 
   protected async queryChatCompleteStreaming(): Promise<ReadableStream> {
     const { url, apiKey } = this.options.llmConfig;
-
     const chatBody = await this.getChatBody();
-    const { messages, ...rest } = chatBody;
-    // Filter out system messages to only include user and assistant messages for summarization
-    const filterMessages = messages.filter((item) => item.role !== Role.SYSTEM);
 
     try {
       const response = await fetch(url, {
@@ -335,7 +321,7 @@ export abstract class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ stream: true, messages: filterMessages, ...rest }),
+        body: JSON.stringify({ stream: true, ...chatBody }),
       });
 
       if (!response.ok) {
@@ -382,4 +368,10 @@ export abstract class McpClientChat {
       writer.releaseLock();
     }
   }
+
+  protected abstract getChatBody(): Promise<ChatBody>;
+
+  protected abstract organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]>;
+
+  protected abstract initSystemPromptMessages(): Promise<string>;
 }

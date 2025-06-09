@@ -1,6 +1,6 @@
 import { McpClientChat } from './mcp-client-chat.js';
-import { FunctionCallChat } from './functionCalling/index.js';
-import { ReActChat } from './react/index.js';
+import FunctionCallChat from './functionCalling/index.js';
+import ReActChat from './react/index.js';
 import { AgentStrategy, type MCPClientOptions } from './type.js';
 
 async function createMCPClientChat(options: MCPClientOptions): Promise<McpClientChat> {
@@ -17,4 +17,4 @@ async function createMCPClientChat(options: MCPClientOptions): Promise<McpClient
   return mcpClient;
 }
 
-export { McpClientChat, createMCPClientChat };
+export { McpClientChat, FunctionCallChat, ReActChat, createMCPClientChat };

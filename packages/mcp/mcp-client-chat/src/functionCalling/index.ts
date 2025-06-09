@@ -2,7 +2,7 @@ import { McpClientChat } from '../mcp-client-chat.js';
 
 import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
 
-export class FunctionCallChat extends McpClientChat {
+export default class FunctionCallChat extends McpClientChat {
   constructor(options: MCPClientOptions) {
     super(options);
   }
