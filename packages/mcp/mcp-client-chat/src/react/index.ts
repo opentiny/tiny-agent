@@ -1,5 +1,5 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
+import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall, Tool } from '../type.js';
 import { DEFAULT_SUMMARY_SYSTEM_PROMPT, FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './systemPrompt.js';
 
 const FINAL_ANSWER_ACTION = 'Final Answer:';
@@ -11,13 +11,24 @@ export default class ReActChat extends McpClientChat {
   }
 
   protected async initSystemPromptMessages(): Promise<string> {
-    return this.createReActSystemPrompt();
+    try {
+      return await this.createReActSystemPrompt();
+    } catch (err) {
+      console.error('ReAct prompt init failed:', err);
+      return this.options.llmConfig.systemPrompt;
+    }
   }
 
   protected async createReActSystemPrompt(): Promise<string> {
-    const tools = await this.fetchToolsList();
+    let tools: Tool[] = [];
 
-    const toolStrings = JSON.stringify(tools);
+    try {
+      tools = await this.fetchToolsList();
+    } catch (_error) {
+      tools = [];
+    }
+
+    const toolStrings = tools.length ? JSON.stringify(tools) : '';
     const prompt = [PREFIX, toolStrings, FORMAT_INSTRUCTIONS, SUFFIX].join('\n\n');
 
     return prompt;
