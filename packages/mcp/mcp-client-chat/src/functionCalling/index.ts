@@ -1,14 +1,15 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-
 import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
+import { DEFAULT_SUMMARY_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT } from './systemPrompt.js';
 
 export default class FunctionCallChat extends McpClientChat {
   constructor(options: MCPClientOptions) {
+    options.llmConfig.summarySystemPrompt = options.llmConfig.summarySystemPrompt ?? DEFAULT_SUMMARY_SYSTEM_PROMPT;
     super(options);
   }
 
   protected async initSystemPromptMessages(): Promise<string> {
-    return this.options.llmConfig.systemPrompt;
+    return this.options.llmConfig.systemPrompt ?? DEFAULT_SYSTEM_PROMPT;
   }
 
   protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {

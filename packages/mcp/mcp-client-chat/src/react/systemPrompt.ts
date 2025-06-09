@@ -25,3 +25,5 @@ Thought: I now know the final answer
 Final Answer: the final answer to the original input question`;
 
 export const SUFFIX = 'Begin! Reminder to always use the exact characters `Final Answer` when responding.';
+
+export const DEFAULT_SUMMARY_SYSTEM_PROMPT = 'Please provide a brief summary!';
