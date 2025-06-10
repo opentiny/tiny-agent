@@ -116,7 +116,14 @@ export abstract class McpClientChat {
   async chat(queryOrMessages: string | Array<Message>, chatOptions?: IChatOptions): Promise<ReadableStream | Error> {
     this.chatOptions = chatOptions;
 
-    const systemPrompt = await this.initSystemPromptMessages();
+    let systemPrompt: string;
+
+    try {
+      systemPrompt = await this.initSystemPromptMessages();
+    } catch (error) {
+      console.error('Failed to initialize system prompt:', error);
+      systemPrompt = this.options.llmConfig.systemPrompt ?? '';
+    }
 
     this.organizePromptMessages({
       role: Role.SYSTEM,
@@ -147,6 +154,16 @@ export abstract class McpClientChat {
 
       while (this.iterationSteps > 0) {
         const response: ChatCompleteResponse | Error = await this.queryChatComplete();
+
+        if (response instanceof Error) {
+          this.organizePromptMessages({
+            role: Role.ASSISTANT,
+            content: response.message,
+          });
+          this.iterationSteps = 0;
+
+          continue;
+        }
 
         if (response.choices?.[0]?.error) {
           this.organizePromptMessages({

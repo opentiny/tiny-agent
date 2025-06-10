@@ -7,19 +7,11 @@ const FINAL_ANSWER_ACTION = 'Final Answer:';
 export default class ReActChat extends McpClientChat {
   constructor(options: MCPClientOptions) {
     options.llmConfig.summarySystemPrompt = options.llmConfig.summarySystemPrompt ?? DEFAULT_SUMMARY_SYSTEM_PROMPT;
+
     super(options);
   }
 
   protected async initSystemPromptMessages(): Promise<string> {
-    try {
-      return await this.createReActSystemPrompt();
-    } catch (err) {
-      console.error('ReAct prompt init failed:', err);
-      return this.options.llmConfig.systemPrompt;
-    }
-  }
-
-  protected async createReActSystemPrompt(): Promise<string> {
     let tools: Tool[] = [];
 
     try {
@@ -37,10 +29,14 @@ export default class ReActChat extends McpClientChat {
   protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
     const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
 
-    if (text.includes(FINAL_ANSWER_ACTION) || !text.includes(`"action":`)) {
+    if (text.includes(FINAL_ANSWER_ACTION)) {
       const parts = text.split(FINAL_ANSWER_ACTION);
       const output = parts[parts.length - 1].trim();
       return [[], output];
+    }
+
+    if (!text.includes(`"action":`)) {
+      return [[], text.trim()];
     }
 
     const toolCalls: ToolCall[] = [];
@@ -55,15 +51,23 @@ export default class ReActChat extends McpClientChat {
         try {
           const { action, action_input } = JSON.parse(block.trim());
 
+          if (!action || typeof action !== 'string') {
+            console.error('Invalid tool call: missing or invalid action field');
+
+            return;
+          }
+
           toolCalls.push({
             id: action,
             type: 'function',
             function: {
               name: action,
-              arguments: action_input,
+              arguments: typeof action_input === 'string' ? action_input : JSON.stringify(action_input || {}),
             },
           });
-        } catch (_error) {}
+        } catch (error) {
+          console.error('Failed to parse tool call JSON:', error);
+        }
       });
     }
 
