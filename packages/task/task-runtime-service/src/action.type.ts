@@ -7,7 +7,7 @@ export enum ActionResultStatus {
 
 export interface IAction {
   name: string;
-  execute: (params: Record<string, any> | any, context?: IActionContext) => IActionResult | Promise<IActionResult>;
+  execute: (params: Record<string, any>, context?: IActionContext) => IActionResult | Promise<IActionResult>;
   description?: string;
 }
 

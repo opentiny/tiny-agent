@@ -1,4 +1,5 @@
-import { addBreathe, removeBreathe, addPopup, Popup } from '@opentiny/tiny-agent-ui-components';
+import type { Popup } from '@opentiny/tiny-agent-ui-components';
+import { addBreathe, addPopup, removeBreathe } from '@opentiny/tiny-agent-ui-components';
 import { t } from '../locale/i18n';
 import closeSvg from '../assets/images/close.svg?raw';
 import '../assets/styles/guide.css';
@@ -54,7 +55,9 @@ export class GuideModal {
   }
 
   show({ title, text }: { title: string; text: string }) {
-    this.targetDom && addBreathe(this.targetDom);
+    if (this.targetDom) {
+      addBreathe(this.targetDom);
+    }
 
     this.titleEl.textContent = title;
     this.content.textContent = text;

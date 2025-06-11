@@ -1,10 +1,10 @@
-import type { ITaskResult, ITaskExecutor } from './task';
+import type { ActionManager } from './action-manager';
+import type { ITaskExecutor, ITaskResult } from './task';
 import type { ITaskSchema } from './schema.type';
-import { Task } from './task';
-import { ActionManager } from './action-manager';
 import type { ITaskUI } from './task-ui';
-import { t } from './locale/i18n';
 import type { IActionContext } from './action.type';
+import { Task } from './task';
+import { t } from './locale/i18n';
 
 export interface ISchedulerContext extends IActionContext {
   $task?: ITaskExecutor;
@@ -68,12 +68,9 @@ export class TaskScheduler {
       this.task.on('finish', () => {
         this.taskUI!.stop();
       });
-      this.task.on(
-        'beforeStep',
-        ({ index, instruction }: { index: number; instruction: any }) => {
-          this.taskUI!.setTitle?.(`${t('scheduler.executingStep')} ${index}`);
-        }
-      );
+      this.task.on('beforeStep', ({ index }: { index: number; instruction: any }) => {
+        this.taskUI!.setTitle?.(`${t('scheduler.executingStep')} ${index}`);
+      });
     }
   }
 
@@ -95,7 +92,7 @@ export class TaskScheduler {
       return;
     }
     this.isExecuting = true;
-    const { taskFn, id, resolve, reject } = this.tasksQueue.shift();
+    const { taskFn, resolve, reject } = this.tasksQueue.shift();
     try {
       const result = await taskFn();
       resolve(result);

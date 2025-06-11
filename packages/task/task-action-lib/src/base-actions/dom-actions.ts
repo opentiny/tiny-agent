@@ -1,5 +1,5 @@
 // dom_operation_lib.ts
-import type { IAction } from '@opentiny/tiny-agent-task-runtime-service';
+import type { IAction, IActionResult } from '@opentiny/tiny-agent-task-runtime-service';
 import { findElement, getElementByText, simulateClick } from '../base-actions';
 import { t } from '../locale/i18n';
 
@@ -41,7 +41,7 @@ const clickByText: IAction = {
       status: 'success',
     };
   },
-};
+} as IAction;
 
 // 高亮插件
 const highlight: IAction = {
@@ -53,7 +53,7 @@ const highlight: IAction = {
       status: 'success',
     };
   },
-};
+} as IAction;
 
 // 插入前置元素插件
 const insertBefore: IAction = {
@@ -72,7 +72,7 @@ const insertBefore: IAction = {
       status: 'success',
     };
   },
-};
+} as IAction;
 
 // 滚动到元素插件
 const scrollTo: IAction = {
@@ -84,7 +84,7 @@ const scrollTo: IAction = {
       status: 'success',
     };
   },
-};
+} as IAction;
 
 // 点击插件
 const click: IAction = {
@@ -96,7 +96,7 @@ const click: IAction = {
       status: 'success',
     };
   },
-};
+} as IAction;
 
 // 双击插件
 const doubleClick: IAction = {
@@ -109,7 +109,7 @@ const doubleClick: IAction = {
       status: 'success',
     };
   },
-};
+} as IAction;
 
 // 右键点击插件
 const rightClick: IAction = {
@@ -127,7 +127,7 @@ const rightClick: IAction = {
       status: 'success',
     };
   },
-};
+} as IAction;
 
 // 查找 DOM 元素插件
 const findDom: IAction = {
@@ -140,8 +140,8 @@ const findDom: IAction = {
     return {
       status: 'success',
       result: { dom: domArr },
-    };
+    } as IActionResult;
   },
-};
+} as IAction;
 
 export const DomActions = [highlight, insertBefore, scrollTo, click, doubleClick, rightClick, findDom, clickByText];

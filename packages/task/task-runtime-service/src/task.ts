@@ -1,7 +1,7 @@
 import type { IInstructionSchema } from './schema.type';
 import type { ISchedulerContext } from './task-scheduler';
+import type { ActionManager } from './action-manager';
 import { ActionResultStatus } from './action.type';
-import { ActionManager } from './action-manager';
 import { EventEmitter } from './event-emitter';
 import { Instruction } from './instruction';
 import { t } from './locale/i18n';
@@ -16,7 +16,7 @@ export interface ITaskResult {
   status: TaskResultStatus;
   index: number;
   instruction?: IInstructionSchema;
-  result?: { [key: string]: any };
+  result?: Record<string, any>;
   error?: { message: string; stack?: string };
 }
 
@@ -27,12 +27,7 @@ export enum ExecutorStatus {
   Paused = 'paused',
 }
 
-export type ITaskExecutorEvent =
-  | 'start'
-  | 'beforeStep'
-  | 'pause'
-  | 'resume'
-  | 'finish';
+export type ITaskExecutorEvent = 'start' | 'beforeStep' | 'pause' | 'resume' | 'finish';
 export interface ITaskExecutor {
   pause(): Promise<void>;
   resume(): void;
@@ -125,14 +120,14 @@ export class Task implements ITaskExecutor {
       });
     }
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
       this.executorInfo.instructions = instructions;
       this.executorInfo.currentIndex = 0;
       this.executorInfo.status = ExecutorStatus.Running;
       this.executorInfo.resolve = resolve;
       this.executorInfo.reject = reject;
       this.emit('start');
-      await this.start();
+      this.start();
     });
   }
 
@@ -149,11 +144,7 @@ export class Task implements ITaskExecutor {
       this.executorInfo.currentIndex < this.executorInfo.instructions.length &&
       this.executorInfo.status === ExecutorStatus.Running
     ) {
-      const {
-        instructions,
-        currentIndex,
-        status: executorStatus,
-      } = this.executorInfo;
+      const { instructions, currentIndex, status: executorStatus } = this.executorInfo;
       const instruction = instructions[currentIndex];
 
       this.emit('beforeStep', {
@@ -161,11 +152,7 @@ export class Task implements ITaskExecutor {
         instruction,
       });
 
-      const instructionExecutor = new Instruction(
-        instruction,
-        this.actionManager,
-        this.context
-      );
+      const instructionExecutor = new Instruction(instruction, this.actionManager, this.context);
 
       const { status, result, error } = await instructionExecutor.execute();
 

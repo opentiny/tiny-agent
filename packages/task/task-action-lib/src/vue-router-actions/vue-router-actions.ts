@@ -38,7 +38,7 @@ const push: IAction = {
       };
     }
   },
-};
+} as IAction;
 
 // 路由替换操作
 const replace: IAction = {
@@ -69,12 +69,12 @@ const replace: IAction = {
       };
     }
   },
-};
+} as IAction;
 
 // 后退操作
 const goBack: IAction = {
   name: RouterActionType.VUE_ROUTER_GO_BACK,
-  execute: (params: any, context: any) => {
+  execute: (_params: Record<string, any>, context: any) => {
     const { vueRouter } = context;
     if (!vueRouter) {
       return {
@@ -104,7 +104,7 @@ const goBack: IAction = {
 // 前进操作
 const goForward: IAction = {
   name: RouterActionType.VUE_ROUTER_GO_FORWARD,
-  execute: (params: any, context: any) => {
+  execute: (_params: Record<string, any>, context: any) => {
     const { vueRouter } = context;
     if (!vueRouter) {
       return {
@@ -160,6 +160,6 @@ const go: IAction = {
       };
     }
   },
-};
+} as IAction;
 
 export const VueRouterActions = [push, replace, goBack, goForward, go];
