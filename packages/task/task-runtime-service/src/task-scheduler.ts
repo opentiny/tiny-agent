@@ -57,19 +57,19 @@ export class TaskScheduler {
     this.task = task;
     if (this.task) {
       this.task.on('start', () => {
-        this.taskUI!.show();
+        this.taskUI?.show();
       });
       this.task.on('pause', () => {
-        this.taskUI!.pause();
+        this.taskUI?.pause();
       });
       this.task.on('resume', () => {
-        this.taskUI!.resume();
+        this.taskUI?.resume();
       });
       this.task.on('finish', () => {
-        this.taskUI!.stop();
+        this.taskUI?.stop();
       });
       this.task.on('beforeStep', ({ index }: { index: number; instruction: any }) => {
-        this.taskUI!.setTitle?.(`${t('scheduler.executingStep')} ${index}`);
+        this.taskUI?.setTitle?.(`${t('scheduler.executingStep')} ${index}`);
       });
     }
   }
