@@ -8,13 +8,13 @@ import type {
   AvailableTool,
   ChatBody,
   ChatCompleteResponse,
+  CustomTransportMcpServer,
   IChatOptions,
   MCPClientOptions,
   McpServer,
   Message,
   ToolCall,
   ToolResults,
-  CustomTransportMcpServer,
 } from './type.js';
 
 export function isCustomTransportMcpServer(serverConfig: McpServer | CustomTransportMcpServer): serverConfig is CustomTransportMcpServer {

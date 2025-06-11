@@ -26,4 +26,4 @@ Final Answer: the final answer to the original input question`;
 
 export const SUFFIX = 'Begin! Reminder to always use the exact characters `Final Answer` when responding.';
 
-export const DEFAULT_SUMMARY_SYSTEM_PROMPT = 'Please provide a brief summary without using the Final Answer format';
+export const RE_ACT_DEFAULT_SUMMARY = 'Please provide a brief summary without using the Final Answer format';
