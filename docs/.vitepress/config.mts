@@ -18,10 +18,8 @@ export default defineConfig({
   vite: {
     plugins: [
       jsconfigPaths({
-        projects: [
-          '../jsconfig.dev.json'
-        ]
-      }) as Plugin // TODO: 似乎不生效
+        projects: ['../jsconfig.dev.json'],
+      }) as Plugin, // TODO: 似乎不生效
     ],
     server: {
       host: '0.0.0.0', // 允许外部访问
@@ -70,9 +68,7 @@ export default defineConfig({
         {
           text: '代理服务器',
           base: '/api/mcp/',
-          items: [
-            { text: 'ProxyServer', link: 'mcp-proxy-server' },
-          ],
+          items: [{ text: 'ProxyServer', link: 'mcp-proxy-server' }],
         },
         {
           text: '调度器',
@@ -139,7 +135,7 @@ export default defineConfig({
         {
           text: '验证器扩展',
           base: '/extension/',
-          items: [],
+          items: [{ text: 'McpValidator', link: 'mcp-validator' }],
         },
       ],
     },

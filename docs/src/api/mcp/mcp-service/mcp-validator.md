@@ -5,13 +5,13 @@ MCP工具调用验证器，
 - **用法**
 
 ```typescript
-const mcpValidator = new McpValidator()
-const code = mcpValidator.genVerifyCode()
+const mcpValidator = new McpValidator();
+const code = mcpValidator.genVerifyCode();
 
 // ....
 
 // 执行 MCP Tool 时候
-const isVerify = await mcpValidator.verify(code)
+const isVerify = await mcpValidator.verify(code);
 ```
 
 ## 方法
@@ -25,7 +25,7 @@ const isVerify = await mcpValidator.verify(code)
 
 ### verify
 
-异步函数，与内部残生的验证码进行比对，验证成功去掉缓存验证码
+异步函数，与内部产生的验证码进行比对，验证成功去掉缓存验证码
 
 - **参数**
   code：外部验证码，与内部验证码进行比对
