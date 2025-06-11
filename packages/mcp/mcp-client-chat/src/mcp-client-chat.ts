@@ -1,5 +1,3 @@
-import type { ReadableStream } from 'node:stream/web';
-import { TransformStream } from 'node:stream/web';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
@@ -20,8 +18,12 @@ import type {
   NonStreamingChoice,
   ToolCall,
   ToolResults,
+  CustomTransportMcpServer,
 } from './type.js';
 
+export function isCustomTransportMcpServer(serverConfig: McpServer | CustomTransportMcpServer): serverConfig is CustomTransportMcpServer {
+  return !!serverConfig.customTransport;
+}
 const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
 export class McpClientChat {
   protected options: MCPClientOptions;
@@ -50,11 +52,23 @@ export class McpClientChat {
     }
   }
 
-  protected async initClients(serverName: string, serverConfig: McpServer): Promise<Client> {
+  protected async initClients(serverName: string, serverConfig: McpServer | CustomTransportMcpServer): Promise<Client> {
     const client = new Client({
       name: serverName,
       version: '1.0.0',
     });
+
+    if (isCustomTransportMcpServer(serverConfig)) {
+      let clientTransport;
+      if (typeof serverConfig.customTransport === 'function') {
+        clientTransport = serverConfig.customTransport(serverConfig);
+      } else {
+        clientTransport = serverConfig.customTransport
+      }
+      await client.connect(clientTransport);
+      return client;
+    }
+
     const { url } = serverConfig;
     const baseUrl = new URL(url);
 
