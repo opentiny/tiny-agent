@@ -1,9 +1,5 @@
+import { addBreathe, addTooltip, removeBreathe } from '@opentiny/tiny-agent-ui-components';
 import { EventEmitter } from './event-emitter';
-import {
-  addBreathe,
-  removeBreathe,
-  addTooltip,
-} from '@opentiny/tiny-agent-ui-components';
 import { t } from './locale/i18n';
 import skip from './assets/images/skip.svg?url';
 import skipDisabled from './assets/images/skip-disabled.svg?url';
@@ -136,12 +132,7 @@ export class TaskUI implements ITaskUI {
     this.resumeBtn.onclick = () => this.resume(true);
     this.resumeBtn.title = t('taskUI.resume');
 
-    this.messageBox.append(
-      this.titleElm,
-      this.skipDisabledBtn,
-      this.pauseBtn,
-      this.stopBtn
-    );
+    this.messageBox.append(this.titleElm, this.skipDisabledBtn, this.pauseBtn, this.stopBtn);
 
     this.hide(); // 初始化时隐藏
   }
@@ -163,28 +154,13 @@ export class TaskUI implements ITaskUI {
 
   setStatus(status: Status) {
     if (status === Status.Running) {
-      this.messageBox.replaceChildren(
-        this.titleElm,
-        this.skipDisabledBtn,
-        this.pauseBtn,
-        this.stopBtn
-      );
+      this.messageBox.replaceChildren(this.titleElm, this.skipDisabledBtn, this.pauseBtn, this.stopBtn);
       this.continueLight();
     } else if (status === Status.Paused) {
-      this.messageBox.replaceChildren(
-        this.titleElm,
-        this.skipBtn,
-        this.resumeBtn,
-        this.stopBtn
-      );
+      this.messageBox.replaceChildren(this.titleElm, this.skipBtn, this.resumeBtn, this.stopBtn);
       this.pauseLight();
     } else if (status === Status.Stop) {
-      this.messageBox.replaceChildren(
-        this.titleElm,
-        this.skipDisabledBtn,
-        this.pauseBtn,
-        this.stopBtn
-      );
+      this.messageBox.replaceChildren(this.titleElm, this.skipDisabledBtn, this.pauseBtn, this.stopBtn);
       this.pauseLight();
     }
   }

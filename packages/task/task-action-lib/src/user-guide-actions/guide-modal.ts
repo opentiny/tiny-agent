@@ -1,14 +1,9 @@
-import {
-  addBreathe,
-  removeBreathe,
-  addPopup,
-  Popup,
-} from '@opentiny/tiny-agent-ui-components';
+import { addBreathe, removeBreathe, addPopup, Popup } from '@opentiny/tiny-agent-ui-components';
 import { t } from '../locale/i18n';
 import closeSvg from '../assets/images/close.svg?raw';
 import '../assets/styles/guide.css';
 
-export const GuideModal = class {
+export class GuideModal {
   private targetDom: HTMLElement;
   originOutlines: string;
   popupContent: HTMLDivElement;
@@ -74,10 +69,8 @@ export const GuideModal = class {
   }
 
   hide() {
-    // this.targetDom.style.outline = this.originOutlines;
-    console.log('hide');
     removeBreathe(this.targetDom);
-    this.popup.destroy();
+    this.popup?.destroy();
     if (this.onHideCallback) {
       this.onHideCallback();
     }
@@ -86,4 +79,4 @@ export const GuideModal = class {
   onHide(callback: () => void) {
     this.onHideCallback = callback;
   }
-};
+}

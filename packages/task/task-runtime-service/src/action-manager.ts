@@ -1,4 +1,4 @@
-import { IAction } from './action.type';
+import type { IAction } from './action.type';
 
 // ACTION管理类
 export class ActionManager {
@@ -18,7 +18,7 @@ export class ActionManager {
   }
 
   // 清空ACTION
-  clearActions() {
+  clearActions(): void {
     this.actions = {};
   }
 

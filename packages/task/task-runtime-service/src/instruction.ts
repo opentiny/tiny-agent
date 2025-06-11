@@ -1,8 +1,9 @@
-import { IActionResult, ActionResultStatus } from './action.type';
-import { IInstructionSchema } from './schema.type';
-import { ActionManager } from './action-manager';
-import { t } from './locale/i18n';
+import type { IActionResult } from './action.type';
+import type { IInstructionSchema } from './schema.type';
+import type { ActionManager } from './action-manager';
 import type { ISchedulerContext } from './task-scheduler';
+import { ActionResultStatus } from './action.type';
+import { t } from './locale/i18n';
 
 export interface IInstructionExecutor {
   execute(instruction?: IInstructionSchema): Promise<IActionResult>;
@@ -13,11 +14,7 @@ export class Instruction implements IInstructionExecutor {
   protected context: ISchedulerContext;
   protected instruction: IInstructionSchema;
 
-  constructor(
-    instruction: IInstructionSchema,
-    actionManager: ActionManager,
-    context: ISchedulerContext
-  ) {
+  constructor(instruction: IInstructionSchema, actionManager: ActionManager, context: ISchedulerContext) {
     this.instruction = instruction;
     this.actionManager = actionManager;
     this.context = context;
@@ -32,9 +29,7 @@ export class Instruction implements IInstructionExecutor {
     return result;
   }
 
-  protected async executeWithCatch(
-    instruction: IInstructionSchema
-  ): Promise<IActionResult> {
+  protected async executeWithCatch(instruction: IInstructionSchema): Promise<IActionResult> {
     const { action: actionName, params } = instruction;
     const action = this.actionManager.findAction(actionName)?.execute;
     if (!action) {

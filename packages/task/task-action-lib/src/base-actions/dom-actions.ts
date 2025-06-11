@@ -27,10 +27,7 @@ const ActionType = {
 
 const clickByText: IAction = {
   name: ActionType.CLICK_BY_TEXT,
-  execute: async (
-    params: { selector: string; timeout?: number; text: string },
-    context: any
-  ) => {
+  execute: async (params: { selector: string; timeout?: number; text: string }) => {
     const { selector, timeout, text } = params;
     const element = await getElementByText(selector, text, timeout);
     if (!element) {
@@ -49,10 +46,7 @@ const clickByText: IAction = {
 // 高亮插件
 const highlight: IAction = {
   name: ActionType.HIGHLIGHT,
-  execute: async (
-    params: { selector: string; timeout?: number },
-    context: any
-  ) => {
+  execute: async (params: { selector: string; timeout?: number }) => {
     const element = await findElement(params.selector, params.timeout);
     element.style.outline = '2px solid red';
     return {
@@ -64,10 +58,7 @@ const highlight: IAction = {
 // 插入前置元素插件
 const insertBefore: IAction = {
   name: ActionType.INSERT_BEFORE,
-  execute: async (
-    params: { content: string; selector: string; timeout?: number },
-    context: any
-  ) => {
+  execute: async (params: { content: string; selector: string; timeout?: number }) => {
     if (!params.content) {
       throw new Error(t('domActions.errorMsg.insertBefore'));
     }
@@ -86,10 +77,7 @@ const insertBefore: IAction = {
 // 滚动到元素插件
 const scrollTo: IAction = {
   name: ActionType.SCROLL_TO,
-  execute: async (
-    params: { selector: string; timeout?: number },
-    context: any
-  ) => {
+  execute: async (params: { selector: string; timeout?: number }) => {
     const element = await findElement(params.selector, params.timeout);
     element.scrollIntoView({ behavior: 'smooth' });
     return {
@@ -101,10 +89,7 @@ const scrollTo: IAction = {
 // 点击插件
 const click: IAction = {
   name: ActionType.CLICK,
-  execute: async (
-    params: { selector: string; timeout?: number },
-    context: any
-  ) => {
+  execute: async (params: { selector: string; timeout?: number }) => {
     const element = await findElement(params.selector, params.timeout);
     await simulateClick(element);
     return {
@@ -116,16 +101,12 @@ const click: IAction = {
 // 双击插件
 const doubleClick: IAction = {
   name: ActionType.DOUBLE_CLICK,
-  execute: async (
-    params: { selector: string; timeout?: number },
-    context: { result: any }
-  ) => {
+  execute: async (params: { selector: string; timeout: number }) => {
     const element = await findElement(params.selector, params.timeout);
     const event = new Event('dblclick');
     element.dispatchEvent(event);
     return {
       status: 'success',
-      result: context.result,
     };
   },
 };
@@ -133,10 +114,7 @@ const doubleClick: IAction = {
 // 右键点击插件
 const rightClick: IAction = {
   name: ActionType.RIGHT_CLICK,
-  execute: async (
-    params: { selector: string; timeout?: number },
-    context: any
-  ) => {
+  execute: async (params: { selector: string; timeout?: number }) => {
     const element = await findElement(params.selector, params.timeout);
     const event = new MouseEvent('contextmenu', {
       bubbles: true,
@@ -154,10 +132,7 @@ const rightClick: IAction = {
 // 查找 DOM 元素插件
 const findDom: IAction = {
   name: ActionType.FIND_DOM,
-  execute: async (
-    params: { selector: string; timeout?: number },
-    context: any
-  ) => {
+  execute: async (params: { selector: string; timeout?: number }) => {
     const element = await findElement(params.selector, params.timeout);
     const domArr: string[] = [];
     domArr.push(element.outerHTML);
@@ -169,13 +144,4 @@ const findDom: IAction = {
   },
 };
 
-export const DomActions = [
-  highlight,
-  insertBefore,
-  scrollTo,
-  click,
-  doubleClick,
-  rightClick,
-  findDom,
-  clickByText,
-];
+export const DomActions = [highlight, insertBefore, scrollTo, click, doubleClick, rightClick, findDom, clickByText];
