@@ -4,7 +4,7 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 export interface McpServer {
   url: string;
   headers?: Record<string, string>;
-  timeout?: number;
+  timeout?: number; // TODO
   customTransport: never;
 }
 
