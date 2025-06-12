@@ -37,11 +37,10 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: '指引', link: '/guide/write-docs-guide' },
-      { text: '配置', link: '/config/config' },
       { text: 'API', link: '/api/api' },
       { text: '扩展', link: '/extensions/extension' },
       { text: '演示', link: '/examples/demo' },
-      { text: '1.0.0', link: '/releases/releases' },
+      { text: '0.1.0', link: 'https://github.com/opentiny/tiny-agent/releases' },
     ],
 
     sidebar: {
