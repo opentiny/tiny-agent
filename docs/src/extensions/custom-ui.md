@@ -7,20 +7,27 @@ type ITaskUIEvent = 'skip' | 'pause' | 'resume' | 'stop';
 interface ITaskUI {
   show(): void;
   hide(): void;
-  stop(): void;
+  destroy(): void;
+  stop(isEmit?: boolean): void;
   pause(isEmit?: boolean): void;
   skip?: (isEmit?: boolean) => void;
   resume(isEmit?: boolean): void;
-  destroy(): void;
   on(event: ITaskUIEvent, callback: (...args: any[]) => void): void;
   off(event: ITaskUIEvent, callback: (...args: any[]) => void): void;
 }
 ```
 
+其中`show` `hide` `destroy`三个方法分别是用于界面的显示、隐藏以及元素的销毁。
+
+`pause` `skip` `resume` `stop`分别对应点击暂停执行、调试执行、恢复执行与停止执行。入参`isEmit`用于是否触发相关事件。
+
+`on`和`off`用于提供上述四个方法的事件监听与销毁。
+
 ## 参考示例
 
 ```typescript
-import { type ITaskUI, EventEmitter } from '@opentiny/tiny-agent-task-runtime-service';
+import type { ITaskUI, ITaskUIEvent } from '@opentiny/tiny-agent-task-runtime-service';
+import { EventEmitter } from '@opentiny/tiny-agent-task-runtime-service';
 
 export enum Status {
   Stop = 'stop',
@@ -28,36 +35,33 @@ export enum Status {
   Paused = 'paused',
 }
 
-
-const createImg = (src: string) => {
-  const img = document.createElement('img');
-  img.src = src;
-  Object.assign(img.style, {
-    width: '24px',
-    height: '24px',
-    marginLeft: '12px',
+const createBtn = (title: string, type?: string) => {
+  const button = document.createElement('button');
+  button.innerText = title;
+  const backgroundColor = type === 'warn' ? '#ff8800' : '#1476ff';
+  Object.assign(button.style, {
+    backgroundColor,
+    color: '#fff',
+    border: 'none',
+    padding: '8px 12px',
     cursor: 'pointer',
-    borderRadius: '50%',
+    borderRadius: '6px',
+    margin: '0 12px',
   });
-  return img;
+  return button;
 };
 
 export class CustomTaskUI implements ITaskUI {
   protected btnBox: HTMLDivElement;
-  protected pauseBtn!: HTMLImageElement;
-  protected skipBtn!: HTMLImageElement;
-  protected skipDisabledBtn!: HTMLImageElement;
-  protected stopBtn!: HTMLImageElement;
-  protected stopDisabledBtn!: HTMLImageElement;
-  protected resumeBtn!: HTMLImageElement;
+  protected pauseBtn!: HTMLButtonElement;
+  protected stopBtn!: HTMLButtonElement;
+  protected resumeBtn!: HTMLButtonElement;
   protected light: HTMLDivElement;
-  protected titleTooltip: { destroy: () => void } | null = null;
-  protected pauseTooltip: { destroy: () => void } | null = null;
   protected emitter: EventEmitter;
 
   constructor() {
     this.light = this.createBreathingLight();
-    this.btnBox = this.btnBox();
+    this.btnBox = this.createBtnBox();
     this.init();
     this.emitter = new EventEmitter();
   }
@@ -74,15 +78,15 @@ export class CustomTaskUI implements ITaskUI {
     this.emitter.emit(event, ...args);
   }
 
-  protected btnBox() {
+  protected createBtnBox() {
     const box = document.createElement('div');
     const boxStyles = {
       position: 'fixed',
       bottom: '20px',
       left: '20px',
-      padding: '0 24px',
+      padding: '0 12px',
       backgroundColor: 'white',
-      borderRadius: '27px',
+      borderRadius: '8px',
       boxShadow: '0 2px 40px rgba(0, 0, 0, 0.16)',
       height: '54px',
       display: 'flex',
@@ -94,47 +98,30 @@ export class CustomTaskUI implements ITaskUI {
     return box;
   }
 
-  protected init({ title }: { title: string }) {
-
-    this.setTitle(title);
-
-    this.skipBtn = createImg(skip);
-    this.skipBtn.onclick = () => this.skip(true);
-    this.skipBtn.title = t('taskUI.skip');
-
-    this.skipDisabledBtn = createImg(skipDisabled);
-    this.skipDisabledBtn.style.cursor = 'not-allowed';
-
-    this.stopBtn = createImg(stop);
+  protected init() {
+    this.stopBtn = createBtn('停止', 'warn');
     this.stopBtn.onclick = () => this.stop(true);
-    this.stopBtn.title = t('taskUI.stop');
 
-    this.stopDisabledBtn = createImg(stopDisabled);
-    this.stopDisabledBtn.style.cursor = 'not-allowed';
-
-    this.pauseBtn = createImg(pause);
+    this.pauseBtn = createBtn('暂停');
     this.pauseBtn.onclick = () => this.pause(true);
-    this.pauseBtn.title = t('taskUI.pause');
 
-    this.resumeBtn = createImg(resume);
+    this.resumeBtn = createBtn('恢复');
     this.resumeBtn.onclick = () => this.resume(true);
-    this.resumeBtn.title = t('taskUI.resume');
 
-    this.btnBox.append(, this.skipDisabledBtn, this.pauseBtn, this.stopBtn);
+    this.btnBox.append(this.pauseBtn, this.stopBtn);
 
     this.hide(); // 初始化时隐藏
   }
 
-
   setStatus(status: Status) {
     if (status === Status.Running) {
-      this.btnBox.replaceChildren( this.skipDisabledBtn, this.pauseBtn, this.stopBtn);
+      this.btnBox.replaceChildren(this.pauseBtn, this.stopBtn);
       this.continueLight();
     } else if (status === Status.Paused) {
-      this.btnBox.replaceChildren( this.skipBtn, this.resumeBtn, this.stopBtn);
+      this.btnBox.replaceChildren(this.resumeBtn, this.stopBtn);
       this.pauseLight();
     } else if (status === Status.Stop) {
-      this.btnBox.replaceChildren( this.skipDisabledBtn, this.pauseBtn, this.stopBtn);
+      this.btnBox.replaceChildren(this.pauseBtn, this.stopBtn);
       this.pauseLight();
     }
   }
@@ -156,18 +143,11 @@ export class CustomTaskUI implements ITaskUI {
     this.setStatus(Status.Paused);
   }
 
-  skip(isEmit: boolean = false) {
-    if (isEmit) {
-      this.emit('skip');
-    }
-  }
-
   resume(isEmit: boolean = false) {
     if (isEmit) {
       this.emit('resume');
     }
     this.setStatus(Status.Running);
-    this.pauseTooltip?.destroy();
   }
 
   stop(isEmit: boolean = false) {
@@ -205,7 +185,7 @@ export class CustomTaskUI implements ITaskUI {
           right: 0;
           top: 0;
           width: 100vw;
-          z-index: 2147483647;
+          z-index: 9999;
           animation-play-state: running;
       }
   `;
@@ -229,16 +209,12 @@ export class CustomTaskUI implements ITaskUI {
   protected continueLight() {
     this.light.style.animationPlayState = 'running';
   }
-
-  // 给恢复按钮加上提示
-  tipToResume(tip: string) {
-    addBreathe(this.resumeBtn);
-    this.pauseTooltip = addTooltip(this.resumeBtn, tip);
-  }
 }
 ```
 
 ## 链接UI
+
+完成自定义UI后，通过调度器的`connectTaskUI`方法链接到自定义UI
 
 ```typescript
 import { ActionManager, TaskScheduler } from '@opentiny/tiny-agent-task-runtime-service';
@@ -252,3 +228,9 @@ actionManager.registerActions(BaseActions);
 ```
 
 ## 自定义UI预览
+
+下图是上述自定义UI示例的预览图
+
+<p align="center">
+  <img alt="TinyAgent Custom UI" src="../public/custom-ui.png" height="400" style="max-width:100%;vertical-align: middle">
+</p>
