@@ -129,11 +129,6 @@ export default defineConfig({
       ],
       '/extensions/': [
         {
-          text: '连接器扩展',
-          base: '/extensions/',
-          items: [],
-        },
-        {
           text: '操作库扩展',
           base: '/extensions/',
           items: [{ text: '自定义Action', link: 'actions' }],
@@ -147,6 +142,11 @@ export default defineConfig({
           text: '调度器扩展',
           base: '/extensions/',
           items: [{ text: '自定义UI', link: 'custom-ui' }],
+        },
+        {
+          text: '连接器扩展',
+          base: '/extensions/',
+          items: [{ text: '待补充', link: '' }],
         },
       ],
     },
