@@ -60,6 +60,7 @@ export default defineConfig({
       '/api/': [
         {
           text: 'MCP服务',
+          collapsed: false,
           base: '/api/mcp/mcp-service/',
           items: [
             { text: 'McpService', link: 'mcp-service' },
@@ -69,6 +70,8 @@ export default defineConfig({
         },
         {
           text: '代理服务器',
+        
+          collapsed: false,
           base: '/api/mcp/',
           items: [
             { text: 'ProxyServer', link: 'mcp-proxy-server' },
@@ -76,6 +79,7 @@ export default defineConfig({
         },
         {
           text: '调度器',
+          collapsed: false,
           base: '/api/schedular/',
           items: [
             { text: 'Task', link: 'task' },
@@ -87,6 +91,7 @@ export default defineConfig({
         },
         {
           text: '操作库',
+          collapsed: false,
           base: '/api/actions/',
           items: [
             { text: 'Actions概述', link: 'simulate-lib' },
@@ -99,6 +104,7 @@ export default defineConfig({
         },
         {
           text: '基础UI库',
+          collapsed: false,
           base: '/api/ui/',
           items: [
             { text: 'Tooltip', link: 'tooltip' },
@@ -107,6 +113,7 @@ export default defineConfig({
         },
         {
           text: 'MCP客户端',
+          collapsed: false,
           base: '/api/mcp/',
           items: [
             { text: 'MCPClientChat', link: 'mcp-client-chat' },
@@ -128,17 +135,19 @@ export default defineConfig({
       '/extensions/': [
         {
           text: '连接器扩展',
-          base: '/extension/',
+          base: '/extensions/',
           items: [],
         },
         {
           text: '操作库扩展',
-          base: '/extension/',
-          items: [],
+          base: '/extensions/',
+          items: [
+            {text: '自定义Action', link: 'actions'}
+          ],
         },
         {
-          text: '验证器扩展',
-          base: '/extension/',
+          text: '验证器扩展', 
+          base: '/extensions/',
           items: [],
         },
       ],
