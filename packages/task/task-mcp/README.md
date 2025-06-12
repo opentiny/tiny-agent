@@ -46,7 +46,7 @@ const mcpToolParser = new McpToolParser(doTask);
  * mcpTool 即为符合MCP协议标准的MCP Tool
  **/
 const mcpTool = mcpToolParser.extractTool(mcpToolJson);
-const mcpTools = mcpToolParser.extractTool(mcpToolsJson);
+const mcpTools = mcpToolParser.extractAllTools(mcpToolsJson);
 ```
 
 ## getTaskOutputSchema
