@@ -46,7 +46,7 @@ const webSocketEndpointServer = new WebSocketEndpointServer({ port: 8082 }, conn
 webSocketEndpointServer.start();
 
 // mcp server链接connector
-server.setEndPoint(connectorCenter.getClient(clientId, sessionId)); //请求或其他渠道获取的clientId, sessionId
+server.setEndpoint(connectorCenter.getClient(clientId, sessionId)); //请求或其他渠道获取的clientId, sessionId
 server.setVerifyCode(verifyCode); // 设置校验码
 server.connect(transport); // 链接transport, transport需自行实现
 ```

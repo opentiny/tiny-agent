@@ -46,7 +46,7 @@ const webSocketEndpointServer = new WebSocketEndpointServer({ port: 8082 }, conn
 webSocketEndpointServer.start();
 
 // Connect mcp server to connector
-server.setEndPoint(connectorCenter.getClient(clientId, sessionId)); // clientId, sessionId from request or other channels
+server.setEndpoint(connectorCenter.getClient(clientId, sessionId)); // clientId, sessionId from request or other channels
 server.setVerifyCode(verifyCode); // Set verification code
 server.connect(transport); // Connect transport, transport needs to be implemented
 ```
@@ -93,37 +93,37 @@ Add a static MCP tool configuration file:
 ```
 
 ```js
-import { setupMcpService, useMcpService } from '@opentiny/tiny-agent-mcp-service-vue'
-import { McpValidator } from '@opentiny/tiny-agent-mcp-service'
-import { EndpointTransport, WebSocketClientEndpoint } from '@opentiny/tiny-agent-mcp-connector'
-import { executableTaskSchema, McpToolParser } from '@opentiny/tiny-agent-task-mcp'
+import { setupMcpService, useMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
+import { McpValidator } from '@opentiny/tiny-agent-mcp-service';
+import { EndpointTransport, WebSocketClientEndpoint } from '@opentiny/tiny-agent-mcp-connector';
+import { executableTaskSchema, McpToolParser } from '@opentiny/tiny-agent-task-mcp';
 
-const mcpValidator = new McpValidator()
-const mcp = setupMcpService()
+const mcpValidator = new McpValidator();
+const mcp = setupMcpService();
 // Connect to backend
 function getWebSocketClientEndpoint() {
-  return new WebSocketClientEndpoint({ url: 'ws://localhost:8082' })
+  return new WebSocketClientEndpoint({ url: 'ws://localhost:8082' });
 }
-const endpointTransport = new EndpointTransport(getWebSocketClientEndpoint)
-mcp.mcpServer.connect(endpointTransport)
-mcp.setValidator(mcpValidator)
+const endpointTransport = new EndpointTransport(getWebSocketClientEndpoint);
+mcp.mcpServer.connect(endpointTransport);
+mcp.setValidator(mcpValidator);
 
 // Extract and register tools
 new McpToolParser(doTask).extractAllTools(mcpToolJson).forEach((tool) => {
-  mcp.mcpServer.registerTool(tool.name, tool.config, tool.cb)
-})
+  mcp.mcpServer.registerTool(tool.name, tool.config, tool.cb);
+});
 
-const { tool } = useMcpService()
-const log = () => console.log('log tool')
+const { tool } = useMcpService();
+const log = () => console.log('log tool');
 // Dynamically register an MCP tool
 tool(
   'name',
   'description',
   {}, // Parameter validation, can be used with zod
   () => {
-    log()
-  }
-)
+    log();
+  },
+);
 ```
 
 ### Using MCP Client Chat
@@ -144,7 +144,7 @@ const mcpClientChat = await createMCPClientChat({
     url: 'https://openrouter.ai/api/v1/chat/completions', // llm interface
     apiKey: '<your-api-key>',
     model: 'mistralai/mistral-7b-instruct:free',
-    systemPrompt: 'You are a helpful assistant with access to tools.'
+    systemPrompt: 'You are a helpful assistant with access to tools.',
   },
   maxIterationSteps: 3, // Maximum iteration count
   mcpServersConfig: {
@@ -154,17 +154,17 @@ const mcpClientChat = await createMCPClientChat({
         url: `xxx`,
         headers: {},
         timeout: 60,
-        sse_read_timeout: 300
+        sse_read_timeout: 300,
       },
       'localhost-mcp2': {
         url: `xxx2`,
         headers: {},
         timeout: 60,
-        sse_read_timeout: 300
-      }
-    }
-  }
-})
+        sse_read_timeout: 300,
+      },
+    },
+  },
+});
 ```
 
 ### Using Scheduler
@@ -187,15 +187,15 @@ import {
   VueRouterActions,
   GuideActions,
   AxiosActions,
-  TinyVueActions
-} from '@opentiny/tiny-agent-task-action-lib'
-import { createScheduler } from '@opentiny/tiny-agent-task-runtime-service'
+  TinyVueActions,
+} from '@opentiny/tiny-agent-task-action-lib';
+import { createScheduler } from '@opentiny/tiny-agent-task-runtime-service';
 
 // Create scheduler and integrate operation library
 export const { taskScheduler, actionManager } = createScheduler(
   [...BaseActions, ...FormActions, ...VueRouterActions, ...GuideActions, ...AxiosActions, ...TinyVueActions],
-  {} // You can provide your own context for the operation library, such as axios and router
-)
+  {}, // You can provide your own context for the operation library, such as axios and router
+);
 ```
 
 ## Development
