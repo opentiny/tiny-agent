@@ -34,7 +34,7 @@ export default defineConfig({
     },
     // https://vitepress.dev/reference/default-theme-config
     nav: [
-      { text: '指引', link: '/guide/write-docs-guide' },
+      { text: '指引', link: '/guide/installation' },
       { text: 'API', link: '/api/api' },
       { text: '扩展', link: '/extensions/extension' },
       { text: '演示', link: '/examples/demo' },
@@ -42,18 +42,6 @@ export default defineConfig({
     ],
 
     sidebar: {
-      '/guide/': [
-        {
-          text: '指引',
-          base: '/guide/',
-          items: [
-            { text: '开发指引', link: 'develop' },
-            { text: '部署流程', link: 'deploy' },
-            { text: '如何使用', link: 'use' },
-            { text: '如何写文章', link: 'write-docs-guide' },
-          ],
-        },
-      ],
       '/api/': [
         {
           text: 'MCP服务',
