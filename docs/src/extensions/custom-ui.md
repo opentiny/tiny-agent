@@ -221,7 +221,7 @@ import { ActionManager, TaskScheduler } from '@opentiny/tiny-agent-task-runtime-
 import { BaseActions } from '@opentiny/tiny-agent-task-action-lib';
 const actionManager = new ActionManager();
 const taskUI = new CustomTaskUI();
-const taskScheduler = new TaskScheduler(actionManager, context);
+const taskScheduler = new TaskScheduler(actionManager, {});
 // 链接自定义的UI
 taskScheduler.connectTaskUI(taskUI);
 actionManager.registerActions(BaseActions);
