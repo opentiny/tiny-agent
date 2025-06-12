@@ -1,6 +1,6 @@
 # TinyAgent 如何使用
 
-### 使用MCP server
+## 使用MCP server
 
 **在后端中使用**
 
@@ -105,7 +105,7 @@ tool(
 );
 ```
 
-### 使用MCP Client Chat
+## 使用MCP Client Chat
 
 **安装依赖**
 
@@ -146,7 +146,7 @@ const mcpClientChat = await createMCPClientChat({
 });
 ```
 
-### 使用调度器
+## 使用调度器
 
 **安装依赖**
 
