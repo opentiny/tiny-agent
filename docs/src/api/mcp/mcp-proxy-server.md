@@ -6,8 +6,8 @@
 
 ```typescript
 const server = new ProxyServer();
-server.connect(new SSEServerTransport(...))；
-server.setEndpoint(new WebSocketServerEndpoint(...))；
+server.connect(new SSEServerTransport(...));
+server.setEndpoint(new WebSocketServerEndpoint(...));
 ```
 
 ## 方法
@@ -20,12 +20,11 @@ server.setEndpoint(new WebSocketServerEndpoint(...))；
 
   连接到已有的 SSEServerTransport / StreamableHTTPServerTransport 等 MCPServer 端 Transport，将会接收Transport的消息与Endpoint消息互相发送
 
-
 - **示例**
 
 ```typescript
 const server = new ProxyServer();
-server.connect(new SSEServerTransport(...))；
+server.connect(new SSEServerTransport(...));
 ```
 
 ### setEndpoint
@@ -51,10 +50,8 @@ server.setEndpoint(new WebSocketServerEndpoint(...))
 - **示例**
 
 ```typescript
-import { v4 as uuidv4 } from'uuid';
+import { v4 as uuidv4 } from 'uuid';
 const server = new ProxyServer();
 const verifyCode = uuidv4();
 server.setVerifyCode(verifyCode);
-
 ```
-

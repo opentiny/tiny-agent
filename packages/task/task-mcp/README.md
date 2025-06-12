@@ -12,19 +12,19 @@
 
 ```typescript
 const doTask = () => {
-  console.log('execute task...')
-}
-const mcpToolParser = new McpToolParser(doTask)
+  console.log('execute task...');
+};
+const mcpToolParser = new McpToolParser(doTask);
 const instruction: InstructionSchema = {
-  action: '注册Tool'
+  action: '注册Tool',
   params: {
-    name: "{{name}}"
-  }
-}
+    name: '{{name}}',
+  },
+};
 
-mcpToolParser.replaceInstructionParamValue(instruction, 'name', 'queryTool')
+mcpToolParser.replaceInstructionParamValue(instruction, 'name', 'queryTool');
 
-console.log(instruction) // { action: '注册Tool', params: { name: 'queryTool' } }
+console.log(instruction); // { action: '注册Tool', params: { name: 'queryTool' } }
 ```
 
 ## extractTool & extractAllTools
