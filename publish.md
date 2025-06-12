@@ -19,8 +19,3 @@ pnpm updateVersion 0.0.3
 ```bash
 pnpm pub
 ```
-
-npm unpublish gimmytest-tiny-agent-mcp-connector --force
-npm unpublish gimmytest-tiny-agent-ui-components --force
-npm unpublish gimmytest-tiny-agent-task-runtime-service --force
-npm unpublish gimmytest-tiny-agent-task-action-lib --force

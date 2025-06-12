@@ -1,0 +1,90 @@
+import { McpClientChat } from '../mcp-client-chat.js';
+import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, Tool, ToolCall } from '../type.js';
+import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
+
+const FINAL_ANSWER_ACTION = 'Final Answer:';
+
+export class ReActChat extends McpClientChat {
+  constructor(options: MCPClientOptions) {
+    options.llmConfig.summarySystemPrompt = options.llmConfig.summarySystemPrompt ?? RE_ACT_DEFAULT_SUMMARY;
+
+    super(options);
+  }
+
+  protected async initSystemPromptMessages(): Promise<string> {
+    let tools: Tool[] = [];
+
+    try {
+      tools = await this.fetchToolsList();
+    } catch (_error) {
+      tools = [];
+    }
+
+    const toolStrings = tools.length ? JSON.stringify(tools) : '';
+    const prompt = [PREFIX, toolStrings, FORMAT_INSTRUCTIONS, SUFFIX].join('\n\n');
+
+    return prompt;
+  }
+
+  protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
+    const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
+
+    if (text.includes(FINAL_ANSWER_ACTION)) {
+      const parts = text.split(FINAL_ANSWER_ACTION);
+      const output = parts[parts.length - 1].trim();
+      return [[], output];
+    }
+
+    if (!text.includes(`"action":`)) {
+      return [[], text.trim()];
+    }
+
+    const toolCalls: ToolCall[] = [];
+
+    if (text.includes('```')) {
+      const actionBlocks = text
+        .trim()
+        .split(/```(?:json)?/)
+        .filter((block: string) => block.includes(`"action":`));
+
+      actionBlocks.forEach((block: string) => {
+        try {
+          const { action, action_input } = JSON.parse(block.trim());
+
+          if (!action || typeof action !== 'string') {
+            console.error('Invalid tool call: missing or invalid action field');
+
+            return;
+          }
+
+          toolCalls.push({
+            id: action,
+            type: 'function',
+            function: {
+              name: action,
+              arguments: typeof action_input === 'string' ? action_input : JSON.stringify(action_input || {}),
+            },
+          });
+        } catch (error) {
+          console.error('Failed to parse tool call JSON:', error);
+        }
+      });
+    }
+
+    return [toolCalls, ''];
+  }
+
+  protected async getChatBody(): Promise<ChatBody> {
+    const { model } = this.options.llmConfig;
+    const chatBody: ChatBody = {
+      model,
+      messages: this.messages,
+    };
+
+    return chatBody;
+  }
+
+  protected clearPromptMessages(): void {
+    this.messages = [];
+  }
+}

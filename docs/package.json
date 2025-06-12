@@ -22,9 +22,10 @@
     "@opentiny/tiny-robot-kit": "0.2.0-alpha.6",
     "@opentiny/tiny-robot-svgs": "0.2.0-alpha.6",
     "@opentiny/vue": "^3.23.0",
+    "@opentiny/vue-theme": "^3.23.0",
+    "vite-jsconfig-paths": "^2.0.1",
     "vitepress": "^1.6.3",
     "vitepress-demo-plugin": "^1.4.1",
-    "vite-jsconfig-paths": "^2.0.1",
     "zod": "^3.25.13"
   }
 }

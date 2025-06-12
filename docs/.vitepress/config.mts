@@ -35,11 +35,10 @@ export default defineConfig({
     // https://vitepress.dev/reference/default-theme-config
     nav: [
       { text: '指引', link: '/guide/write-docs-guide' },
-      { text: '配置', link: '/config/config' },
       { text: 'API', link: '/api/api' },
       { text: '扩展', link: '/extensions/extension' },
       { text: '演示', link: '/examples/demo' },
-      { text: '1.0.0', link: '/releases/releases' },
+      { text: '0.1.0', link: 'https://github.com/opentiny/tiny-agent/releases' },
     ],
 
     sidebar: {
@@ -58,6 +57,7 @@ export default defineConfig({
       '/api/': [
         {
           text: 'MCP服务',
+          collapsed: false,
           base: '/api/mcp/mcp-service/',
           items: [
             { text: 'McpService', link: 'mcp-service' },
@@ -67,11 +67,14 @@ export default defineConfig({
         },
         {
           text: '代理服务器',
+
+          collapsed: false,
           base: '/api/mcp/',
           items: [{ text: 'ProxyServer', link: 'mcp-proxy-server' }],
         },
         {
           text: '调度器',
+          collapsed: false,
           base: '/api/schedular/',
           items: [
             { text: 'Task', link: 'task' },
@@ -83,6 +86,7 @@ export default defineConfig({
         },
         {
           text: '操作库',
+          collapsed: false,
           base: '/api/actions/',
           items: [
             { text: 'Actions概述', link: 'simulate-lib' },
@@ -95,6 +99,7 @@ export default defineConfig({
         },
         {
           text: '基础UI库',
+          collapsed: false,
           base: '/api/ui/',
           items: [
             { text: 'Tooltip', link: 'tooltip' },
@@ -103,6 +108,7 @@ export default defineConfig({
         },
         {
           text: 'MCP客户端',
+          collapsed: false,
           base: '/api/mcp/',
           items: [
             { text: 'MCPClientChat', link: 'mcp-client-chat' },
@@ -130,12 +136,17 @@ export default defineConfig({
         {
           text: '操作库扩展',
           base: '/extensions/',
-          items: [],
+          items: [{ text: '自定义Action', link: 'actions' }],
         },
         {
           text: '验证器扩展',
           base: '/extensions/',
-          items: [{ text: 'McpValidator', link: 'mcp-validator' }],
+          items: [{ text: '自定义McpValidator', link: 'mcp-validator' }],
+        },
+        {
+          text: '调度器扩展',
+          base: '/extensions/',
+          items: [{ text: '自定义UI', link: 'custom-ui' }],
         },
       ],
     },

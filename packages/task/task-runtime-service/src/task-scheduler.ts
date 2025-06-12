@@ -1,18 +1,25 @@
-import type { ITaskResult, ITaskExecutor } from './task';
+import type { ActionManager } from './action-manager';
+import type { ITaskExecutor, ITaskResult } from './task';
 import type { ITaskSchema } from './schema.type';
-import { Task } from './task';
-import { ActionManager } from './action-manager';
 import type { ITaskUI } from './task-ui';
-import { t } from './locale/i18n';
 import type { IActionContext } from './action.type';
+import { Task } from './task';
+import { t } from './locale/i18n';
 
 export interface ISchedulerContext extends IActionContext {
   $task?: ITaskExecutor;
   $taskUI?: ITaskUI;
 }
 
+export interface ITasksQueueItem {
+  id: string;
+  resolve: (result: ITaskResult) => void;
+  reject: (error: unknown) => void;
+  taskFn: () => Promise<ITaskResult>;
+}
+
 export class TaskScheduler {
-  protected tasksQueue: any = [];
+  protected tasksQueue: ITasksQueueItem[] = [];
   protected isExecuting = false;
   protected context: ISchedulerContext;
   protected actionManager: ActionManager;
@@ -57,23 +64,20 @@ export class TaskScheduler {
     this.task = task;
     if (this.task) {
       this.task.on('start', () => {
-        this.taskUI!.show();
+        this.taskUI?.show();
       });
       this.task.on('pause', () => {
-        this.taskUI!.pause();
+        this.taskUI?.pause();
       });
       this.task.on('resume', () => {
-        this.taskUI!.resume();
+        this.taskUI?.resume();
       });
       this.task.on('finish', () => {
-        this.taskUI!.stop();
+        this.taskUI?.stop();
       });
-      this.task.on(
-        'beforeStep',
-        ({ index, instruction }: { index: number; instruction: any }) => {
-          this.taskUI!.setTitle?.(`${t('scheduler.executingStep')} ${index}`);
-        }
-      );
+      this.task.on('beforeStep', ({ index }: { index: number; instruction: any }) => {
+        this.taskUI?.setTitle?.(`${t('scheduler.executingStep')} ${index}`);
+      });
     }
   }
 
@@ -95,11 +99,15 @@ export class TaskScheduler {
       return;
     }
     this.isExecuting = true;
-    const { taskFn, id, resolve, reject } = this.tasksQueue.shift();
+    const tasksQueueItem = this.tasksQueue.shift();
+    if (!tasksQueueItem) {
+      return;
+    }
+    const { taskFn, resolve, reject } = tasksQueueItem;
     try {
       const result = await taskFn();
       resolve(result);
-    } catch (error: any) {
+    } catch (error) {
       reject(error);
     } finally {
       this.isExecuting = false;

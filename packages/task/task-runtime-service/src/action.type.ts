@@ -1,6 +1,4 @@
-export interface IActionContext {
-  [key: string]: any;
-}
+export type IActionContext = Record<string, any>;
 
 export enum ActionResultStatus {
   Success = 'success',
@@ -9,14 +7,12 @@ export enum ActionResultStatus {
 
 export interface IAction {
   name: string;
-  execute: (
-    params: { [key: string]: any },
-    context: IActionContext
-  ) => IActionResult | Promise<IActionResult>;
+  execute: (params: Record<string, any>, context?: IActionContext) => IActionResult | Promise<IActionResult>;
+  description?: string;
 }
 
 export interface IActionResult {
-  status: ActionResultStatus;
-  result?: { [key: string]: any };
+  status: 'success' | 'error';
+  result?: Record<string, any>;
   error?: { message: string; stack?: string };
 }

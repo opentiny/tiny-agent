@@ -154,13 +154,11 @@ const mcpClientChat = await createMCPClientChat({
         url: `xxx`,
         headers: {},
         timeout: 60,
-        sse_read_timeout: 300,
       },
       'localhost-mcp2': {
         url: `xxx2`,
         headers: {},
         timeout: 60,
-        sse_read_timeout: 300,
       },
     },
   },

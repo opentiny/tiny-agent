@@ -1,4 +1,4 @@
-# McpValidator拓展
+# 自定义McpValidator
 
 如果阅读过[McpValidator API](https://github.com/opentiny/tiny-agent/blob/main/docs/src/api/mcp/mcp-service/mcp-validator.md)，那可以知道McpValidator主要是负责MCP工具调用校验。
 
