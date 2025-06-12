@@ -1,8 +1,8 @@
-import { IAction } from './action.type';
+import type { IAction } from './action.type';
 
 // ACTION管理类
 export class ActionManager {
-  protected actions: { [name: string]: IAction } = {};
+  protected actions: Record<string, IAction> = {};
 
   // 注册ACTION
   registerAction(action: IAction): void {
@@ -18,7 +18,7 @@ export class ActionManager {
   }
 
   // 清空ACTION
-  clearActions() {
+  clearActions(): void {
     this.actions = {};
   }
 
