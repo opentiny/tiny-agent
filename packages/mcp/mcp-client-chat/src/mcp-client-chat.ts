@@ -2,36 +2,32 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
-import { extractActions } from './utils.js';
 import { AgentStrategy, Role } from './type.js';
 
-import { FORMAT_INSTRUCTIONS, PREFIX, SUFFIX } from './ReActSystemPrompt.js';
 import type {
   AvailableTool,
   ChatBody,
   ChatCompleteResponse,
-  ChatCreatePromptArgs,
+  CustomTransportMcpServer,
   IChatOptions,
   MCPClientOptions,
   McpServer,
   Message,
-  NonStreamingChoice,
   ToolCall,
   ToolResults,
-  CustomTransportMcpServer,
 } from './type.js';
 
 export function isCustomTransportMcpServer(serverConfig: McpServer | CustomTransportMcpServer): serverConfig is CustomTransportMcpServer {
   return !!serverConfig.customTransport;
 }
 const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
-export class McpClientChat {
+export abstract class McpClientChat {
   protected options: MCPClientOptions;
   protected iterationSteps: number;
   protected clientsMap: Map<string, Client> = new Map<string, Client>();
   protected toolClientMap: Map<string, Client> = new Map<string, Client>();
   protected messages: Message[] = [];
-  protected transformStream: TransformStream = new TransformStream();
+  protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
 
   constructor(options: MCPClientOptions) {
@@ -80,7 +76,11 @@ export class McpClientChat {
       });
       await client.connect(transport);
     } catch (_error) {
-      const sseTransport = new SSEClientTransport(baseUrl);
+      const sseTransport = new SSEClientTransport(baseUrl, {
+        requestInit: {
+          headers: serverConfig.headers,
+        },
+      });
 
       await client.connect(sseTransport);
     }
@@ -119,23 +119,6 @@ export class McpClientChat {
     return availableTools;
   }
 
-  protected getUserMessages(): Message {
-    const userMessage = this.messages.find((m) => m.role === 'user');
-
-    if (userMessage) {
-      return userMessage;
-    }
-
-    const defaultUserMessage: Message = {
-      role: Role.USER,
-      content: [],
-    };
-
-    this.messages.push(defaultUserMessage);
-
-    return defaultUserMessage;
-  }
-
   protected organizePromptMessages(message: Message): void {
     this.messages.push(message);
   }
@@ -147,16 +130,23 @@ export class McpClientChat {
   async chat(queryOrMessages: string | Array<Message>, chatOptions?: IChatOptions): Promise<ReadableStream | Error> {
     this.chatOptions = chatOptions;
 
-    const systemPrompt = await this.initSystemPromptMessages();
+    let systemPrompt: string;
 
-    this.messages.push({
+    try {
+      systemPrompt = await this.initSystemPromptMessages();
+    } catch (error) {
+      console.error('Failed to initialize system prompt:', error);
+      systemPrompt = this.options.llmConfig.systemPrompt ?? '';
+    }
+
+    this.organizePromptMessages({
       role: Role.SYSTEM,
       content: systemPrompt,
     });
 
     if (typeof queryOrMessages === 'string') {
       this.organizePromptMessages({
-        role: 'user',
+        role: Role.USER,
         content: queryOrMessages,
       });
     } else {
@@ -164,130 +154,81 @@ export class McpClientChat {
     }
 
     this.iterationSteps = this.options.maxIterationSteps || 1;
+    this.chatIteration().catch((error) => {
+      console.error('Chat failed:', error);
+      this.transformStream.writable.abort(error);
+    });
 
+    return this.transformStream.readable;
+  }
+
+  protected async chatIteration(): Promise<void> {
     try {
       const toolsCallResults: ToolResults = [];
-      const chatIteration = async () => {
-        while (this.iterationSteps > 0) {
-          const chatBody = await this.getChatBody();
-          const response: ChatCompleteResponse | Error = await this.queryChatComplete(chatBody);
 
-          if (response.choices?.[0]?.error) {
-            this.organizePromptMessages({
-              role: Role.ASSISTANT,
-              content: response.choices[0].error.message,
-            });
-            this.iterationSteps = 0;
+      while (this.iterationSteps > 0) {
+        const response: ChatCompleteResponse | Error = await this.queryChatComplete();
 
-            continue;
-          }
+        if (response instanceof Error) {
+          this.organizePromptMessages({
+            role: Role.ASSISTANT,
+            content: response.message,
+          });
+          this.iterationSteps = 0;
 
-          const [tool_calls, finalAnswer] = await this.organizeToolCalls(response.choices[0] as NonStreamingChoice);
-
-          // 工具调用
-          if (tool_calls.length) {
-            try {
-              const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
-
-              toolsCallResults.push(...toolResults);
-              toolCallMessages.forEach((m) => this.organizePromptMessages(m));
-
-              this.iterationSteps--;
-            } catch (_error) {
-              this.organizePromptMessages({
-                role: 'assistant',
-                content: 'call tools failed!',
-              });
-
-              this.iterationSteps = 0;
-            }
-          } else {
-            this.organizePromptMessages({
-              role: 'assistant',
-              content: finalAnswer,
-            });
-
-            this.iterationSteps = 0;
-          }
+          continue;
         }
 
-        const summaryPrompt = '用简短的话总结！';
-        this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
-        const chatBody = await this.getChatBody(true);
-        const result = await this.queryChatCompleteStreaming(chatBody);
-        return result;
-      };
+        if (response.choices?.[0]?.error) {
+          this.organizePromptMessages({
+            role: Role.ASSISTANT,
+            content: response.choices[0].error.message,
+          });
+          this.iterationSteps = 0;
 
-      chatIteration()
-        .then(async (result) => {
-          await result.pipeTo(this.transformStream.writable);
-        })
-        .catch((error) => {
-          console.error('Chat iteration failed:', error);
-          this.transformStream!.writable.abort(error);
-        });
+          continue;
+        }
 
-      return this.transformStream.readable;
+        const [tool_calls, finalAnswer] = await this.organizeToolCalls(response as ChatCompleteResponse);
+
+        // 工具调用
+        if (tool_calls.length) {
+          try {
+            const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
+
+            toolsCallResults.push(...toolResults);
+            toolCallMessages.forEach((m) => this.organizePromptMessages(m));
+
+            this.iterationSteps--;
+          } catch (_error) {
+            this.organizePromptMessages({
+              role: Role.ASSISTANT,
+              content: 'call tools failed!',
+            });
+
+            this.iterationSteps = 0;
+          }
+        } else {
+          this.organizePromptMessages({
+            role: Role.ASSISTANT,
+            content: finalAnswer,
+          });
+
+          this.iterationSteps = 0;
+        }
+      }
+
+      const summaryPrompt = this.options.llmConfig.summarySystemPrompt || 'Please provide a brief summary.';
+
+      this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
+
+      const result = await this.queryChatCompleteStreaming();
+
+      result.pipeTo(this.transformStream.writable);
     } catch (error) {
-      return error as Error;
+      console.error('Chat iteration failed:', error);
+      throw error;
     }
-  }
-
-  protected async getChatBody(stream = false): Promise<ChatBody> {
-    const { model } = this.options.llmConfig;
-    const chatBody: ChatBody = {
-      model,
-      messages: this.messages,
-    };
-
-    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
-      const tools = await this.fetchToolsList();
-
-      chatBody.tools = this.iterationSteps > 0 ? tools : [];
-    }
-
-    if (stream) {
-      chatBody.stream = stream;
-    }
-
-    return chatBody;
-  }
-
-  protected async organizeToolCalls(choice: NonStreamingChoice): Promise<[ToolCall[], string]> {
-    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
-      return this.extractFunctionCalls(choice);
-    }
-
-    return extractActions(choice.message.content || '');
-  }
-
-  protected extractFunctionCalls(choice: NonStreamingChoice): [ToolCall[], string] {
-    const toolCalls = choice.message.tool_calls || [];
-    let finalAnswer = '';
-
-    if (!toolCalls.length) {
-      finalAnswer = choice.message.content ?? '';
-    }
-
-    return [toolCalls, finalAnswer];
-  }
-
-  protected async createReActSystemPrompt(args?: ChatCreatePromptArgs): Promise<string> {
-    const tools = await this.fetchToolsList();
-
-    const toolStrings = JSON.stringify(tools);
-    const { prefix = PREFIX, suffix = SUFFIX, formatInstructions = FORMAT_INSTRUCTIONS } = args ?? {};
-    const prompt = [prefix, toolStrings, formatInstructions, suffix].join('\n\n');
-
-    return prompt;
-  }
-
-  protected async initSystemPromptMessages(args?: ChatCreatePromptArgs): Promise<string> {
-    if (this.options.agentStrategy === AgentStrategy.FUNCTION_CALLING) {
-      return this.options.llmConfig.systemPrompt;
-    }
-
-    return this.createReActSystemPrompt(args);
   }
 
   protected async callTools(toolCalls: ToolCall[]): Promise<{ toolResults: ToolResults; toolCallMessages: Message[] }> {
@@ -321,7 +262,6 @@ export class McpClientChat {
           });
         }
 
-        // 调用工具
         const callToolResult = (await client.callTool({
           name: toolName,
           arguments: toolArgs,
@@ -339,6 +279,7 @@ export class McpClientChat {
             callToolResult,
           });
         }
+
         toolCallMessages.push(message);
         toolResults.push({
           call: toolName,
@@ -375,8 +316,9 @@ export class McpClientChat {
     return str;
   }
 
-  protected async queryChatComplete(body: ChatBody): Promise<ChatCompleteResponse> {
+  protected async queryChatComplete(): Promise<ChatCompleteResponse> {
     const { url, apiKey } = this.options.llmConfig;
+    const chatBody = await this.getChatBody();
 
     try {
       const response = await fetch(url, {
@@ -385,7 +327,7 @@ export class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(chatBody),
       });
 
       if (!response.ok) {
@@ -400,8 +342,9 @@ export class McpClientChat {
     }
   }
 
-  protected async queryChatCompleteStreaming(chatBody: ChatBody): Promise<ReadableStream> {
+  protected async queryChatCompleteStreaming(): Promise<ReadableStream> {
     const { url, apiKey } = this.options.llmConfig;
+    const chatBody = await this.getChatBody();
 
     try {
       const response = await fetch(url, {
@@ -410,7 +353,7 @@ export class McpClientChat {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(chatBody),
+        body: JSON.stringify({ stream: true, ...chatBody }),
       });
 
       if (!response.ok) {
@@ -432,7 +375,11 @@ export class McpClientChat {
     }
   }
 
-  protected async writeMessageDelta(messageDeltaContent: string, role: string = 'assistant', extra?: any) {
+  protected async writeMessageDelta(
+    messageDeltaContent: string,
+    role: string = 'assistant',
+    extra?: any,
+  ): Promise<void> {
     const writer = this.transformStream.writable.getWriter();
 
     try {
@@ -453,4 +400,10 @@ export class McpClientChat {
       writer.releaseLock();
     }
   }
+
+  protected abstract getChatBody(): Promise<ChatBody>;
+
+  protected abstract organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]>;
+
+  protected abstract initSystemPromptMessages(): Promise<string>;
 }

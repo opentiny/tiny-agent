@@ -28,7 +28,6 @@ npm install @opentiny/tiny-agent-mcp-client-chat --save
         - `url(string)`: mcp-server 连接地址
         - `headers(object)`: 请求头
         - `timeout(number)`: 超时时长
-        - `sse_read_timeout(number)`: sse 连接超时时长
 
 - **示例**
 
@@ -56,14 +55,12 @@ async function main() {
           "localhost-mcp": {
             url: `xxx`,
             headers: {},
-            timeout: 60,
-            sse_read_timeout: 300,
+            timeout: 60
           },
           "localhost-mcp2": {
             url: `xxx2`,
             headers: {},
-            timeout: 60,
-            sse_read_timeout: 300,
+            timeout: 60
           },
         },
       },

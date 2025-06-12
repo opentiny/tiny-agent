@@ -1,9 +1,10 @@
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 
 export interface McpServer {
   url: string;
   headers?: Record<string, string>;
-  timeout?: number;
+  timeout?: number; // TODO
   customTransport: never;
 }
 
@@ -28,14 +29,15 @@ export enum AgentStrategy {
 export interface MCPClientOptions {
   agentStrategy?: AgentStrategy;
   llmConfig: {
-    // 模型配置
-    url: string; // ai 接口地址
-    apiKey: string; // 模型 api key
-    model: string; // 模型名
-    systemPrompt: string; // 指令
+    // Model configuration
+    url: string; // AI interface address
+    apiKey: string; // Model API key
+    model: string; // Model name
+    systemPrompt: string; // Instructions
+    summarySystemPrompt?: string; // Summary instructions for each round of chat
   };
-  mcpServersConfig: McpServersConfig; // MCP 服务配置
-  maxIterationSteps?: number; // 最大执行步数
+  mcpServersConfig: McpServersConfig; // MCP service configuration
+  maxIterationSteps?: number; // Maximum execution steps
 }
 
 export interface AvailableTool {
@@ -62,7 +64,7 @@ export interface ChatBody {
   tools?: AvailableTool[];
 }
 
-export type ToolResults = Array<{ call: string; result: any }>;
+export type ToolResults = Array<{ call: string; result: CallToolResult }>;
 
 export enum Role {
   FUNCTION = 'function',
@@ -208,8 +210,8 @@ export type ChatCompleteRequest = {
   frequency_penalty?: number; // Range: [-2, 2]
   presence_penalty?: number; // Range: [-2, 2]
   repetition_penalty?: number; // Range: (0, 2]
-  logit_bias?: { [key: number]: number };
-  top_logprobs: number; // Integer only
+  logit_bias?: Record<number, number>;
+  top_logprobs?: number; // Integer only
   min_p?: number; // Range: [0, 1]
   top_a?: number; // Range: [0, 1]
   prediction?: { type: 'content'; content: string };
