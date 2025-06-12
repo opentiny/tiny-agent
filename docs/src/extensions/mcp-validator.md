@@ -14,8 +14,7 @@
 
 ## 如何在其他平台配置使用并校验通过？
 
-- SSE：需要在访问的URL加上code参数，code参数即McpValidator genVerifyCode方法所生成的验证码，这里需要约定一个验证码在项目启动时则通过genVerifyCode获取到。
-- Steamable：在访问的URL请求的请求头中加上mcp-verify-code: your code
+在Cherry Studio、Dify等平台使用大模型时配置MCP Server时需要注意传递verifyCode，下面以Cherry Studio平台配置为例，参数传递方式可以结合实际场景自行定义，案例只展示较为常用的方式以供参考
 
 ```typescript
 class CustomMcpValidator {
