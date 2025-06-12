@@ -1,6 +1,10 @@
-# TinyAgent 如何使用
+# TinyAgent
 
-## 使用MCP server
+基于MCP协议使AI理解与操作用户界面，完成用户任务。
+
+## 如何使用
+
+### 使用MCP server
 
 **在后端中使用**
 
@@ -105,7 +109,7 @@ tool(
 );
 ```
 
-## 使用MCP Client Chat
+### 使用MCP Client Chat
 
 **安装依赖**
 
@@ -133,20 +137,18 @@ const mcpClientChat = await createMCPClientChat({
         url: `xxx`,
         headers: {},
         timeout: 60,
-        sse_read_timeout: 300,
       },
       'localhost-mcp2': {
         url: `xxx2`,
         headers: {},
         timeout: 60,
-        sse_read_timeout: 300,
       },
     },
   },
 });
 ```
 
-## 使用调度器
+### 使用调度器
 
 **安装依赖**
 
@@ -176,3 +178,31 @@ export const { taskScheduler, actionManager } = createScheduler(
   {}, // 可自行提供上下文给操作库使用, 如axios以及router
 );
 ```
+
+## 本地开发
+
+```sh
+# 下载代码到本地
+$ git clone git@github.com:opentiny/tiny-agent.git
+
+# 全局安装 pnpm
+$ npm install pnpm -g
+
+# 安装所需的依赖
+$ cd tiny-agent/ && pnpm install
+
+# 启动
+$ pnpm dev
+```
+
+打开浏览器访问： `http://localhost:5173/`
+
+### 环境配置
+
+复制 `demo-server/.env-example` 内容到 `demo-server/.env` 中，填写自己的api key
+
+### 🤝 参与贡献
+
+如果你对我们的开源项目感兴趣，欢迎加入我们！🎉
+
+参与贡献之前请先阅读[贡献指南](CONTRIBUTING.zh-CN.md)。
