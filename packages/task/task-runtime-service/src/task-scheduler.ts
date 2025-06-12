@@ -11,8 +11,15 @@ export interface ISchedulerContext extends IActionContext {
   $taskUI?: ITaskUI;
 }
 
+export interface ITasksQueueItem {
+  id: string;
+  resolve: (result: ITaskResult) => void;
+  reject: (error: unknown) => void;
+  taskFn: () => Promise<ITaskResult>;
+}
+
 export class TaskScheduler {
-  protected tasksQueue: any = [];
+  protected tasksQueue: ITasksQueueItem[] = [];
   protected isExecuting = false;
   protected context: ISchedulerContext;
   protected actionManager: ActionManager;
@@ -92,11 +99,15 @@ export class TaskScheduler {
       return;
     }
     this.isExecuting = true;
-    const { taskFn, resolve, reject } = this.tasksQueue.shift();
+    const tasksQueueItem = this.tasksQueue.shift();
+    if (!tasksQueueItem) {
+      return;
+    }
+    const { taskFn, resolve, reject } = tasksQueueItem;
     try {
       const result = await taskFn();
       resolve(result);
-    } catch (error: any) {
+    } catch (error) {
       reject(error);
     } finally {
       this.isExecuting = false;
