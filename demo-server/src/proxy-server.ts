@@ -17,11 +17,7 @@ export function createSSETransportHandler(deps: {
   transports: Record<string, Transport>;
   messageEndpointUrl: string;
 }) {
-  const {
-    connectorCenter,
-    transports,
-    messageEndpointUrl,
-  } = deps;
+  const { connectorCenter, transports, messageEndpointUrl } = deps;
 
   const sessionHandler = async (req: Request, res: Response) => {
     const transport = new SSEServerTransport(messageEndpointUrl, res);
@@ -29,13 +25,13 @@ export function createSSETransportHandler(deps: {
     const clientId = req.query.client as string;
     const verifyCode = req.query.code as string;
     const server = getProxyServer();
-    server.setEndPoint(connectorCenter.getClient(clientId, transport.sessionId)!);
+    server.setEndpoint(connectorCenter.getClient(clientId, transport.sessionId)!);
     server.setVerifyCode(verifyCode);
     res.on('close', () => {
       delete transports[transport.sessionId];
     });
     await server.connect(transport);
-  }
+  };
   const messageHandler = async (req: Request, res: Response) => {
     const sessionId = req.query.sessionId as string;
     const transport = transports[sessionId] as SSEServerTransport;
@@ -44,21 +40,18 @@ export function createSSETransportHandler(deps: {
     } else {
       res.status(400).send('No transport found for sessionId');
     }
-  }
+  };
   return {
     sessionHandler,
-    messageHandler
-  }
+    messageHandler,
+  };
 }
 
 export function createSteamableWithHttpHandle<T extends IConnectorEndpoint>(deps: {
   connectorCenter: ConnectorCenter<T>;
   transports: Record<string, Transport>;
 }) {
-  const {
-    connectorCenter,
-    transports
-  } = deps;
+  const { connectorCenter, transports } = deps;
 
   const sessionHandler = async (req: Request, res: Response) => {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
@@ -96,37 +89,36 @@ export function createSteamableWithHttpHandle<T extends IConnectorEndpoint>(deps
       const clientId = req.headers['connector-client-id'] as string | undefined;
       const verifyCode = req.headers['mcp-verify-code'] as string | undefined;
       const server = getProxyServer();
-      server.setEndPoint(connectorCenter.getClient(clientId!, sessionId)!);
+      server.setEndpoint(connectorCenter.getClient(clientId!, sessionId)!);
       server.setVerifyCode(verifyCode);
       await server.connect(transport);
     }
     await (transport as StreamableHTTPServerTransport).handleRequest(req, res, req.body);
-  }
+  };
 
   return {
     sessionHandler,
     messageHandler,
-  }
+  };
 }
 
 export function createProxyServer(deps: {
   connectorCenter: ConnectorCenter<IConnectorEndpoint>;
-  sseMessageEndpointUrl?: string
+  sseMessageEndpointUrl?: string;
 }) {
-  const {connectorCenter, sseMessageEndpointUrl} = deps;
+  const { connectorCenter, sseMessageEndpointUrl } = deps;
   const transports: { [sessionId: string]: Transport } = {};
   const sseHandlers = createSSETransportHandler({
     connectorCenter,
     transports,
-    messageEndpointUrl: sseMessageEndpointUrl || '/messages'
+    messageEndpointUrl: sseMessageEndpointUrl || '/messages',
   });
   const streamableHttpHandlers = createSteamableWithHttpHandle({
     connectorCenter,
-    transports
-  }
-  )
+    transports,
+  });
   return {
     sseHandlers,
-    streamableHttpHandlers
-  }
+    streamableHttpHandlers,
+  };
 }
