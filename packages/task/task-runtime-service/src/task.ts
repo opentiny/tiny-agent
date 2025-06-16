@@ -144,7 +144,7 @@ export class Task implements ITaskExecutor {
       this.executorInfo.currentIndex < this.executorInfo.instructions.length &&
       this.executorInfo.status === ExecutorStatus.Running
     ) {
-      const { instructions, currentIndex, status: executorStatus } = this.executorInfo;
+      const { instructions, currentIndex } = this.executorInfo;
       const instruction = instructions[currentIndex];
 
       this.emit('beforeStep', {
@@ -163,17 +163,18 @@ export class Task implements ITaskExecutor {
         this.taskResult.status = TaskResultStatus.PartialCompleted;
 
         // 暂停执行，并使暂停方法返回
-        if (executorStatus === (ExecutorStatus.Paused as ExecutorStatus)) {
+        if (this.executorInfo.status === (ExecutorStatus.Paused as ExecutorStatus)) {
           this.executorInfo.pauseResolve?.();
           this.executorInfo.pauseResolve = null;
           this.executorInfo.waitPromise = null;
         }
 
-        if (currentIndex === instructions.length - 1) {
+        if (this.executorInfo.currentIndex === this.executorInfo.instructions.length - 1) {
           this.taskResult.status = TaskResultStatus.Success;
           // 最后一步点了暂停，等待恢复
-          if (executorStatus !== (ExecutorStatus.Paused as ExecutorStatus)) {
-            return this.finish();
+          if (this.executorInfo.status !== (ExecutorStatus.Paused as ExecutorStatus)) {
+            this.finish();
+            return;
           }
         }
 
@@ -181,7 +182,8 @@ export class Task implements ITaskExecutor {
       } else {
         this.taskResult.error = error;
         this.taskResult.status = TaskResultStatus.Error;
-        return this.finish();
+        this.finish();
+        return;
       }
     }
   }
