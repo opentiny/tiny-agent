@@ -31,6 +31,7 @@ const showChat = ref(true);
 
 // MCP Client Chat
 const chatConfig = {
+  agentStrategy: null,
   llmConfig: {},
   maxIterationSteps: 3,
   mcpServersConfig: {
@@ -42,7 +43,9 @@ const chatConfig = {
   },
 };
 const setLLMConfig = (config) => {
-  chatConfig.llmConfig = config;
+  const { url, apiKey, model, systemPrompt, agentStrategy } = config;
+  chatConfig.llmConfig = { url, apiKey, model, systemPrompt };
+  chatConfig.agentStrategy = agentStrategy;
 };
 const chatFactory = () => createMCPClientChat(chatConfig);
 provide('chat-factory', chatFactory);

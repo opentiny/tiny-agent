@@ -26,6 +26,7 @@
 
 <script setup>
 import { AIClient, useMessage, STATUS, GeneratingStatus} from '@opentiny/tiny-robot-kit';
+import { TrContainer, TrBubbleList, TrPrompts, TrSender } from '@opentiny/tiny-robot';
 import { ref, watch, nextTick, computed, onUnmounted, inject } from 'vue';
 import { CustomModelProvider } from './chat-config/custom-model-provider'
 import { SimpleToolCallHandler } from './chat-config/simple-tool-call-handler';

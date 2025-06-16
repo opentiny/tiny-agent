@@ -5,36 +5,55 @@
     </template>
     <template #operations> </template>
     <template v-if="messages.length === 0">
-      <tr-prompts :items="promptItems" :wrap="true" item-class="prompt-item" class="tiny-prompts"
-        @item-click="handlePromptItemClick"></tr-prompts>
+      <tr-prompts
+        :items="promptItems"
+        :wrap="true"
+        item-class="prompt-item"
+        class="tiny-prompts"
+        @item-click="handlePromptItemClick"
+      ></tr-prompts>
     </template>
     <tr-bubble-list v-else :items="showMessages" :roles="roles"> </tr-bubble-list>
     <template #footer>
-      <tr-sender class="chat-input" mode="multiple" :maxLength="10000" v-model="inputMessage" :showWordLimit="true"
-        ref="senderRef" :placeholder="messageState.status === STATUS.PROCESSING ? '正在思考中...' : '请输入您的问题'"
-        :clearable="true" :loading="GeneratingStatus.includes(messageState.status)" @submit="sendMessage"
-        @cancel="abortRequest"></tr-sender>
+      <tr-sender
+        class="chat-input"
+        mode="multiple"
+        :maxLength="10000"
+        v-model="inputMessage"
+        :showWordLimit="true"
+        ref="senderRef"
+        :placeholder="messageState.status === STATUS.PROCESSING ? '正在思考中...' : '请输入您的问题'"
+        :clearable="true"
+        :loading="GeneratingStatus.includes(messageState.status)"
+        @submit="sendMessage"
+        @cancel="abortRequest"
+      ></tr-sender>
     </template>
   </tr-container>
-  <div @click="() => {
-    show = !show;
-    senderRef?.focus();
-  }">
+  <div
+    @click="
+      () => {
+        show = !show;
+        senderRef?.focus();
+      }
+    "
+  >
     <slot></slot>
   </div>
 </template>
 
 <script setup>
-import { AIClient, useMessage, STATUS, GeneratingStatus} from '@opentiny/tiny-robot-kit';
 import { ref, watch, nextTick, computed, onUnmounted } from 'vue';
-import { CustomModelProvider } from './chat-config/custom-model-provider'
+import { AIClient, useMessage, STATUS, GeneratingStatus } from '@opentiny/tiny-robot-kit';
+import { TrContainer, TrBubbleList, TrPrompts, TrSender } from '@opentiny/tiny-robot';
+import { CustomModelProvider } from './chat-config/custom-model-provider';
 import { SimpleToolCallHandler } from './chat-config/simple-tool-call-handler';
 import { roles, promptItems } from './chat-config/chat-config';
 
 const props = defineProps({
   getClientId: { type: Function, default: () => () => '' },
-  genCode: { type: Function, default: () => () => { } },
-  clearCode: { type: Function, default: () => () => { } },
+  genCode: { type: Function, default: () => () => {} },
+  clearCode: { type: Function, default: () => () => {} },
   memory: { type: Boolean, default: true },
 });
 
@@ -50,17 +69,19 @@ const senderRef = ref(null);
 const customModelProvider = new CustomModelProvider(
   {
     memory: props.memory,
-  }, 
+  },
   {
     toolCallHandler: new SimpleToolCallHandler(),
     validator: {
       genCode: props.genCode,
       clearCode: props.clearCode,
     },
-    getClientId: props.getClientId
-  }
+    getClientId: props.getClientId,
+  },
 );
-onUnmounted(() => { customModelProvider.destroy(); });
+onUnmounted(() => {
+  customModelProvider.destroy();
+});
 
 // 配置AI对话客户端
 const client = new AIClient({
@@ -73,7 +94,6 @@ const { messages, inputMessage, messageState, sendMessage, abortRequest } = useM
   useStreamByDefault: true,
   initialMessages: [],
 });
-
 
 const handlePromptItemClick = (e, item) => {
   sendMessage(item.description);
