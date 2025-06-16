@@ -12,7 +12,7 @@ hero:
   actions:
     - theme: brand
       text: 指引
-      link: /guide/write-docs-guide
+      link: /guide/installation
     - theme: alt
       text: 扩展
       link: /extensions/extension.md
