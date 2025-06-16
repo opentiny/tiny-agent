@@ -29,7 +29,7 @@
         <!-- 模式选择 -->
         <TinyFormItem label="调用模式">
           <TinySelect v-model="formData.agentStrategy" placeholder="选择调用模式" style="width: 180px">
-            <TinyOption label="Function Call" value="" />
+            <TinyOption label="Function Call" value="Function Calling" />
             <TinyOption label="ReAct" value="ReAct" />
           </TinySelect>
           <div class="mode-des" style="margin-top: 8px">FunctionCalling：适配支持工具调用的大模型</div>
@@ -78,7 +78,7 @@ const formData = ref({
   model: '',
   systemPrompt: '',
   isPersistent: false,
-  agentStrategy: '', // 默认Function Call模式
+  agentStrategy: 'Function Calling', // 默认Function Call模式
 });
 
 // 初始化时加载本地存储
@@ -94,7 +94,7 @@ const loadFromLocalStorage = () => {
     model: localStorage.getItem('model') || 'qwen2.5:7b',
     systemPrompt: localStorage.getItem('systemPrompt') || 'You are a helpful assistant',
     isPersistent: !!localStorage.getItem('isPersistent'), // 转换为布尔值
-    agentStrategy: localStorage.getItem('agentStrategy') || null,
+    agentStrategy: localStorage.getItem('agentStrategy'),
   };
   emit('LLMConfigChange', formData.value);
 };
