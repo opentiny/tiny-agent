@@ -30,14 +30,7 @@
       ></tr-sender>
     </template>
   </tr-container>
-  <div
-    @click="
-      () => {
-        show = !show;
-        senderRef?.focus();
-      }
-    "
-  >
+  <div @click="handleDialog">
     <slot></slot>
   </div>
 </template>
@@ -97,6 +90,11 @@ const { messages, inputMessage, messageState, sendMessage, abortRequest } = useM
 
 const handlePromptItemClick = (e, item) => {
   sendMessage(item.description);
+};
+
+const handleDialog = () => {
+  show = !show;
+  senderRef?.focus();
 };
 
 const showMessages = computed(() => {

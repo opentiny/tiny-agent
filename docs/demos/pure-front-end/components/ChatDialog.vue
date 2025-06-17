@@ -98,6 +98,7 @@ const handleDialog = () => {
   show = !show;
   senderRef?.focus();
 };
+
 const showMessages = computed(() => {
   if (messageState.status === STATUS.PROCESSING) {
     return [
