@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "tsx watch --tsconfig ./tsconfig.dev.json src/index.ts ",
+    "serve": "node dist/index.js",
     "build": "vite build"
   },
   "main": "dist/index.js",
