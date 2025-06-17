@@ -25,7 +25,7 @@ const chatConfigFn = (req: Request) => ({
       //   timeout: 60
       // },
       'localhost-mcp-streamable-http': {
-        url: 'http://127.0.0.1:3001/mcp',
+        url: 'http://127.0.0.1:3301/mcp',
         headers: {
           'connector-client-id': req.headers['connector-client-id'],
           'mcp-verify-code': req.headers['mcp-verify-code'],
@@ -58,4 +58,4 @@ app.post('/messages', sseHandlers.messageHandler);
 // chat
 app.post('/chat', chatHandler);
 
-app.listen(3001);
+app.listen(3301);
