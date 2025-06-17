@@ -155,7 +155,7 @@ const openDialog = () => {
   gap: 16px;
 }
 .mode-des {
-  color: #606266;
+  color: var(--tv-color-text-weaken);
   font-size: 12px;
   line-height: 18px;
 }
