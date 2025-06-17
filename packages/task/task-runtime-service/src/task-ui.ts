@@ -221,6 +221,19 @@ export class TaskUI implements ITaskUI {
               box-shadow: inset 20px 20px 60px 0 rgba(20,118,255, 0.5), inset -20px -20px 60px 0 rgba(20,118,255, 0.5);
           }
       }
+          
+      @media (prefers-reduced-motion: reduce) {
+        .task-run-shadow {     
+          animation-delay: -1ms!important;
+          animation-duration: 1ms!important;
+          animation-iteration-count: 1!important;
+          background-attachment: initial!important;
+          scroll-behavior: auto!important;
+          transition-duration: 0s!important;
+          transition-delay: 0s!important;
+          box-shadow: inset 10px 10px 30px 0 rgba(20,118,255, 0.3), inset -10px -10px 30px 0 rgba(20,118,255, 0.3);
+        }
+      }
       .task-run-shadow {
           animation: shadow_fade 2.5s ease-in-out infinite;
           bottom: 0;
