@@ -1,0 +1,91 @@
+:root {
+  --ta-task-text-color: #191919;
+  --ta-task-box-bg-color: #ffffff;
+  --ta-task-icon-color: #191919;
+  --ta-task-icon-color-disabled: #c2c2c2;
+}
+
+:root.dark {
+  --ta-task-text-color: #ffffff;
+  --ta-task-box-bg-color: #32363f;
+  --ta-task-icon-color: #191919;
+  --ta-task-icon-color-disabled: #f0f0f0;
+}
+
+.ta-task-ui-box {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 0 24px;
+  background-color: var(--ta-task-box-bg-color);
+  border-radius: 27px;
+  box-shadow: 0 2px 40px rgba(0, 0, 0, 0.16);
+  height: 54px;
+  display: flex;
+  align-items: center;
+  z-index: 10000;
+}
+
+.ta-task-ui-title {
+  font-size: 14px;
+  color: var(--ta-task-text-color);
+  width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ta-task-ui-icon {
+  width: 24px;
+  height: 24px;
+  margin-left: 12px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.ta-task-ui-icon svg {
+  fill: var(--ta-task-icon-color);
+}
+
+.ta-task-ui-icon.is-disabled svg {
+  fill: var(--ta-task-icon-color-disabled);
+}
+
+@keyframes shadow_fade {
+  0%,
+  to {
+    box-shadow:
+      inset 10px 10px 30px 0 rgba(20, 118, 255, 0.3),
+      inset -10px -10px 30px 0 rgba(20, 118, 255, 0.3);
+  }
+  50% {
+    box-shadow:
+      inset 20px 20px 60px 0 rgba(20, 118, 255, 0.5),
+      inset -20px -20px 60px 0 rgba(20, 118, 255, 0.5);
+  }
+}
+
+.ta-task-ui-shadow {
+  animation: shadow_fade 2.5s ease-in-out infinite;
+  bottom: 0;
+  display: none;
+  height: 100vh;
+  left: 0;
+  pointer-events: none;
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 100vw;
+  z-index: 2147483647;
+  animation-play-state: running;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ta-task-ui-shadow--reduce-motion.ta-task-ui-shadow {
+    animation: none;
+    transition: none;
+    box-shadow:
+      inset 10px 10px 30px 0 rgba(20, 118, 255, 0.3),
+      inset -10px -10px 30px 0 rgba(20, 118, 255, 0.3);
+  }
+}

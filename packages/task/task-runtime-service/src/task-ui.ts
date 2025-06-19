@@ -1,12 +1,13 @@
 import { addBreathe, addTooltip, removeBreathe } from '@opentiny/tiny-agent-ui-components';
 import { EventEmitter } from './event-emitter';
 import { t } from './locale/i18n';
-import skip from './assets/images/skip.svg?url';
-import skipDisabled from './assets/images/skip-disabled.svg?url';
-import pause from './assets/images/pause.svg?url';
-import resume from './assets/images/resume.svg?url';
-import stop from './assets/images/stop.svg?url';
-import stopDisabled from './assets/images/stop-disabled.svg?url';
+import './assets/style/task-ui.css';
+import skip from './assets/images/skip.svg?raw';
+import skipDisabled from './assets/images/skip-disabled.svg?raw';
+import pause from './assets/images/pause.svg?raw';
+import resume from './assets/images/resume.svg?raw';
+import stop from './assets/images/stop.svg?raw';
+import stopDisabled from './assets/images/stop-disabled.svg?raw';
 
 // UI运行状态 TODO: 需要扩展loading状态
 export enum Status {
@@ -15,26 +16,11 @@ export enum Status {
   Paused = 'paused',
 }
 
-const titleStyles = {
-  fontSize: '14px',
-  color: '#191919',
-  width: '180px',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-};
-
-const createImg = (src: string) => {
-  const img = document.createElement('img');
-  img.src = src;
-  Object.assign(img.style, {
-    width: '24px',
-    height: '24px',
-    marginLeft: '12px',
-    cursor: 'pointer',
-    borderRadius: '50%',
-  });
-  return img;
+const createSvg = (svg: string) => {
+  const container = document.createElement('div');
+  container.innerHTML = svg;
+  container.className = 'ta-task-ui-icon';
+  return container;
 };
 
 export type ITaskUIEvent = 'skip' | 'pause' | 'resume' | 'stop';
@@ -55,12 +41,12 @@ export interface ITaskUI {
 export class TaskUI implements ITaskUI {
   protected messageBox: HTMLDivElement;
   protected titleElm!: HTMLDivElement;
-  protected pauseBtn!: HTMLImageElement;
-  protected skipBtn!: HTMLImageElement;
-  protected skipDisabledBtn!: HTMLImageElement;
-  protected stopBtn!: HTMLImageElement;
-  protected stopDisabledBtn!: HTMLImageElement;
-  protected resumeBtn!: HTMLImageElement;
+  protected pauseBtn!: HTMLDivElement;
+  protected skipBtn!: HTMLDivElement;
+  protected skipDisabledBtn!: HTMLDivElement;
+  protected stopBtn!: HTMLDivElement;
+  protected stopDisabledBtn!: HTMLDivElement;
+  protected resumeBtn!: HTMLDivElement;
   protected light: HTMLDivElement;
   protected titleTooltip: { destroy: () => void } | null = null;
   protected pauseTooltip: { destroy: () => void } | null = null;
@@ -87,48 +73,35 @@ export class TaskUI implements ITaskUI {
 
   protected createMessageBox() {
     const box = document.createElement('div');
-    const boxStyles = {
-      position: 'fixed',
-      bottom: '20px',
-      left: '20px',
-      padding: '0 24px',
-      backgroundColor: 'white',
-      borderRadius: '27px',
-      boxShadow: '0 2px 40px rgba(0, 0, 0, 0.16)',
-      height: '54px',
-      display: 'flex',
-      alignItems: 'center',
-      zIndex: '10000',
-    };
-    Object.assign(box.style, boxStyles);
+    box.classList.add('ta-task-ui-box');
     document.body.appendChild(box);
     return box;
   }
 
   protected init({ title }: { title: string }) {
     this.titleElm = document.createElement('div');
-    Object.assign(this.titleElm.style, titleStyles);
+    this.titleElm.classList.add('ta-task-ui-title');
     this.setTitle(title);
 
-    this.skipBtn = createImg(skip);
+    this.skipBtn = createSvg(skip);
     this.skipBtn.onclick = () => this.skip(true);
     this.skipBtn.title = t('taskUI.skip');
 
-    this.skipDisabledBtn = createImg(skipDisabled);
+    this.skipDisabledBtn = createSvg(skipDisabled);
     this.skipDisabledBtn.style.cursor = 'not-allowed';
 
-    this.stopBtn = createImg(stop);
+    this.stopBtn = createSvg(stop);
     this.stopBtn.onclick = () => this.stop(true);
     this.stopBtn.title = t('taskUI.stop');
 
-    this.stopDisabledBtn = createImg(stopDisabled);
+    this.stopDisabledBtn = createSvg(stopDisabled);
     this.stopDisabledBtn.style.cursor = 'not-allowed';
 
-    this.pauseBtn = createImg(pause);
+    this.pauseBtn = createSvg(pause);
     this.pauseBtn.onclick = () => this.pause(true);
     this.pauseBtn.title = t('taskUI.pause');
 
-    this.resumeBtn = createImg(resume);
+    this.resumeBtn = createSvg(resume);
     this.resumeBtn.onclick = () => this.resume(true);
     this.resumeBtn.title = t('taskUI.resume');
 
@@ -207,45 +180,9 @@ export class TaskUI implements ITaskUI {
 
   protected createBreathingLight() {
     const light = document.createElement('div');
-    light.classList.add('task-run-shadow', 'task-run-shadow--reduce-motion');
+    light.classList.add('ta-task-ui-shadow', 'ta-task-ui-shadow--reduce-motion');
     light.style.display = 'block';
     document.body.appendChild(light);
-
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes shadow_fade {
-          0%, to {
-              box-shadow: inset 10px 10px 30px 0 rgba(20,118,255, 0.3), inset -10px -10px 30px 0 rgba(20,118,255, 0.3);
-          }
-          50% {
-              box-shadow: inset 20px 20px 60px 0 rgba(20,118,255, 0.5), inset -20px -20px 60px 0 rgba(20,118,255, 0.5);
-          }
-      }
-          
-      .task-run-shadow {
-          animation: shadow_fade 2.5s ease-in-out infinite;
-          bottom: 0;
-          display: none;
-          height: 100vh;
-          left: 0;
-          pointer-events: none;
-          position: fixed;
-          right: 0;
-          top: 0;
-          width: 100vw;
-          z-index: 2147483647;
-          animation-play-state: running;
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .task-run-shadow--reduce-motion.task-run-shadow {     
-          animation: none;
-          transition: none;
-          box-shadow: inset 10px 10px 30px 0 rgba(20,118,255, 0.3), inset -10px -10px 30px 0 rgba(20,118,255, 0.3);
-        }
-      }
-  `;
-    document.head.appendChild(style);
     return light;
   }
 
