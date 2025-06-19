@@ -1,12 +1,16 @@
 <p align="center">
-  <a href="" target="_blank" rel="noopener noreferrer">
-    <img alt="OpenTiny TinyAgent Logo" src="./docs/src/public/logo.svg" height="100" style="max-width:100%;vertical-align: middle">
-    <span style="font-size: 36px; vertical-align: middle; margin-left: 24px">OpenTiny TinyAgent</span>
+    <img alt="logo" src="./docs/src/public/logo.svg" height="48" >
+    <img alt='Opentiny TinyAgent' src='./docs/src/public/logo-text.svg' />
+</p>
+
+<p align="center">基于MCP协议使AI理解与操作用户界面，完成用户任务。</p>
+<p align="center">
+  <a href="https://opentiny.github.io/tiny-agent">
+    <img src="https://img.shields.io/badge/docs-tiny_agent-5f5af8"/>
   </a>
 </p>
-<p align="center"> 基于MCP协议使AI理解与操作用户界面，完成用户任务。</p>
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | 简体中文
 
 ## 🌈 特性
 
@@ -153,12 +157,12 @@ const mcpClientChat = await createMCPClientChat({
       'localhost-mcp': {
         url: `xxx`,
         headers: {},
-        timeout: 60
+        timeout: 60,
       },
       'localhost-mcp2': {
         url: `xxx2`,
         headers: {},
-        timeout: 60
+        timeout: 60,
       },
     },
   },
