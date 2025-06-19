@@ -3,11 +3,9 @@ import { EventEmitter } from './event-emitter';
 import { t } from './locale/i18n';
 import './assets/style/task-ui.css';
 import skip from './assets/images/skip.svg?raw';
-import skipDisabled from './assets/images/skip-disabled.svg?raw';
 import pause from './assets/images/pause.svg?raw';
 import resume from './assets/images/resume.svg?raw';
 import stop from './assets/images/stop.svg?raw';
-import stopDisabled from './assets/images/stop-disabled.svg?raw';
 
 // UI运行状态 TODO: 需要扩展loading状态
 export enum Status {
@@ -87,14 +85,16 @@ export class TaskUI implements ITaskUI {
     this.skipBtn.onclick = () => this.skip(true);
     this.skipBtn.title = t('taskUI.skip');
 
-    this.skipDisabledBtn = createSvg(skipDisabled);
+    this.skipDisabledBtn = createSvg(skip);
+    this.skipDisabledBtn.classList.add('is-disabled');
     this.skipDisabledBtn.style.cursor = 'not-allowed';
 
     this.stopBtn = createSvg(stop);
     this.stopBtn.onclick = () => this.stop(true);
     this.stopBtn.title = t('taskUI.stop');
 
-    this.stopDisabledBtn = createSvg(stopDisabled);
+    this.stopDisabledBtn = createSvg(stop);
+    this.stopDisabledBtn.classList.add('is-disabled');
     this.stopDisabledBtn.style.cursor = 'not-allowed';
 
     this.pauseBtn = createSvg(pause);
