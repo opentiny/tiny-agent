@@ -1,8 +1,6 @@
 <p align="center">
-  <a target="_blank" rel="noopener noreferrer"  href='https://opentiny.github.io/tiny-agent/' >
-      <img alt="logo" src="./docs/src/public/logo.svg" height="48" >
-      <img alt='Opentiny TinyAgent' src='./docs/src/public/logo-text.svg' />
-  </a>
+  <img alt="logo" src="./docs/src/public/logo.svg" height="48" >
+  <img alt='Opentiny TinyAgent' src='./docs/src/public/logo-text.svg' />
 </p>
 
 <p align="center">Enable AI to understand and operate user interfaces based on MCP protocol to complete user tasks.</p>
