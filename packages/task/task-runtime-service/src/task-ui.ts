@@ -207,7 +207,7 @@ export class TaskUI implements ITaskUI {
 
   protected createBreathingLight() {
     const light = document.createElement('div');
-    light.classList.add('task-run-shadow');
+    light.classList.add('task-run-shadow', 'task-run-shadow--reduce-motion');
     light.style.display = 'block';
     document.body.appendChild(light);
 
@@ -221,6 +221,7 @@ export class TaskUI implements ITaskUI {
               box-shadow: inset 20px 20px 60px 0 rgba(20,118,255, 0.5), inset -20px -20px 60px 0 rgba(20,118,255, 0.5);
           }
       }
+          
       .task-run-shadow {
           animation: shadow_fade 2.5s ease-in-out infinite;
           bottom: 0;
@@ -234,6 +235,14 @@ export class TaskUI implements ITaskUI {
           width: 100vw;
           z-index: 2147483647;
           animation-play-state: running;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .task-run-shadow--reduce-motion.task-run-shadow {     
+          animation: none;
+          transition: none;
+          box-shadow: inset 10px 10px 30px 0 rgba(20,118,255, 0.3), inset -10px -10px 30px 0 rgba(20,118,255, 0.3);
+        }
       }
   `;
     document.head.appendChild(style);
