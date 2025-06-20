@@ -205,4 +205,4 @@ $ pnpm dev
 
 如果你对我们的开源项目感兴趣，欢迎加入我们！🎉
 
-参与贡献之前请先阅读[贡献指南](CONTRIBUTING.zh-CN.md)。
+参与贡献之前请先阅读[贡献指南](https://github.com/opentiny/tiny-agent/blob/main/CONTRIBUTING.zh-CN.md)。
