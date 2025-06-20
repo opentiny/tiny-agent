@@ -1,0 +1,17 @@
+:root.dark .tiny-button {
+  --tv-Button-text-color-primary: #e6e6e6;
+  --tv-Button-border-color-primary: #3d444db3;
+  --tv-Button-bg-color-primary: #5f5af8;
+  --tv-Button-bg-color-active-primary: #827efd;
+  --tv-Button-text-color-active-primary: #e6e6e6;
+  --tv-Button-border-color-active-primary: #3d444db3;
+}
+
+:root .tiny-button {
+  --tv-Button-text-color-primary: #ffffff;
+  --tv-Button-border-color-primary: #5f5af8;
+  --tv-Button-bg-color-primary: #5f5af8;
+  --tv-Button-bg-color-active-primary: #827efd;
+  --tv-Button-text-color-active-primary: #ffffff;
+  --tv-Button-border-color-active-primary: #827efd;
+}
