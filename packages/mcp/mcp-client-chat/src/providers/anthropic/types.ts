@@ -1,9 +1,3 @@
-/*
- * @Descript: 
- * @Author: yaoyun
- * @Date: 2025-06-20 11:20:52
- * @FilePath: /tiny-agent/packages/mcp/mcp-client-chat/src/providers/anthropic/types.ts
- */
 export type Role = 'system' | 'user' | 'assistant';
 
 /** 消息内容块类型，用于多模态、工具调用等 */
@@ -19,25 +13,11 @@ export interface Message {
   content: string | ContentBlock[];
 }
 
-export interface ToolFunctionProperty {
-  type: string;
-  description: string;
-}
-
-export interface ToolFunctionParameters {
-  type: 'object';
-  properties: Record<string, ToolFunctionProperty>;
-  required?: string[];
-}
-
-// 工具（函数）定义
+/** 注册工具定义 */
 export interface ToolDefinition {
-  type: 'function'; // 工具类型，目前仅支持 "function"
-  function: {
-    name: string; // 函数名称（唯一标识）
-    description?: string; // 描述信息（供模型参考）
-    input_schema: ToolFunctionParameters; // JSON Schema 格式的参数结构
-  };
+  name: string;
+  description?: string;
+  input_schema: Record<string, any>; // JSON Schema
 }
 
 /** 工具使用策略 */
