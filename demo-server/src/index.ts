@@ -2,7 +2,7 @@ import express, { type Request } from 'express';
 import expressWs from 'express-ws';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { createConnector } from './connector';
+import { createConnector, createSSEConnector } from './connector';
 import { createProxyServer } from './proxy-server';
 import { createChat } from './chat';
 
@@ -30,13 +30,13 @@ const chatConfigFn = (req: Request) => ({
           'connector-client-id': req.headers['connector-client-id'],
           'mcp-verify-code': req.headers['mcp-verify-code'],
         },
-        timeout: 60
+        timeout: 60,
       },
     },
   },
 });
 
-const { connectorCenter, websocketConnectionHandler } = createConnector();
+const { connectorCenter } = createSSEConnector();
 const { sseHandlers, streamableHttpHandlers } = createProxyServer({ connectorCenter });
 const { chatHandler } = createChat(chatConfigFn);
 
@@ -44,8 +44,8 @@ const app = express();
 expressWs(app);
 app.use(cors());
 
-// connector
-(app as unknown as expressWs.WithWebsocketMethod).ws('/ws', websocketConnectionHandler);
+// // connector
+// (app as unknown as expressWs.WithWebsocketMethod).ws('/ws', websocketConnectionHandler);
 
 // mcp server
 app.get('/mcp', streamableHttpHandlers.sessionHandler);
