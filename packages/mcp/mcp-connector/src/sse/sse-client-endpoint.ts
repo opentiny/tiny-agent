@@ -20,12 +20,7 @@ export class SSEClientEndpoint implements IConnectorEndpoint {
     return new Promise((resolve) => {
       this.eventSource = new EventSource(this.url, this.config);
 
-      this.eventSource.onopen = () => {
-        const message = {
-          type: EndpointMessageType.INITIALIZE,
-        };
-        this.send(message);
-      };
+      this.eventSource.onopen = () => {};
 
       this.eventSource.onerror = (error) => {
         console.error('SSE error:', error);
@@ -53,7 +48,9 @@ export class SSEClientEndpoint implements IConnectorEndpoint {
       await this.clientIdResolved;
     }
 
-    fetch(`${this.url}/message`, {
+    const url = URL.parse(this.url);
+
+    fetch(`${url?.origin}/message`, {
       method: 'POST',
       body: JSON.stringify(message),
     });

@@ -36,6 +36,7 @@ const chatConfigFn = (req: Request) => ({
   },
 });
 
+// const { connectorCenter, websocketConnectionHandler } = createConnector();
 const { connectorCenter } = createSSEConnector();
 const { sseHandlers, streamableHttpHandlers } = createProxyServer({ connectorCenter });
 const { chatHandler } = createChat(chatConfigFn);

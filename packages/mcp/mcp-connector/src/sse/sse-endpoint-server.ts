@@ -1,37 +1,43 @@
-import express, { type Request, type Response } from 'express';
+import * as http from 'node:http';
 import { ConnectorCenter } from '../connector-center';
 import { EndpointMessageType } from '../endpoint.type';
 import { genId } from '../utils';
 import { SSEServerEndpoint } from './sse-server-endpoint';
 
 export class SSEEndpointServer {
-  public app: express.Application;
+  public app: http.Server;
   protected connectorCenter: ConnectorCenter<SSEServerEndpoint>;
 
   constructor(config: { port: number }, connectorCenter: ConnectorCenter<SSEServerEndpoint>) {
-    this.app = express();
+    this.app = http.createServer();
     this.connectorCenter = connectorCenter;
     this.app.listen(config.port);
   }
 
   start() {
-    this.app.all('/client', (req: Request, res: Response) => {
-      const clientId = genId();
-      const endpoint = new SSEServerEndpoint(this.app, res, clientId);
+    this.app.on('request', (req, res) => {
+      if (req.url === '/client') {
+        const clientId = genId();
+        const endpoint = new SSEServerEndpoint(this.app, res, clientId);
 
-      endpoint.start();
+        endpoint.start();
 
-      this.connectorCenter.setClient(clientId, endpoint);
-      const message = JSON.parse(req.body);
-      if (message.type === EndpointMessageType.INITIALIZE) {
-        res.set('Content-Type', 'text/event-stream');
-        res.send(
-          JSON.stringify({
-            type: EndpointMessageType.INITIALIZE,
-            data: {
-              clientId,
-            },
-          }),
+        this.connectorCenter.setClient(clientId, endpoint);
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', '*');
+        res.write(
+          'data: ' +
+            JSON.stringify({
+              type: EndpointMessageType.INITIALIZE,
+              data: {
+                clientId,
+              },
+            }) +
+            '\n\n',
         );
       }
     });

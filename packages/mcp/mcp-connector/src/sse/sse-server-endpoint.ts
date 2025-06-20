@@ -1,14 +1,14 @@
-import express, { type Request, type Response } from 'express';
+import * as http from 'node:http';
 import { JSONRPCMessage } from '@modelcontextprotocol/sdk/types';
 import { EndpointMessageType, IConnectorEndpoint, IEndpointMessage } from '../endpoint.type';
 
 export class SSEServerEndpoint implements IConnectorEndpoint {
-  protected app: express.Application;
-  protected res: Response;
+  protected app: http.Server;
+  protected res: any;
   public clientId: string;
   public clientIdResolved: Promise<string>;
 
-  constructor(app: express.Application, res: Response, clientId: string) {
+  constructor(app: http.Server, res: any, clientId: string) {
     this.app = app;
     this.res = res;
     this.clientId = clientId;
@@ -17,13 +17,31 @@ export class SSEServerEndpoint implements IConnectorEndpoint {
 
   start(): Promise<void> {
     return new Promise(() => {
-      this.app.post('/message', (req: Request) => {
-        const message: IEndpointMessage = JSON.parse(req.body);
-        if (message.type === EndpointMessageType.INITIALIZE) {
-          return;
-        }
+      this.app.on('request', (req, res) => {
+        if (req.url === '/message') {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', '*');
 
-        this.onmessage?.(message);
+          let body = '';
+
+          req.on('data', (chunk) => {
+            body += chunk.toString();
+          });
+
+          req.on('end', () => {
+            try {
+              const message = JSON.parse(body);
+              if (message.type === EndpointMessageType.INITIALIZE) {
+                res.end();
+                return;
+              }
+
+              this.onmessage?.(message);
+            } finally {
+              res.end();
+            }
+          });
+        }
       });
     });
   }

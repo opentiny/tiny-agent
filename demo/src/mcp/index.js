@@ -10,6 +10,7 @@ export function initMcp() {
   const sseEndpoint = new SSEClientEndpoint('http://localhost:8082/client');
   const wsEndpoint = new WebSocketClientEndpoint({ url: import.meta.env.VITE_CONNECTOR_ENDPOINT_URL });
   const endpointTransport = new EndpointTransport(sseEndpoint);
+  // const endpointTransport = new EndpointTransport(wsEndpoint);
 
   // MCP Service
   const mcpService = setupMcpService();
