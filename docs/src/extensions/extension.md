@@ -11,3 +11,7 @@
 ### 调度器扩展
 
 - [自定义调度器界面UI](/extensions/custom-ui.md)
+
+### 连接器扩展
+
+- [自定义连接器](/extensions/connector.md)

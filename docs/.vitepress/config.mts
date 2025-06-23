@@ -134,7 +134,7 @@ export default defineConfig({
         {
           text: '连接器扩展',
           base: '/extensions/',
-          items: [{ text: '待补充', link: '' }],
+          items: [{ text: '自定义Connector', link: 'connector' }],
         },
       ],
     },
