@@ -6,15 +6,17 @@ import { SSEServerEndpoint } from './sse-server-endpoint';
 
 export class SSEEndpointServer {
   public app: http.Server;
+  protected port: number;
   protected connectorCenter: ConnectorCenter<SSEServerEndpoint>;
 
   constructor(config: { port: number }, connectorCenter: ConnectorCenter<SSEServerEndpoint>) {
     this.app = http.createServer();
+    this.port = config.port;
     this.connectorCenter = connectorCenter;
-    this.app.listen(config.port);
   }
 
   start() {
+    this.app.listen(this.port);
     this.app.on('request', (req, res) => {
       if (req.url === '/client') {
         const clientId = genId();

@@ -4,7 +4,7 @@ import { EndpointMessageType, IConnectorEndpoint, IEndpointMessage } from '../en
 
 export class SSEServerEndpoint implements IConnectorEndpoint {
   protected app: http.Server;
-  protected res: any;
+  protected res: http.ServerResponse;
   public clientId: string;
   public clientIdResolved: Promise<string>;
 
@@ -15,41 +15,39 @@ export class SSEServerEndpoint implements IConnectorEndpoint {
     this.clientIdResolved = Promise.resolve(clientId);
   }
 
-  start(): Promise<void> {
-    return new Promise(() => {
-      this.app.on('request', (req, res) => {
-        if (req.url === '/message') {
-          res.setHeader('Access-Control-Allow-Origin', '*');
-          res.setHeader('Access-Control-Allow-Methods', '*');
+  async start(): Promise<void> {
+    this.app.on('request', (req, res) => {
+      if (req.url === '/message') {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', '*');
 
-          let body = '';
+        let body = '';
 
-          req.on('data', (chunk) => {
-            body += chunk.toString();
-          });
+        req.on('data', (chunk) => {
+          body += chunk.toString();
+        });
 
-          req.on('end', () => {
-            try {
-              const message = JSON.parse(body);
-              if (message.type === EndpointMessageType.INITIALIZE) {
-                res.end();
-                return;
-              }
-
-              this.onmessage?.(message);
-            } finally {
+        req.on('end', () => {
+          try {
+            const message = JSON.parse(body);
+            if (message.type === EndpointMessageType.INITIALIZE) {
               res.end();
+              return;
             }
-          });
-        }
-      });
+
+            this.onmessage?.(message);
+          } finally {
+            res.end();
+          }
+        });
+      }
     });
   }
   async close(): Promise<void> {
     this.res.end();
   }
   async send(message: IEndpointMessage<JSONRPCMessage>): Promise<void> {
-    this.res.write(`data: ${JSON.stringify(message)}\n`);
+    this.res.write(`data: ${JSON.stringify(message)}\n\n`);
   }
   onmessage?: ((message: IEndpointMessage<JSONRPCMessage>) => void) | null | undefined;
   onclose?: (() => void) | null | undefined;

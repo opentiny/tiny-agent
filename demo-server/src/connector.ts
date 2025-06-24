@@ -25,8 +25,16 @@ export function createConnector() {
 
 export function createSSEConnector() {
   const connectorCenter = new ConnectorCenter<SSEServerEndpoint>();
-  const sseEndpointServer = new SSEEndpointServer({ port: 8082 }, connectorCenter);
+  const port = 8082;
+  const sseEndpointServer = new SSEEndpointServer({ port }, connectorCenter);
   sseEndpointServer.start();
+
+  try {
+    sseEndpointServer.start();
+  } catch (error) {
+    console.error(`Failed to start SSE endpoint server on port ${port}:`, error);
+    throw error;
+  }
 
   return {
     connectorCenter,

@@ -32,7 +32,7 @@ import { EndpointMessageType, IConnectorEndpoint, IEndpointMessage } from '../en
 
 class SSEServerEndpoint implements IConnectorEndpoint {
   protected app: http.Server;
-  protected res: any;
+  protected res: http.ServerResponse;
   public clientId: string;
   public clientIdResolved: Promise<string>;
 
@@ -43,38 +43,36 @@ class SSEServerEndpoint implements IConnectorEndpoint {
     this.clientIdResolved = Promise.resolve(clientId);
   }
 
-  start(): Promise<void> {
-    return new Promise(() => {
-      // 订阅http请求
-      this.app.on('request', (req, res) => {
-        // 定义/message api 用以接收客户端的请求内容
-        if (req.url === '/message') {
-          // 解决跨域问题
-          res.setHeader('Access-Control-Allow-Origin', '*');
-          res.setHeader('Access-Control-Allow-Methods', '*');
+  async start(): Promise<void> {
+    // 订阅http请求
+    this.app.on('request', (req, res) => {
+      // 定义/message api 用以接收客户端的请求内容
+      if (req.url === '/message') {
+        // 解决跨域问题
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', '*');
 
-          // 读取请求体
-          let body = '';
-          req.on('data', (chunk) => {
-            body += chunk.toString();
-          });
+        // 读取请求体
+        let body = '';
+        req.on('data', (chunk) => {
+          body += chunk.toString();
+        });
 
-          // 响应请求
-          req.on('end', () => {
-            try {
-              const message = JSON.parse(body);
-              if (message.type === EndpointMessageType.INITIALIZE) {
-                res.end();
-                return;
-              }
-
-              this.onmessage?.(message);
-            } finally {
+        // 响应请求
+        req.on('end', () => {
+          try {
+            const message = JSON.parse(body);
+            if (message.type === EndpointMessageType.INITIALIZE) {
               res.end();
+              return;
             }
-          });
-        }
-      });
+
+            this.onmessage?.(message);
+          } finally {
+            res.end();
+          }
+        });
+      }
     });
   }
   // 关闭SSE连接
@@ -83,7 +81,7 @@ class SSEServerEndpoint implements IConnectorEndpoint {
   }
   // 使用SSE连接向客户端推送消息
   async send(message: IEndpointMessage<JSONRPCMessage>): Promise<void> {
-    this.res.write(`data: ${JSON.stringify(message)}\n`);
+    this.res.write(`data: ${JSON.stringify(message)}\n\n`);
   }
   onmessage?: ((message: IEndpointMessage<JSONRPCMessage>) => void) | null | undefined;
   onclose?: (() => void) | null | undefined;
@@ -102,16 +100,18 @@ import { SSEServerEndpoint } from './sse-server-endpoint';
 
 class SSEEndpointServer {
   public app: http.Server;
+  protected port: number;
   protected connectorCenter: ConnectorCenter<SSEServerEndpoint>;
 
   constructor(config: { port: number }, connectorCenter: ConnectorCenter<SSEServerEndpoint>) {
     // 启动http服务器
     this.app = http.createServer();
+    this.port = config.port;
     this.connectorCenter = connectorCenter;
-    this.app.listen(config.port);
   }
 
   start() {
+    this.app.listen(config.port);
     this.app.on('request', (req, res) => {
       // 定义/client api用以初始化ClientId
       if (req.url === '/client') {
@@ -203,17 +203,24 @@ class SSEClientEndpoint implements IConnectorEndpoint {
   }
   // 由于SSE是用以服务端向客户端推送消息，后续客户端主动请求则是以HTTP进行
   async send(message: IEndpointMessage<JSONRPCMessage>): Promise<void> {
-    if (message.type !== EndpointMessageType.INITIALIZE) {
-      await this.clientIdResolved;
+    try {
+      if (message.type !== EndpointMessageType.INITIALIZE) {
+        await this.clientIdResolved;
+      }
+
+      const url = URL.parse(this.url);
+
+      // 请求/message api 向服务端发送请求
+      fetch(`${url?.origin}/message`, {
+        method: 'POST',
+        body: JSON.stringify(message),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (e) {
+      this.onerror?.(e as Error);
     }
-
-    const url = URL.parse(this.url);
-
-    // 请求/message api 向服务端发送请求
-    fetch(`${url?.origin}/message`, {
-      method: 'POST',
-      body: JSON.stringify(message),
-    });
   }
   onmessage?: ((message: IEndpointMessage<JSONRPCMessage>) => void) | null | undefined;
   onclose?: (() => void) | null | undefined;

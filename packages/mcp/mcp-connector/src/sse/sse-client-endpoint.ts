@@ -44,16 +44,23 @@ export class SSEClientEndpoint implements IConnectorEndpoint {
     this.onclose?.();
   }
   async send(message: IEndpointMessage<JSONRPCMessage>): Promise<void> {
-    if (message.type !== EndpointMessageType.INITIALIZE) {
-      await this.clientIdResolved;
+    try {
+      if (message.type !== EndpointMessageType.INITIALIZE) {
+        await this.clientIdResolved;
+      }
+
+      const url = URL.parse(this.url);
+
+      fetch(`${url?.origin}/message`, {
+        method: 'POST',
+        body: JSON.stringify(message),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (e) {
+      this.onerror?.(e as Error);
     }
-
-    const url = URL.parse(this.url);
-
-    fetch(`${url?.origin}/message`, {
-      method: 'POST',
-      body: JSON.stringify(message),
-    });
   }
   onmessage?: ((message: IEndpointMessage<JSONRPCMessage>) => void) | null | undefined;
   onclose?: (() => void) | null | undefined;
