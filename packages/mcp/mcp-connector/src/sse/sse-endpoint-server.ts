@@ -18,6 +18,14 @@ export class SSEEndpointServer {
   start() {
     this.app.listen(this.port);
     this.app.on('request', (req, res) => {
+      if (req.method === 'OPTIONS' && req.url === '/client') {
+        res.writeHead(204, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': '*',
+          'Access-Control-Allow-Headers': '*',
+        });
+        return res.end();
+      }
       if (req.url === '/client') {
         const clientId = genId();
         const endpoint = new SSEServerEndpoint(this.app, res, clientId);

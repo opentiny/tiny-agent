@@ -17,6 +17,14 @@ export class SSEServerEndpoint implements IConnectorEndpoint {
 
   async start(): Promise<void> {
     this.app.on('request', (req, res) => {
+      if (req.method === 'OPTIONS' && req.url === '/message') {
+        res.writeHead(204, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': '*',
+          'Access-Control-Allow-Headers': '*',
+        });
+        return res.end();
+      }
       if (req.url === '/message') {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', '*');

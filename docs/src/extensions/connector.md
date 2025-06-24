@@ -46,6 +46,14 @@ class SSEServerEndpoint implements IConnectorEndpoint {
   async start(): Promise<void> {
     // 订阅http请求
     this.app.on('request', (req, res) => {
+      if (req.method === 'OPTIONS' && req.url === '/message') {
+        res.writeHead(204, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': '*',
+          'Access-Control-Allow-Headers': '*',
+        });
+        return res.end();
+      }
       // 定义/message api 用以接收客户端的请求内容
       if (req.url === '/message') {
         // 解决跨域问题
@@ -113,6 +121,14 @@ class SSEEndpointServer {
   start() {
     this.app.listen(config.port);
     this.app.on('request', (req, res) => {
+      if (req.method === 'OPTIONS' && req.url === '/client') {
+        res.writeHead(204, {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': '*',
+          'Access-Control-Allow-Headers': '*',
+        });
+        return res.end();
+      }
       // 定义/client api用以初始化ClientId
       if (req.url === '/client') {
         const clientId = genId();
