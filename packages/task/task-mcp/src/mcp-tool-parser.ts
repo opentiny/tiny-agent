@@ -1,41 +1,48 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
-import { v4 as uuidv4 } from 'uuid'
-import { getZodRawShape } from './utils';
+import { v4 as uuidv4 } from 'uuid';
 import { z, ZodRawShape } from 'zod';
-export const genTaskId = () => uuidv4()
+import { getZodRawShape } from './utils';
+export const genTaskId = () => uuidv4();
 
-export type SerializableType = string | number | boolean | null | undefined | Array<SerializableType> | { [key: string]: SerializableType }
+export type SerializableType =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | Array<SerializableType>
+  | { [key: string]: SerializableType };
 export type InstructionSchema = {
-  action: string
+  action: string;
   params: {
-    [props: string]: SerializableType
-  }
-}
+    [props: string]: SerializableType;
+  };
+};
 export type McpToolsSchema = {
   tools: Array<McpToolSchema>;
-}
+};
 
 export type McpToolTaskSchema = {
   instructions: Array<InstructionSchema>;
-}
+};
 export type executableTaskSchema = {
-  id: string
+  id: string;
 } & McpToolTaskSchema;
 
 export type McpToolSchema = {
-  name: string
-  task: McpToolTaskSchema
+  name: string;
+  task: McpToolTaskSchema;
 } & Tool;
 
 export type McpTool = {
   name: string;
   config: Omit<Tool, 'name'>;
   cb: (args: any) => Promise<any>;
-}
+};
 
 export class McpToolParser {
-  public placeholder = (key: string) => `{{${key}}}`
+  public placeholder = (key: string) => `{{${key}}}`;
   protected doTask: (task: executableTaskSchema) => Promise<any>;
   constructor(doTask: (task: executableTaskSchema) => Promise<any>, placeholderFn?: (key: string) => string) {
     this.doTask = doTask;
@@ -52,29 +59,35 @@ export class McpToolParser {
   }
 
   extractTool(mcpToolSchema: McpToolSchema): McpTool {
-    const { name, task, inputSchema, outputSchema, ...config } = structuredClone(mcpToolSchema)
+    const { name, task, inputSchema, outputSchema, ...config } = structuredClone(mcpToolSchema);
     const zodInputSchema = getZodRawShape(inputSchema as McpToolSchema['inputSchema']);
-    const taskOutputSchema = this.getTaskOutputSchema()
+    const taskOutputSchema = this.getTaskOutputSchema();
     const cb = async (args: any) => {
       const variables = Object.keys(inputSchema.properties || {});
-      const realTask = variables.reduce((accTask: executableTaskSchema, cur) => {
-        accTask.instructions.forEach(instruction => {
-          this.replaceInstructionParamValue(instruction, cur, args[cur])
-        });
-        return accTask;
-      }, {
-        id: genTaskId(),
-        instructions: structuredClone(task.instructions)
-      });
-      const result = await this.doTask(realTask)
+      const realTask = variables.reduce(
+        (accTask: executableTaskSchema, cur) => {
+          accTask.instructions.forEach((instruction) => {
+            this.replaceInstructionParamValue(instruction, cur, args[cur]);
+          });
+          return accTask;
+        },
+        {
+          id: genTaskId(),
+          instructions: structuredClone(task.instructions),
+        },
+      );
+
+      const result = await this.doTask(realTask);
       return {
         structuredContent: result,
-        content: [{
-          type: 'text',
-          text: result.status
-        }]
-      }
-    }
+        content: [
+          {
+            type: 'text',
+            text: result.status,
+          },
+        ],
+      };
+    };
     return {
       name,
       config: {
@@ -82,8 +95,8 @@ export class McpToolParser {
         outputSchema: taskOutputSchema,
         ...config,
       },
-      cb 
-    }
+      cb,
+    };
   }
 
   extractAllTools(mcpToolsSchema: McpToolsSchema): Array<McpTool> {
@@ -92,23 +105,30 @@ export class McpToolParser {
 
   getTaskOutputSchema(outputSchema: ZodRawShape = {}): ZodRawShape {
     const instructionZod = z.object({
-        action: z.string().describe('failed instruction action'),
-        params: z.object({}).passthrough().describe('failed instruction action parameters'),
-        // only zod 4 support declaration below, mcp now use zod 3
-        // get catchInstruction() {
-        //   return instructionZod.optional()
-        // }
-        catchInstruction: z.object({}).passthrough().optional().describe('fall back instruction if occur error')
+      action: z.string().describe('failed instruction action'),
+      params: z.object({}).passthrough().describe('failed instruction action parameters'),
+      // only zod 4 support declaration below, mcp now use zod 3
+      // get catchInstruction() {
+      //   return instructionZod.optional()
+      // }
+      catchInstruction: z.object({}).passthrough().optional().describe('fall back instruction if occur error'),
     });
     return {
       status: z.enum(['success', 'error', 'partial completed']).describe('task status'),
       index: z.number().describe('failed step'),
       instruction: instructionZod.optional().describe('failed instruction detail'),
-      result: z.object(outputSchema).passthrough().optional().describe('task result if run task to obtain some content'),
-      error: z.object({
-        message: z.string().describe('error message'),
-        stack: z.string().optional().describe('error stack')
-      }).optional().describe('error information if occur error')
-    }
+      result: z
+        .object(outputSchema)
+        .passthrough()
+        .optional()
+        .describe('task result if run task to obtain some content'),
+      error: z
+        .object({
+          message: z.string().describe('error message'),
+          stack: z.string().optional().describe('error stack'),
+        })
+        .optional()
+        .describe('error information if occur error'),
+    };
   }
 }
