@@ -1,15 +1,17 @@
-import { EndpointTransport, WebSocketClientEndpoint } from '@opentiny/tiny-agent-mcp-connector';
+import { EndpointTransport, WebSocketClientEndpoint, SSEClientEndpoint } from '@opentiny/tiny-agent-mcp-connector';
 import { McpValidator } from '@opentiny/tiny-agent-mcp-service';
 import { setupMcpService } from '@opentiny/tiny-agent-mcp-service-vue';
 import { McpToolParser } from '@opentiny/tiny-agent-task-mcp';
-import { useTaskScheduler } from "./scheduler";
+import { useTaskScheduler } from './scheduler';
 import mcpToolJson from './mcp-tool.json';
 
 export function initMcp() {
   // Connector
-  const wsEndpoint = new WebSocketClientEndpoint({ url: import.meta.env.VITE_CONNECTOR_ENDPOINT_URL });
-  const endpointTransport = new EndpointTransport(wsEndpoint);
-  
+  const sseEndpoint = new SSEClientEndpoint(import.meta.env.VITE_CONNECTOR_SSE_ENDPOINT_URL);
+  const wsEndpoint = new WebSocketClientEndpoint({ url: import.meta.env.VITE_CONNECTOR_WS_ENDPOINT_URL });
+  const endpointTransport = new EndpointTransport(sseEndpoint);
+  // const endpointTransport = new EndpointTransport(wsEndpoint);
+
   // MCP Service
   const mcpService = setupMcpService();
   mcpService.mcpServer.connect(endpointTransport);
@@ -19,9 +21,9 @@ export function initMcp() {
   mcpService.setValidator(mcpValidator);
 
   // Task Scheduler
-  const {taskScheduler, actionManager} = useTaskScheduler();
+  const { taskScheduler, actionManager } = useTaskScheduler();
   const doTask = async (task) => taskScheduler.pushTask(task);
-  
+
   // MCP Tool Parser & mcp-tool.json
   const mcpToolParser = new McpToolParser(doTask);
   mcpToolParser.extractAllTools(mcpToolJson).forEach((tool) => {
@@ -29,12 +31,13 @@ export function initMcp() {
   });
 
   return {
+    sseEndpoint,
     wsEndpoint,
     endpointTransport,
     mcpService,
     mcpValidator,
     taskScheduler,
     actionManager,
-    mcpToolParser
-  }
+    mcpToolParser,
+  };
 }
