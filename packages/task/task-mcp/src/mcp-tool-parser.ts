@@ -61,7 +61,9 @@ export class McpToolParser {
   extractTool(mcpToolSchema: McpToolSchema): McpTool {
     const { name, task, inputSchema, outputSchema, ...config } = structuredClone(mcpToolSchema);
     const zodInputSchema = getZodRawShape(inputSchema as McpToolSchema['inputSchema']);
-    const taskOutputSchema = this.getTaskOutputSchema();
+    const taskOutputSchema = this.getTaskOutputSchema(
+      outputSchema ? getZodRawShape(outputSchema as McpToolSchema['inputSchema']) : undefined,
+    );
     const cb = async (args: any) => {
       const variables = Object.keys(inputSchema.properties || {});
       const realTask = variables.reduce(
@@ -77,7 +79,19 @@ export class McpToolParser {
         },
       );
 
-      const result = await this.doTask(realTask);
+      const result = await this.doTask(realTask).catch((error) => {
+        if (error instanceof Error) {
+          return {
+            status: 'error',
+            index: 0,
+            error: {
+              message: error.message,
+              stack: error.stack,
+            },
+          };
+        }
+        return error;
+      });
       return {
         structuredContent: result,
         content: [
