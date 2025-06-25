@@ -17,7 +17,9 @@ import type {
   ToolResults,
 } from './type.js';
 
-export function isCustomTransportMcpServer(serverConfig: McpServer | CustomTransportMcpServer): serverConfig is CustomTransportMcpServer {
+export function isCustomTransportMcpServer(
+  serverConfig: McpServer | CustomTransportMcpServer,
+): serverConfig is CustomTransportMcpServer {
   return !!serverConfig.customTransport;
 }
 const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
@@ -59,7 +61,7 @@ export abstract class McpClientChat {
       if (typeof serverConfig.customTransport === 'function') {
         clientTransport = serverConfig.customTransport(serverConfig);
       } else {
-        clientTransport = serverConfig.customTransport
+        clientTransport = serverConfig.customTransport;
       }
       await client.connect(clientTransport);
       return client;
@@ -262,10 +264,23 @@ export abstract class McpClientChat {
           });
         }
 
-        const callToolResult = (await client.callTool({
-          name: toolName,
-          arguments: toolArgs,
-        })) as CallToolResult;
+        const callToolResult = (await client
+          .callTool({
+            name: toolName,
+            arguments: toolArgs,
+          })
+          .catch(async (error) => {
+            if (this.chatOptions?.toolCallResponse) {
+              await this.writeMessageDelta('Tool call result: failed \n\n', 'assistant', {
+                toolCall,
+                callToolResult: {
+                  isError: true,
+                  error: error instanceof Error ? error.message : String(error),
+                },
+              });
+            }
+            throw error;
+          })) as CallToolResult;
         const callToolContent = this.getToolCallMessage(callToolResult);
         const message: Message = {
           role: Role.TOOL,
