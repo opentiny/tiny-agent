@@ -93,7 +93,7 @@ const handlePromptItemClick = (e, item) => {
 };
 
 const handleDialog = () => {
-  show = !show;
+  show.value = !show.value;
   senderRef?.focus();
 };
 
