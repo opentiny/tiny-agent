@@ -11,7 +11,9 @@
     "updateVersion": "node update-version.js",
     "dev:demo": "pnpm --filter demo-web dev",
     "dev:demo-server": "pnpm --filter demo-server dev",
+    "dev:demo-chart": "pnpm --filter demo-server dev:chart",
     "dev": "concurrently \"pnpm dev:demo-server\"  \"pnpm dev:demo\"",
+    "dev:chart": "concurrently \"pnpm dev:demo-chart\"  \"pnpm dev:demo\"",
     "docs:dev": "pnpm --filter docs run docs:dev",
     "docs:build": "pnpm --filter docs run docs:build",
     "docs:preview": "pnpm --filter docs run docs:preview"

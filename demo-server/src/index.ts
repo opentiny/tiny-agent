@@ -14,6 +14,7 @@ const chatConfigFn = (req: Request) => ({
     apiKey: process.env.apiKey,
     model: process.env.model,
     systemPrompt: process.env.systemPrompt,
+    summarySystemPrompt: process.env.summarySystemPrompt,
   },
   maxIterationSteps: 3,
   mcpServersConfig: {
@@ -24,13 +25,18 @@ const chatConfigFn = (req: Request) => ({
       //   headers: {},
       //   timeout: 60
       // },
-      'localhost-mcp-streamable-http': {
-        url: 'http://127.0.0.1:3001/mcp',
-        headers: {
-          'connector-client-id': req.headers['connector-client-id'],
-          'mcp-verify-code': req.headers['mcp-verify-code'],
-        },
-        timeout: 60
+      // 'localhost-mcp-streamable-http': {
+      //   url: 'http://127.0.0.1:3001/mcp',
+      //   headers: {
+      //     'connector-client-id': req.headers['connector-client-id'],
+      //     'mcp-verify-code': req.headers['mcp-verify-code'],
+      //   },
+      //   timeout: 60,
+      // },
+      'localhost-chart': {
+        url: 'http://localhost:1122/mcp',
+        headers: {},
+        timeout: 60,
       },
     },
   },

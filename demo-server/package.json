@@ -2,11 +2,13 @@
   "name": "demo-server",
   "version": "0.0.1",
   "scripts": {
-    "dev": "tsx watch --tsconfig ./tsconfig.dev.json src/index.ts ",
+    "dev": "tsx watch --tsconfig ./tsconfig.dev.json src/index.ts",
+    "dev:chart": "bash start.sh",
     "build": "tsc -p tsconfig.json"
   },
   "main": "dist/index.js",
   "dependencies": {
+    "@antv/mcp-server-chart": "^0.7.1",
     "@modelcontextprotocol/sdk": "^1.11.0",
     "@opentiny/tiny-agent-mcp-client-chat": "workspace:~",
     "@opentiny/tiny-agent-mcp-connector": "workspace:~",
