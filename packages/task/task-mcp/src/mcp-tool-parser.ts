@@ -1,5 +1,6 @@
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
-
+import type { Tool, Request, Notification } from '@modelcontextprotocol/sdk/types.js';
+import { DEFAULT_REQUEST_TIMEOUT_MSEC, type RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
+import type { ITaskOptions, Task } from '@opentiny/tiny-agent-task-runtime-service';
 import { v4 as uuidv4 } from 'uuid';
 import { z, ZodRawShape } from 'zod';
 import { getZodRawShape } from './utils';
@@ -38,13 +39,16 @@ export type McpToolSchema = {
 export type McpTool = {
   name: string;
   config: Omit<Tool, 'name'>;
-  cb: (args: any) => Promise<any>;
+  cb: (args: any, extra?: any) => Promise<any>;
 };
 
 export class McpToolParser {
   public placeholder = (key: string) => `{{${key}}}`;
-  protected doTask: (task: executableTaskSchema) => Promise<any>;
-  constructor(doTask: (task: executableTaskSchema) => Promise<any>, placeholderFn?: (key: string) => string) {
+  protected doTask: (task: executableTaskSchema, taskOption?: ITaskOptions) => Promise<any>;
+  constructor(
+    doTask: (task: executableTaskSchema, taskOption?: ITaskOptions) => Promise<any>,
+    placeholderFn?: (key: string) => string,
+  ) {
     this.doTask = doTask;
     if (placeholderFn) {
       this.placeholder = placeholderFn;
@@ -64,7 +68,7 @@ export class McpToolParser {
     const taskOutputSchema = this.getTaskOutputSchema(
       outputSchema ? getZodRawShape(outputSchema as McpToolSchema['inputSchema']) : undefined,
     );
-    const cb = async (args: any) => {
+    const cb = async (args: any, extra: RequestHandlerExtra<Request, Notification>) => {
       const variables = Object.keys(inputSchema.properties || {});
       const realTask = variables.reduce(
         (accTask: executableTaskSchema, cur) => {
@@ -79,7 +83,34 @@ export class McpToolParser {
         },
       );
 
-      const result = await this.doTask(realTask).catch((error) => {
+      const result = await this.doTask(realTask, {
+        onCreated: (task: Task) => {
+          if (extra?._meta?.progressToken) {
+            let timeout: number | null = null;
+            task.on('beforeStep', () => {
+              this.sendTaskProgressNotification(task, extra);
+            });
+            task.on('pause', () => {
+              this.sendTaskProgressNotification(task, extra);
+              timeout = setInterval(() => {
+                this.sendTaskProgressNotification(task, extra);
+              }, DEFAULT_REQUEST_TIMEOUT_MSEC * 0.5);
+            });
+            task.on('resume', () => {
+              if (timeout) {
+                clearInterval(timeout);
+                timeout = null;
+              }
+            });
+            task.on('finish', () => {
+              if (timeout) {
+                clearInterval(timeout);
+                timeout = null;
+              }
+            });
+          }
+        },
+      }).catch((error) => {
         if (error instanceof Error) {
           return {
             status: 'error',
@@ -100,6 +131,7 @@ export class McpToolParser {
             text: result.status,
           },
         ],
+        isError: result.status !== 'success',
       };
     };
     return {
@@ -115,6 +147,22 @@ export class McpToolParser {
 
   extractAllTools(mcpToolsSchema: McpToolsSchema): Array<McpTool> {
     return mcpToolsSchema.tools.map((tool) => this.extractTool(tool));
+  }
+
+  sendTaskProgressNotification(task: Task, extra: RequestHandlerExtra<Request, Notification>) {
+    const i = task['executorInfo'].currentIndex + 1;
+    const steps = task['executorInfo'].instructions.length;
+    const status = task['executorInfo'].status;
+    extra.sendNotification({
+      method: 'notifications/progress',
+      params: {
+        progressToken: extra._meta?.progressToken,
+        progress: i,
+        total: steps,
+        message: `Completed step ${i} of ${steps} ${status === 'paused' ? '(Paused)' : ''}`,
+        status,
+      },
+    });
   }
 
   getTaskOutputSchema(outputSchema: ZodRawShape = {}): ZodRawShape {
