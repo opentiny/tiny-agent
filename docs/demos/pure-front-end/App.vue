@@ -19,8 +19,8 @@ const mcp = setupMcpService();
 mcp.mcpServer.connect(serverTransport);
 
 // handle mcp-tool.json
-const doTask = async (task) => {
-  return taskScheduler.pushTask(task);
+const doTask = async (task, opt) => {
+  return taskScheduler.pushTask(task, opt);
 };
 new McpToolParser(doTask).extractAllTools(mcpToolJson).forEach((tool) => {
   mcp.mcpServer.registerTool(tool.name, tool.config, tool.cb);

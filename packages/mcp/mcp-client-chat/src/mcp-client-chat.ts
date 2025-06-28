@@ -1,7 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, Progress, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { AgentStrategy, Role } from './type.js';
 
 import type {
@@ -16,8 +16,11 @@ import type {
   ToolCall,
   ToolResults,
 } from './type.js';
+import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js';
 
-export function isCustomTransportMcpServer(serverConfig: McpServer | CustomTransportMcpServer): serverConfig is CustomTransportMcpServer {
+export function isCustomTransportMcpServer(
+  serverConfig: McpServer | CustomTransportMcpServer,
+): serverConfig is CustomTransportMcpServer {
   return !!serverConfig.customTransport;
 }
 const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
@@ -59,7 +62,7 @@ export abstract class McpClientChat {
       if (typeof serverConfig.customTransport === 'function') {
         clientTransport = serverConfig.customTransport(serverConfig);
       } else {
-        clientTransport = serverConfig.customTransport
+        clientTransport = serverConfig.customTransport;
       }
       await client.connect(clientTransport);
       return client;
@@ -262,10 +265,31 @@ export abstract class McpClientChat {
           });
         }
 
-        const callToolResult = (await client.callTool({
-          name: toolName,
-          arguments: toolArgs,
-        })) as CallToolResult;
+        const callToolResult = (await client
+          .callTool(
+            {
+              name: toolName,
+              arguments: toolArgs,
+            },
+            undefined,
+            {
+              onprogress: async (progress: Progress) => this.writeToolCallProgress(toolCall, progress),
+              resetTimeoutOnProgress: true,
+              maxTotalTimeout: 10 * DEFAULT_REQUEST_TIMEOUT_MSEC,
+            },
+          )
+          .catch(async (error) => {
+            if (this.chatOptions?.toolCallResponse) {
+              await this.writeMessageDelta(`[${toolCall.function.name}] Tool call result: failed \n\n`, 'assistant', {
+                toolCall,
+                callToolResult: {
+                  isError: true,
+                  error: error instanceof Error ? error.message : String(error),
+                },
+              });
+            }
+            throw error;
+          })) as CallToolResult;
         const callToolContent = this.getToolCallMessage(callToolResult);
         const message: Message = {
           role: Role.TOOL,
@@ -274,10 +298,14 @@ export abstract class McpClientChat {
         };
 
         if (this.chatOptions?.toolCallResponse) {
-          await this.writeMessageDelta('Tool call result: ' + JSON.stringify(callToolContent) + '\n\n', 'assistant', {
-            toolCall,
-            callToolResult,
-          });
+          await this.writeMessageDelta(
+            `[${toolCall.function.name}] Tool call result: ${JSON.stringify(callToolContent)}\n\n`,
+            'assistant',
+            {
+              toolCall,
+              callToolResult,
+            },
+          );
         }
 
         toolCallMessages.push(message);
@@ -373,6 +401,16 @@ export abstract class McpClientChat {
       // TODO: Implement context memory feature, for now clear after each request
       this.clearPromptMessages();
     }
+  }
+
+  protected async writeToolCallProgress(toolCall: ToolCall, progress: Progress) {
+    await this.writeMessageDelta(
+      `[${toolCall.function.name}] ` +
+        ((progress.message as string) || `${progress.progress}${progress.total ? `/${progress.total}` : ''}`) +
+        '\n\n',
+      'assistant',
+      { toolCall, progress },
+    );
   }
 
   protected async writeMessageDelta(
