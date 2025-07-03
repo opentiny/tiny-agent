@@ -14,19 +14,28 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const showChat = ref(true);
-
 </script>
 
 <template>
   <AddUser />
-  <ChatDialog :get-client-id="() => endpointTransport?.clientId || ''" :genCode="mcpValidator.genVerifyCode"
-    :clearCode="mcpValidator.clearVerifyCode" v-model:show="showChat" />
+  <ChatDialog
+    :get-client-id="() => endpointTransport?.clientId || ''"
+    :genCode="mcpValidator.genVerifyCode"
+    :clearCode="mcpValidator.clearVerifyCode"
+    v-model:show="showChat"
+  />
   <div class="ai-chat-toggle" title="打开AI对话框" v-show="!showChat" @click="showChat = true">
     <img :src="AiChatSvg" />
   </div>
 </template>
 
 <style>
+@import url('gridstack/dist/gridstack.min.css');
+
+.grid-stack-item-content {
+  height: fit-content;
+}
+
 body {
   margin: 0;
   min-height: 100vh;

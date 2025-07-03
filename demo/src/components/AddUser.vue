@@ -1,31 +1,22 @@
 <template>
   <div class="user-form">
+    <div class="girdstack-area"></div>
     <tiny-form label-width="100px">
       <tiny-form-item label="姓名">
         <tiny-input v-model="userInfo.name" class="user-input"></tiny-input>
       </tiny-form-item>
       <tiny-form-item label="性别">
-        <tiny-select
-          v-model="userInfo.sex"
-          class="user-sex"
-          popper-class="user-sex-popper"
-        >
+        <tiny-select v-model="userInfo.sex" class="user-sex" popper-class="user-sex-popper">
           <tiny-option label="男" value="男"></tiny-option>
           <tiny-option label="女" value="女"></tiny-option>
         </tiny-select>
       </tiny-form-item>
       <tiny-form-item label="出生日期">
-        <tiny-date-picker
-          v-model="userInfo.date"
-          class="user-date"
-          popper-class="user-date-popper"
-        ></tiny-date-picker>
+        <tiny-date-picker v-model="userInfo.date" class="user-date" popper-class="user-date-popper"></tiny-date-picker>
       </tiny-form-item>
       <tiny-form-item>
         <div class="btn-container">
-          <tiny-button type="primary" @click="submitClick" class="user-submit">
-            提交
-          </tiny-button>
+          <tiny-button type="primary" @click="submitClick" class="user-submit"> 提交 </tiny-button>
         </div>
       </tiny-form-item>
     </tiny-form>
@@ -46,6 +37,7 @@ import {
   TinySelect,
   TinyOption,
 } from '@opentiny/vue';
+import { renderDashboard } from '../mcp/gridstack';
 
 const userInfo = reactive({
   name: '',
@@ -54,9 +46,7 @@ const userInfo = reactive({
 });
 
 function submitClick() {
-  TinyModal.alert(
-    `新增用户:${userInfo.name}，性别:${userInfo.sex}，出生日期:${userInfo.date}`
-  );
+  TinyModal.alert(`新增用户:${userInfo.name}，性别:${userInfo.sex}，出生日期:${userInfo.date}`);
 }
 
 function addUser({ name, sex, date }) {
@@ -87,7 +77,37 @@ tool(
         },
       ],
     };
-  }
+  },
+);
+
+// const imageList = [
+//   'https://res-static.hc-cdn.cn/cloudbu-site/public/product-banner-icon/Compute/Flexus.png',
+//   'https://res-static.hc-cdn.cn/cloudbu-site/public/product-banner-icon/Compute/Flexus.png',
+// ];
+
+// nextTick(() => {
+//   renderDashboard(imageList);
+// });
+
+tool(
+  'renderDashboard',
+  '用于看板生成的工具',
+  {
+    imageSrcList: z.string().describe('图表图片的URL'),
+  },
+  ({ imageSrcList }) => {
+    console.log(imageSrcList);
+    const dom = renderDashboard([imageSrcList]);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: '成功',
+        },
+      ],
+    };
+  },
 );
 </script>
 

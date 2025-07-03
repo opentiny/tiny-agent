@@ -23,16 +23,16 @@ const chatConfigFn = (req: Request) => ({
       // 'localhost-mcp': {
       //   url: `http://127.0.0.1:3001/sse?client=${req.headers['connector-client-id'] as string}&code=${req.headers['mcp-verify-code']}`,
       //   headers: {},
-      //   timeout: 60
-      // },
-      // 'localhost-mcp-streamable-http': {
-      //   url: 'http://127.0.0.1:3001/mcp',
-      //   headers: {
-      //     'connector-client-id': req.headers['connector-client-id'],
-      //     'mcp-verify-code': req.headers['mcp-verify-code'],
-      //   },
       //   timeout: 60,
       // },
+      'localhost-mcp-streamable-http': {
+        url: 'http://127.0.0.1:3001/mcp',
+        headers: {
+          'connector-client-id': req.headers['connector-client-id'],
+          'mcp-verify-code': req.headers['mcp-verify-code'],
+        },
+        timeout: 60,
+      },
       'localhost-chart': {
         url: 'http://localhost:1122/mcp',
         headers: {},
