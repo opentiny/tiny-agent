@@ -21,7 +21,7 @@ export class ReActChat extends McpClientChat {
     }
 
     const toolStrings = tools.length ? JSON.stringify(tools) : '';
-    const prompt = [PREFIX, toolStrings, FORMAT_INSTRUCTIONS, SUFFIX].join('\n\n');
+    const prompt = [this.options.llmConfig.systemPrompt, PREFIX, toolStrings, FORMAT_INSTRUCTIONS, SUFFIX].join('\n\n');
 
     return prompt;
   }
@@ -35,7 +35,7 @@ export class ReActChat extends McpClientChat {
       return [[], output];
     }
 
-    if (!text.includes(`"action":`)) {
+    if (!text.includes('"action":')) {
       return [[], text.trim()];
     }
 
@@ -45,7 +45,7 @@ export class ReActChat extends McpClientChat {
       const actionBlocks = text
         .trim()
         .split(/```(?:json)?/)
-        .filter((block: string) => block.includes(`"action":`));
+        .filter((block: string) => block.includes('"action":'));
 
       actionBlocks.forEach((block: string) => {
         try {
