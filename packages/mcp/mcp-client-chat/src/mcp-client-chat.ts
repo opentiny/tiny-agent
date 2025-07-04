@@ -17,7 +17,9 @@ import type {
   ToolResults,
 } from './type.js';
 
-export function isCustomTransportMcpServer(serverConfig: McpServer | CustomTransportMcpServer): serverConfig is CustomTransportMcpServer {
+export function isCustomTransportMcpServer(
+  serverConfig: McpServer | CustomTransportMcpServer,
+): serverConfig is CustomTransportMcpServer {
   return !!serverConfig.customTransport;
 }
 const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
@@ -44,11 +46,15 @@ export abstract class McpClientChat {
     for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
       const client = await this.initClients(serverName, serverConfig as McpServer);
 
+      if (!client) {
+        continue;
+      }
+
       this.clientsMap.set(serverName, client);
     }
   }
 
-  protected async initClients(serverName: string, serverConfig: McpServer | CustomTransportMcpServer): Promise<Client> {
+  protected async initClients(serverName: string, serverConfig: McpServer | CustomTransportMcpServer): Promise<Client | null> {
     const client = new Client({
       name: serverName,
       version: '1.0.0',
@@ -59,7 +65,7 @@ export abstract class McpClientChat {
       if (typeof serverConfig.customTransport === 'function') {
         clientTransport = serverConfig.customTransport(serverConfig);
       } else {
-        clientTransport = serverConfig.customTransport
+        clientTransport = serverConfig.customTransport;
       }
       await client.connect(clientTransport);
       return client;
@@ -76,13 +82,17 @@ export abstract class McpClientChat {
       });
       await client.connect(transport);
     } catch (_error) {
-      const sseTransport = new SSEClientTransport(baseUrl, {
-        requestInit: {
-          headers: serverConfig.headers,
-        },
-      });
+      try {
+        const sseTransport = new SSEClientTransport(baseUrl, {
+          requestInit: {
+            headers: serverConfig.headers,
+          },
+        });
 
-      await client.connect(sseTransport);
+        await client.connect(sseTransport);
+      } catch (error) {
+        return null;
+      }
     }
 
     return client;
