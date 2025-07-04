@@ -22,7 +22,7 @@ export class ReActChat extends McpClientChat {
     }
 
     const toolStrings = tools.length ? JSON.stringify(tools) : '';
-    const prompt = [PREFIX, toolStrings, FORMAT_INSTRUCTIONS, SUFFIX].join('\n\n');
+    const prompt = [this.options.llmConfig.systemPrompt, PREFIX, toolStrings, FORMAT_INSTRUCTIONS, SUFFIX].join('\n\n');
 
     return prompt;
   }
