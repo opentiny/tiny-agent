@@ -24,6 +24,12 @@ Observation: the result of the action
 Thought: I now know the final answer
 Final Answer: the final answer to the original input question`;
 
-export const SUFFIX = 'Begin! Reminder to always use the exact characters `Final Answer` when responding.';
+export const SUFFIX = `Important rules:
+1. Only output one Action ($JSON_BLOB) at a time, never multiple Actions in a row.
+2. After each Action, you must wait for the Observation (tool result) before continuing.
+3. Only after all Observations are received, you may output the Final Answer.
+4. If the user question contains multiple steps, you must strictly proceed step by step, never output all Actions/Observations/Final Answer at once.
+5. If a tool call is still required, only output $JSON_BLOB, do not output Final Answer.
+Begin! Reminder to always use the exact characters \`Final Answer\` when responding.`;
 
 export const RE_ACT_DEFAULT_SUMMARY = 'Please provide a brief summary without using the Final Answer format';
