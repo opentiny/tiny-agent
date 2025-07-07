@@ -277,7 +277,7 @@ export abstract class McpClientChat {
           arguments: toolArgs,
         }).catch(async error => {
           if (this.chatOptions?.toolCallResponse) {
-            await this.writeMessageDelta(`[${toolCall.function.name}] Tool call result: failed \n\n`, 'assistant', {
+            await this.writeMessageDelta(`[${toolCall.function.name}] Tool call result: failed. \n\n`, 'assistant', {
               toolCall,
               callToolResult: {
                 isError: true,
