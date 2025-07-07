@@ -2,6 +2,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
+import OpenAI from 'openai';
+import type { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
 import { AgentStrategy, Role } from './type.js';
 
 import type {
@@ -13,6 +15,7 @@ import type {
   MCPClientOptions,
   McpServer,
   Message,
+  OpenAIRawStreamOutput,
   ToolCall,
   ToolResults,
 } from './type.js';
@@ -31,6 +34,7 @@ export abstract class McpClientChat {
   protected messages: Message[] = [];
   protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
+  protected sdk: OpenAI | null = null;
 
   constructor(options: MCPClientOptions) {
     this.options = {
@@ -52,9 +56,21 @@ export abstract class McpClientChat {
 
       this.clientsMap.set(serverName, client);
     }
+
+    if (this.options.llmConfig.useSDK) {
+      this.sdk = new OpenAI({
+        baseURL: this.options.llmConfig.url,
+        apiKey: this.options.llmConfig.apiKey,
+      });
+    } else {
+      this.sdk = null;
+    }
   }
 
-  protected async initClients(serverName: string, serverConfig: McpServer | CustomTransportMcpServer): Promise<Client | null> {
+  protected async initClients(
+    serverName: string,
+    serverConfig: McpServer | CustomTransportMcpServer,
+  ): Promise<Client | null> {
     const client = new Client({
       name: serverName,
       version: '1.0.0',
@@ -232,9 +248,7 @@ export abstract class McpClientChat {
 
       this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
 
-      const result = await this.queryChatCompleteStreaming();
-
-      result.pipeTo(this.transformStream.writable);
+      await this.queryChatCompleteStreaming();
     } catch (error) {
       console.error('Chat iteration failed:', error);
       throw error;
@@ -326,25 +340,66 @@ export abstract class McpClientChat {
     return str;
   }
 
-  protected async queryChatComplete(): Promise<ChatCompleteResponse> {
+  protected async queryChatByREST(isStream: boolean = false): Promise<ChatCompleteResponse | ReadableStream> {
     const { url, apiKey } = this.options.llmConfig;
     const chatBody = await this.getChatBody();
+    const requestBody = { ...chatBody };
 
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(chatBody),
-      });
+    if (isStream) {
+      requestBody.stream = true;
+    }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}: ${await response.text()}`);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}: ${await response.text()}`);
+    }
+
+    if (isStream) {
+      if (!response.body) {
+        throw new Error('Response body is null');
       }
 
-      return (await response.json()) as ChatCompleteResponse;
+      return response.body;
+    }
+
+    try {
+      const res = await response.json();
+
+      return res;
+    } catch (error) {
+      console.error(error);
+    }
+
+    // return await response.json();
+  }
+
+  protected async queryChatBySDK(isStream: boolean = false): Promise<OpenAIRawStreamOutput | OpenAI.ChatCompletion> {
+    const chatBody = await this.getChatBody();
+    const requestBody = { ...chatBody };
+
+    if (isStream) {
+      requestBody.stream = true;
+    }
+
+    const response = await (this.sdk as OpenAI).chat.completions.create(requestBody as ChatCompletionCreateParamsBase);
+
+    return response;
+  }
+
+  protected async queryChatComplete(): Promise<OpenAIRawStreamOutput | OpenAI.ChatCompletion> {
+    try {
+      const queryFn = this.options.llmConfig.useSDK ? this.queryChatBySDK : this.queryChatByREST;
+      const response = await queryFn.call(this);
+
+      return response;
     } catch (error) {
       console.error('Error calling chat/complete:', error);
 
@@ -352,29 +407,12 @@ export abstract class McpClientChat {
     }
   }
 
-  protected async queryChatCompleteStreaming(): Promise<ReadableStream> {
-    const { url, apiKey } = this.options.llmConfig;
-    const chatBody = await this.getChatBody();
-
+  protected async queryChatCompleteStreaming(): Promise<void> {
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ stream: true, ...chatBody }),
-      });
+      const queryFn = this.options.llmConfig.useSDK ? this.queryChatBySDK : this.queryChatByREST;
+      const response = await queryFn.call(this, true);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      if (!response.body) {
-        throw new Error('Response body is null');
-      }
-
-      return response.body;
+      return await this.handleStreamResponse(response);
     } catch (error) {
       console.error('Error calling streaming chat/complete:', error);
 
@@ -382,6 +420,21 @@ export abstract class McpClientChat {
     } finally {
       // TODO: Implement context memory feature, for now clear after each request
       this.clearPromptMessages();
+    }
+  }
+
+  protected async handleStreamResponse(response: OpenAIRawStreamOutput | ReadableStream): Promise<void> {
+    if (this.options.llmConfig.useSDK) {
+      const writer = this.transformStream.writable.getWriter();
+      const encoder = new TextEncoder();
+
+      for await (const chunk of response as OpenAIRawStreamOutput) {
+        const json = JSON.stringify(chunk);
+        await writer.write(encoder.encode('data: ' + json + '\n'));
+      }
+      await writer.close();
+    } else {
+      (response as ReadableStream).pipeTo(this.transformStream.writable);
     }
   }
 

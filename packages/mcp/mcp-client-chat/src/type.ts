@@ -1,5 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import type OpenAI from 'openai';
+import type { Stream } from 'openai/streaming';
 
 export interface McpServer {
   url: string;
@@ -26,16 +28,19 @@ export enum AgentStrategy {
   RE_ACT = 'ReAct',
 }
 
+export type LlmConfig = {
+  // Model configuration
+  useSDK: boolean;
+  url: string; // AI interface address
+  apiKey: string; // Model API key
+  model: string; // Model name
+  systemPrompt: string; // Instructions
+  summarySystemPrompt?: string; // Summary instructions for each round of chat
+};
+
 export interface MCPClientOptions {
   agentStrategy?: AgentStrategy;
-  llmConfig: {
-    // Model configuration
-    url: string; // AI interface address
-    apiKey: string; // Model API key
-    model: string; // Model name
-    systemPrompt: string; // Instructions
-    summarySystemPrompt?: string; // Summary instructions for each round of chat
-  };
+  llmConfig: LlmConfig;
   mcpServersConfig: McpServersConfig; // MCP service configuration
   maxIterationSteps?: number; // Maximum execution steps
 }
@@ -240,3 +245,5 @@ export interface ChatCreatePromptArgs {
   /** List of input variables the final prompt will expect. */
   inputVariables?: string[];
 }
+
+export type OpenAIRawStreamOutput = Stream<OpenAI.Chat.Completions.ChatCompletionChunk>;

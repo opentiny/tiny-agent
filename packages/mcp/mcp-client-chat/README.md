@@ -11,11 +11,13 @@ npm install @opentiny/tiny-agent-mcp-client-chat --save
 - **参数说明**
 
   - `llmConfig(object)`: LLM 配置项
-
+  
     - `url(string)`: AI 平台 API 接口地址
     - `apiKey(string)`: AI 平台的 API Key
     - `model(string)`: 模型名称
-    - `systemPrompt(string)`: 系统提示词
+    - `systemPrompt(string)`?: 系统提示词
+    - `summarySystemPrompt(string)`?: 最终总结输出系统提示词
+    - `useSDK(boolean)`?: true:调用 OpenAI SDK; false:调用 OpenRouter REST API
 
   - `maxIterationSteps(number)`: Agent 最大迭代步数
 
