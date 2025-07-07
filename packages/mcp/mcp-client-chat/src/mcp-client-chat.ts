@@ -102,8 +102,16 @@ export abstract class McpClientChat {
     const availableTools = [];
     const toolClientMap = new Map();
 
-    for (const [, client] of this.clientsMap) {
-      const tools = (await client.listTools()).tools as unknown as Tool[];
+    for (const [name, client] of this.clientsMap) {
+      let tools: Tool[] = [];
+
+      try {
+        tools = (await client.listTools()).tools as unknown as Tool[];
+      } catch (error) {
+        console.error(`Error occurred while listing tools for ${name}`)
+        tools = []
+      }
+
       const openaiTools = tools.map((tool) => ({
         type: 'function' as const,
         function: {
