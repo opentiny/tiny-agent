@@ -1,6 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { LogLevel } from './types.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const logDir = path.resolve(__dirname, '../../logs');
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
