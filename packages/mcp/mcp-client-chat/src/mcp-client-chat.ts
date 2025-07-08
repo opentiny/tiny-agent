@@ -143,7 +143,7 @@ export abstract class McpClientChat {
     }
 
     this.toolClientMap = toolClientMap;
-    logger.info('Successfully fetched tools list:', JSON.stringify(availableTools));
+    logger.info('Successfully fetched tools list:', JSON.stringify(availableTools.map(t => t.function.name)));
 
     return availableTools;
   }
