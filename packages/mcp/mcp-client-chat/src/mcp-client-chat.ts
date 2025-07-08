@@ -3,6 +3,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { AgentStrategy, Role } from './type.js';
+import { logger } from './logger/index.js';
 
 import type {
   AvailableTool,
@@ -52,9 +53,14 @@ export abstract class McpClientChat {
 
       this.clientsMap.set(serverName, client);
     }
+
+    logger.info('Successfully connected to mcp-client-agent.');
   }
 
-  protected async initClients(serverName: string, serverConfig: McpServer | CustomTransportMcpServer): Promise<Client | null> {
+  protected async initClients(
+    serverName: string,
+    serverConfig: McpServer | CustomTransportMcpServer,
+  ): Promise<Client | null> {
     const client = new Client({
       name: serverName,
       version: '1.0.0',
@@ -91,9 +97,13 @@ export abstract class McpClientChat {
 
         await client.connect(sseTransport);
       } catch (error) {
+        logger.error(`Init ${serverName} failed: ${error}`);
+
         return null;
       }
     }
+
+    logger.info(`Successfully connected to MCP server: ${serverName}`);
 
     return client;
   }
@@ -108,8 +118,8 @@ export abstract class McpClientChat {
       try {
         tools = (await client.listTools()).tools as unknown as Tool[];
       } catch (error) {
-        console.error(`Error occurred while listing tools for ${name}`)
-        tools = []
+        logger.error(`Error occurred while listing tools for ${name}: ${error}`);
+        tools = [];
       }
 
       const openaiTools = tools.map((tool) => ({
@@ -133,6 +143,7 @@ export abstract class McpClientChat {
     }
 
     this.toolClientMap = toolClientMap;
+    logger.info('Successfully fetched tools list:', JSON.stringify(availableTools));
 
     return availableTools;
   }
@@ -153,7 +164,7 @@ export abstract class McpClientChat {
     try {
       systemPrompt = await this.initSystemPromptMessages();
     } catch (error) {
-      console.error('Failed to initialize system prompt:', error);
+      logger.error('Failed to initialize system prompt:', error);
       systemPrompt = this.options.llmConfig.systemPrompt ?? '';
     }
 
@@ -173,7 +184,7 @@ export abstract class McpClientChat {
 
     this.iterationSteps = this.options.maxIterationSteps || 1;
     this.chatIteration().catch((error) => {
-      console.error('Chat failed:', error);
+      logger.error('Chat failed:', error);
       this.transformStream.writable.abort(error);
     });
 
@@ -193,6 +204,7 @@ export abstract class McpClientChat {
             content: response.message,
           });
           this.iterationSteps = 0;
+          logger.error(`queryChatComplete failed: ${response}`);
 
           continue;
         }
@@ -203,6 +215,7 @@ export abstract class McpClientChat {
             content: response.choices[0].error.message,
           });
           this.iterationSteps = 0;
+          logger.error(`queryChatComplete failed: ${response.choices[0].error.message}`);
 
           continue;
         }
@@ -244,7 +257,7 @@ export abstract class McpClientChat {
 
       result.pipeTo(this.transformStream.writable);
     } catch (error) {
-      console.error('Chat iteration failed:', error);
+      logger.error('Chat iteration failed:', error);
       throw error;
     }
   }
@@ -269,8 +282,8 @@ export abstract class McpClientChat {
             typeof toolCall.function.arguments === 'string'
               ? JSON.parse(toolCall.function.arguments)
               : toolCall.function.arguments;
-        } catch (_error) {
-          console.error(`Failed to parse tool arguments for ${toolName}:`, _error);
+        } catch (error) {
+          logger.error(`Failed to parse tool arguments for ${toolName}:`, error);
           toolArgs = {};
         }
 
@@ -280,24 +293,28 @@ export abstract class McpClientChat {
           });
         }
 
-        const callToolResult = (await client.callTool({
-          name: toolName,
-          arguments: toolArgs,
-        }).catch(async error => {
-          if (this.chatOptions?.toolCallResponse) {
-            await this.writeMessageDelta(`[${toolCall.function.name}] Tool call result: failed. \n\n`, 'assistant', {
-              toolCall,
-              callToolResult: {
-                isError: true,
-                error: error instanceof Error ? error.message : JSON.stringify(error)
-              },
-            });
-          }
-          return {
-            isError: true,
-            error: error instanceof Error ? error.message : JSON.stringify(error)
-          }
-        })) as CallToolResult;
+        const callToolResult = (await client
+          .callTool({
+            name: toolName,
+            arguments: toolArgs,
+          })
+          .catch(async (error) => {
+            if (this.chatOptions?.toolCallResponse) {
+              await this.writeMessageDelta(`[${toolCall.function.name}] Tool call result: failed. \n\n`, 'assistant', {
+                toolCall,
+                callToolResult: {
+                  isError: true,
+                  error: error instanceof Error ? error.message : JSON.stringify(error),
+                },
+              });
+            }
+            logger.error(`Failed to call tool "${toolName}":`, error);
+
+            return {
+              isError: true,
+              error: error instanceof Error ? error.message : JSON.stringify(error),
+            };
+          })) as CallToolResult;
         const callToolContent = this.getToolCallMessage(callToolResult);
         const message: Message = {
           role: Role.TOOL,
@@ -317,11 +334,13 @@ export abstract class McpClientChat {
           call: toolName,
           result: callToolResult,
         });
+
+        logger.info(`Successfully called tool "${toolName}". Result:`, callToolContent);
       }
 
       return { toolResults, toolCallMessages };
     } catch (error) {
-      console.error('Error calling tools:', error);
+      logger.error('Failed to call tools:', error);
 
       return { toolResults: [], toolCallMessages: [{ role: Role.ASSISTANT, content: 'call tools failed!' }] };
     }
@@ -348,7 +367,7 @@ export abstract class McpClientChat {
     return str;
   }
 
-  protected async queryChatComplete(): Promise<ChatCompleteResponse> {
+  protected async queryChatComplete(): Promise<ChatCompleteResponse | Error> {
     const { url, apiKey } = this.options.llmConfig;
     const chatBody = await this.getChatBody();
 
@@ -363,14 +382,18 @@ export abstract class McpClientChat {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}: ${await response.text()}`);
+        return new Error(`Failed to fetch ${url}: ${await response.text()}`);
       }
 
       return (await response.json()) as ChatCompleteResponse;
     } catch (error) {
-      console.error('Error calling chat/complete:', error);
+      logger.error('Error calling chat/complete:', error);
 
-      throw error;
+      if (error instanceof Error) {
+        return error;
+      } else {
+        return new Error(String(error));
+      }
     }
   }
 
@@ -389,18 +412,18 @@ export abstract class McpClientChat {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Streaming request to ${url} failed with status: ${response.status} - ${response.statusText}`);
       }
 
       if (!response.body) {
-        throw new Error('Response body is null');
+        throw new Error('Response body is null: unable to retrieve streaming data');
       }
 
       return response.body;
     } catch (error) {
-      console.error('Error calling streaming chat/complete:', error);
+      logger.error('Failed to call streaming chat/complete:', error);
 
-      throw new Error(`Streaming chat API call failed: ${String(error)}`);
+      throw new Error(`Failed to call streaming chat API: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       // TODO: Implement context memory feature, for now clear after each request
       this.clearPromptMessages();

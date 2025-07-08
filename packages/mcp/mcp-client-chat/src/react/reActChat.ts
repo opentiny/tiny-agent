@@ -1,3 +1,4 @@
+import { logger } from '../logger/index.js';
 import { McpClientChat } from '../mcp-client-chat.js';
 import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, Tool, ToolCall } from '../type.js';
 import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
@@ -35,7 +36,7 @@ export class ReActChat extends McpClientChat {
       return [[], output];
     }
 
-    if (!text.includes(`"action":`)) {
+    if (!text.includes('"action":')) {
       return [[], text.trim()];
     }
 
@@ -45,14 +46,14 @@ export class ReActChat extends McpClientChat {
       const actionBlocks = text
         .trim()
         .split(/```(?:json)?/)
-        .filter((block: string) => block.includes(`"action":`));
+        .filter((block: string) => block.includes('"action":'));
 
       actionBlocks.forEach((block: string) => {
         try {
           const { action, action_input } = JSON.parse(block.trim());
 
           if (!action || typeof action !== 'string') {
-            console.error('Invalid tool call: missing or invalid action field');
+            logger.error('Invalid tool call: missing or invalid action field');
 
             return;
           }
@@ -66,7 +67,7 @@ export class ReActChat extends McpClientChat {
             },
           });
         } catch (error) {
-          console.error('Failed to parse tool call JSON:', error);
+          logger.error('Failed to parse tool call JSON:', error);
         }
       });
     }
