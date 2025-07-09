@@ -2,7 +2,8 @@ import { McpClientChat } from '../mcp-client-chat.js';
 import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, Tool, ToolCall } from '../type.js';
 import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
 
-const FINAL_ANSWER_ACTION = 'Final Answer:';
+const FINAL_ANSWER_TAG = 'Final Answer:';
+const ACTION_TAG = '"action":';
 
 export class ReActChat extends McpClientChat {
   constructor(options: MCPClientOptions) {
@@ -21,7 +22,7 @@ export class ReActChat extends McpClientChat {
     }
 
     const toolStrings = tools.length ? JSON.stringify(tools) : '';
-    const prompt = [PREFIX, toolStrings, FORMAT_INSTRUCTIONS, SUFFIX].join('\n\n');
+    const prompt = [this.options.llmConfig.systemPrompt, PREFIX, toolStrings, FORMAT_INSTRUCTIONS, SUFFIX].join('\n\n');
 
     return prompt;
   }
@@ -29,13 +30,13 @@ export class ReActChat extends McpClientChat {
   protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
     const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
 
-    if (text.includes(FINAL_ANSWER_ACTION)) {
-      const parts = text.split(FINAL_ANSWER_ACTION);
+    if (text.includes(FINAL_ANSWER_TAG) && !text.includes(ACTION_TAG)) {
+      const parts = text.split(FINAL_ANSWER_TAG);
       const output = parts[parts.length - 1].trim();
       return [[], output];
     }
 
-    if (!text.includes(`"action":`)) {
+    if (!text.includes(ACTION_TAG)) {
       return [[], text.trim()];
     }
 
@@ -45,7 +46,7 @@ export class ReActChat extends McpClientChat {
       const actionBlocks = text
         .trim()
         .split(/```(?:json)?/)
-        .filter((block: string) => block.includes(`"action":`));
+        .filter((block: string) => block.includes(ACTION_TAG));
 
       actionBlocks.forEach((block: string) => {
         try {
@@ -58,7 +59,7 @@ export class ReActChat extends McpClientChat {
           }
 
           toolCalls.push({
-            id: action,
+            id: `call_${Math.random().toString(36).slice(2)}`,
             type: 'function',
             function: {
               name: action,
