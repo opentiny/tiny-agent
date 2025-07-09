@@ -17,7 +17,9 @@ import type {
   ToolResults,
 } from './type.js';
 
-export function isCustomTransportMcpServer(serverConfig: McpServer | CustomTransportMcpServer): serverConfig is CustomTransportMcpServer {
+export function isCustomTransportMcpServer(
+  serverConfig: McpServer | CustomTransportMcpServer,
+): serverConfig is CustomTransportMcpServer {
   return !!serverConfig.customTransport;
 }
 const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
@@ -59,7 +61,7 @@ export abstract class McpClientChat {
       if (typeof serverConfig.customTransport === 'function') {
         clientTransport = serverConfig.customTransport(serverConfig);
       } else {
-        clientTransport = serverConfig.customTransport
+        clientTransport = serverConfig.customTransport;
       }
       await client.connect(clientTransport);
       return client;
@@ -164,8 +166,6 @@ export abstract class McpClientChat {
 
   protected async chatIteration(): Promise<void> {
     try {
-      const toolsCallResults: ToolResults = [];
-
       while (this.iterationSteps > 0) {
         const response: ChatCompleteResponse | Error = await this.queryChatComplete();
 
@@ -198,22 +198,21 @@ export abstract class McpClientChat {
             this.organizePromptMessages({
               role: Role.ASSISTANT,
               content: '', // assistant 消息内容可以为空，但必须包含 tool_calls
-              tool_calls: tool_calls
+              tool_calls: tool_calls,
             });
 
-            const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
+            const { messages } = await this.callTools(tool_calls);
 
-            toolsCallResults.push(...toolResults);
-            toolCallMessages.forEach((m) => this.organizePromptMessages(m));
+            messages.forEach((m) => this.organizePromptMessages(m));
 
             this.iterationSteps--;
           } catch (_error) {
             this.organizePromptMessages({
               role: Role.ASSISTANT,
-              content: 'call tools failed!',
+              content: 'Tool call failed, retrying...',
             });
 
-            this.iterationSteps = 0;
+            this.iterationSteps--;
           }
         } else {
           this.organizePromptMessages({
@@ -238,19 +237,19 @@ export abstract class McpClientChat {
     }
   }
 
-  protected async callTools(toolCalls: ToolCall[]): Promise<{ toolResults: ToolResults; toolCallMessages: Message[] }> {
-    try {
-      const toolResults: ToolResults = [];
-      const toolCallMessages: Message[] = [];
+  protected async callTools(toolCalls: ToolCall[]): Promise<{ results: ToolResults; messages: Message[] }> {
+    const results: ToolResults = [];
+    const messages: Message[] = [];
 
-      for (const toolCall of toolCalls) {
-        const toolName = toolCall.function.name;
-        const client = this.toolClientMap.get(toolName);
+    for (const toolCall of toolCalls) {
+      const toolName = toolCall.function.name;
+      const client = this.toolClientMap.get(toolName);
 
-        if (!client) {
-          continue;
-        }
+      if (!client) {
+        throw new Error(`Tool "${toolName}" is not registered.`);
+      }
 
+      try {
         let toolArgs = {};
 
         try {
@@ -260,6 +259,7 @@ export abstract class McpClientChat {
               : toolCall.function.arguments;
         } catch (_error) {
           console.error(`Failed to parse tool arguments for ${toolName}:`, _error);
+
           toolArgs = {};
         }
 
@@ -273,11 +273,15 @@ export abstract class McpClientChat {
           name: toolName,
           arguments: toolArgs,
         })) as CallToolResult;
-        const callToolContent = this.getToolCallMessage(callToolResult);
+        const callToolContent = this.getToolCallContent(callToolResult);
         const message: Message = {
           role: Role.TOOL,
           tool_call_id: toolCall.id,
-          content: callToolContent,
+          content: `Tool "${toolName}" executed successfully: ${callToolContent}`,
+        };
+        const result = {
+          call: toolName,
+          result: callToolResult,
         };
 
         if (this.chatOptions?.toolCallResponse) {
@@ -287,22 +291,38 @@ export abstract class McpClientChat {
           });
         }
 
-        toolCallMessages.push(message);
-        toolResults.push({
+        messages.push(message);
+        results.push(result);
+      } catch (error) {
+        if (this.chatOptions?.toolCallResponse) {
+          await this.writeMessageDelta('Tool call failed: ' + (error as Error).message);
+        }
+
+        const message: Message = {
+          role: Role.TOOL,
+          tool_call_id: toolCall.id,
+          content: `Tool "${toolName}" execution failed. Please check the parameters or try again.`,
+        };
+
+        const callToolResult: CallToolResult = {
+          content: [{ type: 'text', text: 'Tool call failed!' }],
+          isError: true,
+        };
+
+        const result = {
           call: toolName,
           result: callToolResult,
-        });
+        };
+
+        messages.push(message);
+        results.push(result);
       }
-
-      return { toolResults, toolCallMessages };
-    } catch (error) {
-      console.error('Error calling tools:', error);
-
-      return { toolResults: [], toolCallMessages: [{ role: Role.ASSISTANT, content: 'call tools failed!' }] };
     }
+
+    return { results, messages };
   }
 
-  protected getToolCallMessage(toolCallResult: CallToolResult): string {
+  protected getToolCallContent(toolCallResult: CallToolResult): string {
     let str = '';
 
     if (toolCallResult.content?.length) {
@@ -323,7 +343,7 @@ export abstract class McpClientChat {
     return str;
   }
 
-  protected async queryChatComplete(): Promise<ChatCompleteResponse> {
+  protected async queryChatComplete(): Promise<ChatCompleteResponse | Error> {
     const { url, apiKey } = this.options.llmConfig;
     const chatBody = await this.getChatBody();
 
@@ -336,16 +356,15 @@ export abstract class McpClientChat {
         },
         body: JSON.stringify(chatBody),
       });
-
       if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}: ${await response.text()}`);
+        return new Error(`HTTP error ${response.status}: ${await response.text()}`);
       }
 
       return (await response.json()) as ChatCompleteResponse;
     } catch (error) {
       console.error('Error calling chat/complete:', error);
 
-      throw error;
+      return error as Error;
     }
   }
 
