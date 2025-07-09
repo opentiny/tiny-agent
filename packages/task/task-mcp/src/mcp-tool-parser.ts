@@ -1,7 +1,7 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
 import { v4 as uuidv4 } from 'uuid';
-import { z, ZodRawShape } from 'zod';
+import { type ZodRawShape, z } from 'zod';
 import { getZodRawShape } from './utils';
 export const genTaskId = () => uuidv4();
 
@@ -15,9 +15,7 @@ export type SerializableType =
   | { [key: string]: SerializableType };
 export type InstructionSchema = {
   action: string;
-  params: {
-    [props: string]: SerializableType;
-  };
+  params: Record<string, SerializableType>;
 };
 export type McpToolsSchema = {
   tools: Array<McpToolSchema>;
