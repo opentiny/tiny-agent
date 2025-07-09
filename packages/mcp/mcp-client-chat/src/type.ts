@@ -162,11 +162,17 @@ export type ContentPart = TextContent | ImageContentPart;
 
 export type Message =
   | {
-      role: 'user' | 'assistant' | 'system';
+      role: 'user' | 'system';
       // ContentParts are only for the "user" role:
       content: string | ContentPart[];
       // If "name" is included, it will be prepended like this
       // for non-OpenAI models: `{name}: {content}`
+      name?: string;
+    }
+  | {
+      role: 'assistant';
+      content: string | ContentPart[];
+      tool_calls?: ToolCall[];
       name?: string;
     }
   | {
