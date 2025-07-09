@@ -68,8 +68,6 @@ export class ReActChat extends McpClientChat {
           });
         } catch (error) {
           console.error('Failed to parse tool call JSON:', error);
-
-          return [[], `Failed to parse tool call JSON: ${error}`];
         }
       });
     }
