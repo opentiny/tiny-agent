@@ -166,8 +166,6 @@ export abstract class McpClientChat {
 
   protected async chatIteration(): Promise<void> {
     try {
-      const toolCallsResults: ToolResults = [];
-
       while (this.iterationSteps > 0) {
         const response: ChatCompleteResponse | Error = await this.queryChatComplete();
 
@@ -200,12 +198,11 @@ export abstract class McpClientChat {
             this.organizePromptMessages({
               role: Role.ASSISTANT,
               content: '', // assistant 消息内容可以为空，但必须包含 tool_calls
-              tool_calls: tool_calls
+              tool_calls: tool_calls,
             });
-            
-            const { results, messages } = await this.callTools(tool_calls);
 
-            toolCallsResults.push(...results);
+            const { messages } = await this.callTools(tool_calls);
+
             messages.forEach((m) => this.organizePromptMessages(m));
 
             this.iterationSteps--;
