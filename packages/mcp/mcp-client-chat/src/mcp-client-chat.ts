@@ -196,6 +196,13 @@ export abstract class McpClientChat {
         // 工具调用
         if (tool_calls.length) {
           try {
+            // 首先添加包含 tool_calls 的 assistant 消息
+            this.organizePromptMessages({
+              role: Role.ASSISTANT,
+              content: '', // assistant 消息内容可以为空，但必须包含 tool_calls
+              tool_calls: tool_calls
+            });
+            
             const { results, messages } = await this.callTools(tool_calls);
 
             toolCallsResults.push(...results);
@@ -379,7 +386,10 @@ export abstract class McpClientChat {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // 获取详细的错误信息
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}\nError details: ${errorText}`);
       }
 
       if (!response.body) {
