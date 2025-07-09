@@ -269,11 +269,25 @@ export abstract class McpClientChat {
           });
         }
 
-        const callToolResult = (await client.callTool({
-          name: toolName,
-          arguments: toolArgs,
-        })) as CallToolResult;
+        const callToolResult = (await client
+          .callTool({
+            name: toolName,
+            arguments: toolArgs,
+          })
+          .catch(async (error) => {
+            if (this.chatOptions?.toolCallResponse) {
+              await this.writeMessageDelta('Tool call result: failed \n\n', 'assistant', {
+                toolCall,
+                callToolResult: {
+                  isError: true,
+                  error: error instanceof Error ? error.message : String(error),
+                },
+              });
+            }
+            throw error;
+          })) as CallToolResult;
         const callToolContent = this.getToolCallContent(callToolResult);
+        
         const message: Message = {
           role: Role.TOOL,
           tool_call_id: toolCall.id,
