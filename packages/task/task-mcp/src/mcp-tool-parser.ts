@@ -148,16 +148,15 @@ export class McpToolParser {
   }
 
   sendTaskProgressNotification(task: Task, extra: RequestHandlerExtra<Request, Notification>) {
-    const i = task['executorInfo'].currentIndex + 1;
-    const steps = task['executorInfo'].instructions.length;
-    const status = task['executorInfo'].status;
+    const { currentIndex, totalSteps, status } = task.getProgressInfo();
+    const i = currentIndex + 1;
     extra.sendNotification({
       method: 'notifications/progress',
       params: {
         progressToken: extra._meta?.progressToken,
         progress: i,
-        total: steps,
-        message: `Completed step ${i} of ${steps} ${status === 'paused' ? '(Paused)' : ''}`,
+        total: totalSteps,
+        message: `Completed step ${i} of ${totalSteps} ${status === 'paused' ? '(Paused)' : ''}`,
         status,
       },
     });

@@ -253,4 +253,12 @@ export class Task implements ITaskExecutor {
     }
     this.finish();
   }
+
+  public getExecutorIProgressInfo() {
+    return {
+      currentIndex: this.executorInfo.currentIndex,
+      totalSteps: this.executorInfo.instructions.length,
+      status: this.executorInfo.status
+    };
+  }
 }
