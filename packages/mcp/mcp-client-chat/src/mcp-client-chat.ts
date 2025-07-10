@@ -193,8 +193,6 @@ export abstract class McpClientChat {
 
   protected async chatIteration(): Promise<void> {
     try {
-      const toolsCallResults: ToolResults = [];
-
       while (this.iterationSteps > 0) {
         const response: ChatCompleteResponse | Error = await this.queryChatComplete();
 
@@ -225,19 +223,25 @@ export abstract class McpClientChat {
         // 工具调用
         if (tool_calls.length) {
           try {
-            const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
+            // 首先添加包含 tool_calls 的 assistant 消息
+            this.organizePromptMessages({
+              role: Role.ASSISTANT,
+              content: '', // assistant 消息内容可以为空，但必须包含 tool_calls
+              tool_calls: tool_calls,
+            });
 
-            toolsCallResults.push(...toolResults);
-            toolCallMessages.forEach((m) => this.organizePromptMessages(m));
+            const { messages } = await this.callTools(tool_calls);
+
+            messages.forEach((m) => this.organizePromptMessages(m));
 
             this.iterationSteps--;
           } catch (_error) {
             this.organizePromptMessages({
               role: Role.ASSISTANT,
-              content: 'call tools failed!',
+              content: 'Tool call failed, retrying...',
             });
 
-            this.iterationSteps = 0;
+            this.iterationSteps--;
           }
         } else {
           this.organizePromptMessages({
@@ -262,7 +266,7 @@ export abstract class McpClientChat {
     }
   }
 
-  protected async callTools(toolCalls: ToolCall[]): Promise<{ toolResults: ToolResults; toolCallMessages: Message[] }> {
+  protected async callTools(toolCalls: ToolCall[]): Promise<{ results: ToolResults; messages: Message[] }> {
     try {
       const toolResults: ToolResults = [];
       const toolCallMessages: Message[] = [];
@@ -315,7 +319,7 @@ export abstract class McpClientChat {
               error: error instanceof Error ? error.message : JSON.stringify(error),
             };
           })) as CallToolResult;
-        const callToolContent = this.getToolCallMessage(callToolResult);
+        const callToolContent = this.getToolCallContent(callToolResult);
         const message: Message = {
           role: Role.TOOL,
           tool_call_id: toolCall.id,
@@ -338,15 +342,15 @@ export abstract class McpClientChat {
         logger.info(`Successfully called tool "${toolName}". Result:`, callToolContent);
       }
 
-      return { toolResults, toolCallMessages };
+      return { results: toolResults, messages: toolCallMessages };
     } catch (error) {
       logger.error('Failed to call tools:', error);
 
-      return { toolResults: [], toolCallMessages: [{ role: Role.ASSISTANT, content: 'call tools failed!' }] };
+      return { results: [], messages: [{ role: Role.ASSISTANT, content: 'call tools failed!' }] };
     }
   }
 
-  protected getToolCallMessage(toolCallResult: CallToolResult): string {
+  protected getToolCallContent(toolCallResult: CallToolResult): string {
     let str = '';
 
     if (toolCallResult.content?.length) {
@@ -380,9 +384,8 @@ export abstract class McpClientChat {
         },
         body: JSON.stringify(chatBody),
       });
-
       if (!response.ok) {
-        return new Error(`Failed to fetch ${url}: ${await response.text()}`);
+        return new Error(`Failed to fetch ${url}: ${response.status}:${await response.text()}`);
       }
 
       return (await response.json()) as ChatCompleteResponse;
@@ -412,7 +415,10 @@ export abstract class McpClientChat {
       });
 
       if (!response.ok) {
-        throw new Error(`Streaming request to ${url} failed with status: ${response.status} - ${response.statusText}`);
+        // 获取详细的错误信息
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}\nError details: ${errorText}`);
       }
 
       if (!response.body) {
