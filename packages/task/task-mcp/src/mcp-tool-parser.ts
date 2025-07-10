@@ -2,7 +2,7 @@ import type { Tool, Request, Notification } from '@modelcontextprotocol/sdk/type
 import { DEFAULT_REQUEST_TIMEOUT_MSEC, type RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import type { ITaskOptions, Task } from '@opentiny/tiny-agent-task-runtime-service';
 import { v4 as uuidv4 } from 'uuid';
-import { z, ZodRawShape } from 'zod';
+import { type ZodRawShape, z } from 'zod';
 import { getZodRawShape } from './utils';
 export const genTaskId = () => uuidv4();
 
@@ -16,9 +16,7 @@ export type SerializableType =
   | { [key: string]: SerializableType };
 export type InstructionSchema = {
   action: string;
-  params: {
-    [props: string]: SerializableType;
-  };
+  params: Record<string, SerializableType>;
 };
 export type McpToolsSchema = {
   tools: Array<McpToolSchema>;

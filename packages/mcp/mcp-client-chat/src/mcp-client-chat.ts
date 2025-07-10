@@ -167,8 +167,6 @@ export abstract class McpClientChat {
 
   protected async chatIteration(): Promise<void> {
     try {
-      const toolsCallResults: ToolResults = [];
-
       while (this.iterationSteps > 0) {
         const response: ChatCompleteResponse | Error = await this.queryChatComplete();
 
@@ -197,19 +195,25 @@ export abstract class McpClientChat {
         // 工具调用
         if (tool_calls.length) {
           try {
-            const { toolResults, toolCallMessages } = await this.callTools(tool_calls);
+            // 首先添加包含 tool_calls 的 assistant 消息
+            this.organizePromptMessages({
+              role: Role.ASSISTANT,
+              content: '', // assistant 消息内容可以为空，但必须包含 tool_calls
+              tool_calls: tool_calls,
+            });
 
-            toolsCallResults.push(...toolResults);
-            toolCallMessages.forEach((m) => this.organizePromptMessages(m));
+            const { messages } = await this.callTools(tool_calls);
+
+            messages.forEach((m) => this.organizePromptMessages(m));
 
             this.iterationSteps--;
           } catch (_error) {
             this.organizePromptMessages({
               role: Role.ASSISTANT,
-              content: 'call tools failed!',
+              content: 'Tool call failed, retrying...',
             });
 
-            this.iterationSteps = 0;
+            this.iterationSteps--;
           }
         } else {
           this.organizePromptMessages({
@@ -234,19 +238,19 @@ export abstract class McpClientChat {
     }
   }
 
-  protected async callTools(toolCalls: ToolCall[]): Promise<{ toolResults: ToolResults; toolCallMessages: Message[] }> {
-    try {
-      const toolResults: ToolResults = [];
-      const toolCallMessages: Message[] = [];
+  protected async callTools(toolCalls: ToolCall[]): Promise<{ results: ToolResults; messages: Message[] }> {
+    const results: ToolResults = [];
+    const messages: Message[] = [];
 
-      for (const toolCall of toolCalls) {
-        const toolName = toolCall.function.name;
-        const client = this.toolClientMap.get(toolName);
+    for (const toolCall of toolCalls) {
+      const toolName = toolCall.function.name;
+      const client = this.toolClientMap.get(toolName);
 
-        if (!client) {
-          continue;
-        }
+      if (!client) {
+        throw new Error(`Tool "${toolName}" is not registered.`);
+      }
 
+      try {
         let toolArgs = {};
 
         try {
@@ -256,6 +260,7 @@ export abstract class McpClientChat {
               : toolCall.function.arguments;
         } catch (_error) {
           console.error(`Failed to parse tool arguments for ${toolName}:`, _error);
+
           toolArgs = {};
         }
 
@@ -290,11 +295,16 @@ export abstract class McpClientChat {
             }
             throw error;
           })) as CallToolResult;
-        const callToolContent = this.getToolCallMessage(callToolResult);
+        const callToolContent = this.getToolCallContent(callToolResult);
+        
         const message: Message = {
           role: Role.TOOL,
           tool_call_id: toolCall.id,
-          content: callToolContent,
+          content: `Tool "${toolName}" executed successfully: ${callToolContent}`,
+        };
+        const result = {
+          call: toolName,
+          result: callToolResult,
         };
 
         if (this.chatOptions?.toolCallResponse) {
@@ -308,22 +318,38 @@ export abstract class McpClientChat {
           );
         }
 
-        toolCallMessages.push(message);
-        toolResults.push({
+        messages.push(message);
+        results.push(result);
+      } catch (error) {
+        if (this.chatOptions?.toolCallResponse) {
+          await this.writeMessageDelta('Tool call failed: ' + (error as Error).message);
+        }
+
+        const message: Message = {
+          role: Role.TOOL,
+          tool_call_id: toolCall.id,
+          content: `Tool "${toolName}" execution failed. Please check the parameters or try again.`,
+        };
+
+        const callToolResult: CallToolResult = {
+          content: [{ type: 'text', text: 'Tool call failed!' }],
+          isError: true,
+        };
+
+        const result = {
           call: toolName,
           result: callToolResult,
-        });
+        };
+
+        messages.push(message);
+        results.push(result);
       }
-
-      return { toolResults, toolCallMessages };
-    } catch (error) {
-      console.error('Error calling tools:', error);
-
-      return { toolResults: [], toolCallMessages: [{ role: Role.ASSISTANT, content: 'call tools failed!' }] };
     }
+
+    return { results, messages };
   }
 
-  protected getToolCallMessage(toolCallResult: CallToolResult): string {
+  protected getToolCallContent(toolCallResult: CallToolResult): string {
     let str = '';
 
     if (toolCallResult.content?.length) {
@@ -344,7 +370,7 @@ export abstract class McpClientChat {
     return str;
   }
 
-  protected async queryChatComplete(): Promise<ChatCompleteResponse> {
+  protected async queryChatComplete(): Promise<ChatCompleteResponse | Error> {
     const { url, apiKey } = this.options.llmConfig;
     const chatBody = await this.getChatBody();
 
@@ -357,16 +383,15 @@ export abstract class McpClientChat {
         },
         body: JSON.stringify(chatBody),
       });
-
       if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}: ${await response.text()}`);
+        return new Error(`HTTP error ${response.status}: ${await response.text()}`);
       }
 
       return (await response.json()) as ChatCompleteResponse;
     } catch (error) {
       console.error('Error calling chat/complete:', error);
 
-      throw error;
+      return error as Error;
     }
   }
 
@@ -385,7 +410,10 @@ export abstract class McpClientChat {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // 获取详细的错误信息
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}\nError details: ${errorText}`);
       }
 
       if (!response.body) {
