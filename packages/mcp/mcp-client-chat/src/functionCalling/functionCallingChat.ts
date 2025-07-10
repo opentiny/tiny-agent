@@ -1,5 +1,11 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-import type { ChatCompleteRequest, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
+import type {
+  ChatCompleteRequest,
+  ChatCompleteResponse,
+  MCPClientOptions,
+  NonStreamingChoice,
+  ToolCall,
+} from '../type.js';
 import { Role } from '../type.js';
 import { DEFAULT_SUMMARY_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT } from './systemPrompt.js';
 
@@ -31,17 +37,19 @@ export class FunctionCallChat extends McpClientChat {
     const { model } = this.options.llmConfig;
 
     // 过滤和验证消息格式，确保符合 API 要求
-    const processedMessages = this.messages.map(msg => {
+    const processedMessages = this.messages.map((msg) => {
       // 确保消息内容不为空
       if (msg.role === Role.ASSISTANT && msg.tool_calls && !msg.content) {
         return { ...msg, content: '' }; // DeepSeek API 要求 content 字段存在
       }
       return msg;
     });
+    const { apiKey, url, systemPrompt, summarySystemPrompt, ...llmConfig } = this.options.llmConfig;
 
     const chatBody: ChatCompleteRequest = {
       model,
       messages: processedMessages,
+      ...llmConfig,
     };
 
     // 只有在有工具且当前迭代步数大于0时才添加tools字段
