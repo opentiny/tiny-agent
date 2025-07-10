@@ -1,5 +1,5 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
+import type { ChatCompleteRequest, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
 import { Role } from '../type.js';
 import { DEFAULT_SUMMARY_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT } from './systemPrompt.js';
 
@@ -25,7 +25,7 @@ export class FunctionCallChat extends McpClientChat {
     return [toolCalls, finalAnswer];
   }
 
-  protected async getChatBody(): Promise<ChatBody> {
+  protected async getChatBody(): Promise<ChatCompleteRequest> {
     const tools = await this.fetchToolsList();
 
     const { model } = this.options.llmConfig;
@@ -39,7 +39,7 @@ export class FunctionCallChat extends McpClientChat {
       return msg;
     });
 
-    const chatBody: ChatBody = {
+    const chatBody: ChatCompleteRequest = {
       model,
       messages: processedMessages,
     };

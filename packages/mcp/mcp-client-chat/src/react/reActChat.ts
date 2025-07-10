@@ -1,6 +1,6 @@
 import { logger } from '../logger/index.js';
 import { McpClientChat } from '../mcp-client-chat.js';
-import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, Tool, ToolCall } from '../type.js';
+import type { ChatCompleteRequest, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, Tool, ToolCall } from '../type.js';
 import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
 
 const FINAL_ANSWER_TAG = 'Final Answer:';
@@ -76,9 +76,9 @@ export class ReActChat extends McpClientChat {
     return [toolCalls, ''];
   }
 
-  protected async getChatBody(): Promise<ChatBody> {
+  protected async getChatBody(): Promise<ChatCompleteRequest> {
     const { model } = this.options.llmConfig;
-    const chatBody: ChatBody = {
+    const chatBody: ChatCompleteRequest = {
       model,
       messages: this.messages,
     };

@@ -7,7 +7,7 @@ import { logger } from './logger/index.js';
 
 import type {
   AvailableTool,
-  ChatBody,
+  ChatCompleteRequest,
   ChatCompleteResponse,
   CustomTransportMcpServer,
   IChatOptions,
@@ -143,7 +143,7 @@ export abstract class McpClientChat {
     }
 
     this.toolClientMap = toolClientMap;
-    logger.info('Successfully fetched tools list:', JSON.stringify(availableTools.map(t => t.function.name)));
+    logger.info('Successfully fetched tools list:', JSON.stringify(availableTools.map((t) => t.function.name)));
 
     return availableTools;
   }
@@ -276,6 +276,21 @@ export abstract class McpClientChat {
         const client = this.toolClientMap.get(toolName);
 
         if (!client) {
+          toolCallMessages.push({
+            role: Role.TOOL,
+            tool_call_id: toolCall.id,
+            content: `Tool "${toolName}" not found.`,
+          });
+          toolResults.push({
+            call: toolName,
+            result: {
+              content: [],
+              isError: true,
+              error: `Tool "${toolName}" not found.`,
+            },
+          });
+          logger.error(`Tool "${toolName}" not found.`);
+
           continue;
         }
 
@@ -462,7 +477,7 @@ export abstract class McpClientChat {
     }
   }
 
-  protected abstract getChatBody(): Promise<ChatBody>;
+  protected abstract getChatBody(): Promise<ChatCompleteRequest>;
 
   protected abstract organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]>;
 

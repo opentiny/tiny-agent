@@ -26,16 +26,16 @@ export enum AgentStrategy {
   RE_ACT = 'ReAct',
 }
 
+export type LlmConfig = {
+  url: string; // AI interface address
+  apiKey: string;
+  systemPrompt: string; // Instructions
+  summarySystemPrompt?: string; // Summary instructions for each round of chat
+} & Omit<ChatCompleteRequest, 'messages' | 'stream'>;
+
 export interface MCPClientOptions {
   agentStrategy?: AgentStrategy;
-  llmConfig: {
-    // Model configuration
-    url: string; // AI interface address
-    apiKey: string; // Model API key
-    model: string; // Model name
-    systemPrompt: string; // Instructions
-    summarySystemPrompt?: string; // Summary instructions for each round of chat
-  };
+  llmConfig: LlmConfig;
   mcpServersConfig: McpServersConfig; // MCP service configuration
   maxIterationSteps?: number; // Maximum execution steps
 }
@@ -62,6 +62,7 @@ export interface ChatBody {
   model: string;
   messages: Message[];
   tools?: AvailableTool[];
+  temperature?: number;
 }
 
 export type ToolResults = Array<{ call: string; result: CallToolResult }>;
