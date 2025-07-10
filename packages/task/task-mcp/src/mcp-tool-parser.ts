@@ -126,7 +126,7 @@ export class McpToolParser {
         content: [
           {
             type: 'text',
-            text: result.status,
+            text: JSON.stringify(result),
           },
         ],
         isError: result.status !== 'success',
