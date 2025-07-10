@@ -370,6 +370,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.11.4
         version: 1.12.1
+      '@opentiny/tiny-agent-task-runtime-service':
+        specifier: workspace:~
+        version: link:../task-runtime-service
       json-schema-to-zod:
         specifier: ^2.0.7
         version: 2.6.1

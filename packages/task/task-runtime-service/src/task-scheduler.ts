@@ -11,11 +11,17 @@ export interface ISchedulerContext extends IActionContext {
   $taskUI?: ITaskUI;
 }
 
+export interface ITaskOptions {
+  onCreated?: (task: Task) => void;
+}
+
 export interface ITasksQueueItem {
   id: string;
   resolve: (result: ITaskResult) => void;
   reject: (error: unknown) => void;
   taskFn: () => Promise<ITaskResult>;
+  task: Task;
+  taskOptions?: ITaskOptions;
 }
 
 export class TaskScheduler {
@@ -46,16 +52,16 @@ export class TaskScheduler {
         $taskUI: this.taskUI,
       });
       this.taskUI.on('pause', () => {
-        this.task!.pause();
+        this.task?.pause();
       });
       this.taskUI.on('skip', () => {
-        this.task!.skip();
+        this.task?.skip();
       });
       this.taskUI.on('resume', () => {
-        this.task!.resume();
+        this.task?.resume();
       });
       this.taskUI.on('stop', () => {
-        this.task!.stop();
+        this.task?.stop();
       });
     }
   }
@@ -76,19 +82,19 @@ export class TaskScheduler {
         this.taskUI?.stop();
       });
       this.task.on('beforeStep', ({ index }: { index: number; instruction: any }) => {
-        this.taskUI?.setTitle?.(`${t('scheduler.executingStep')} ${index}`);
+        this.taskUI?.setTitle?.(`${t('scheduler.executingStep')} ${index + 1}`);
       });
     }
   }
 
-  pushTask(taskDescription: ITaskSchema): Promise<ITaskResult> {
+  pushTask(taskDescription: ITaskSchema, taskOptions?: ITaskOptions): Promise<ITaskResult> {
     return new Promise((resolve, reject) => {
       const { instructions, id } = taskDescription;
       const taskContext = { ...this.context };
       const task = new Task(this.actionManager, taskContext);
-      this.connectTask(task);
-      const taskFn = () => this.task!.execute(instructions);
-      this.tasksQueue.push({ taskFn, id, resolve, reject });
+      const taskFn = () => task.execute(instructions);
+      this.tasksQueue.push({ taskFn, id, resolve, reject, task, taskOptions });
+      taskOptions?.onCreated?.(task);
       this.execute();
     });
   }
@@ -103,7 +109,10 @@ export class TaskScheduler {
     if (!tasksQueueItem) {
       return;
     }
-    const { taskFn, resolve, reject } = tasksQueueItem;
+
+    const { taskFn, resolve, reject, task } = tasksQueueItem;
+    this.connectTask(task);
+
     try {
       const result = await taskFn();
       resolve(result);

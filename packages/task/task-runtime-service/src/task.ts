@@ -201,10 +201,10 @@ export class Task implements ITaskExecutor {
         : { result: this.taskResult.result }),
     };
 
-    if (this.taskResult.status === TaskResultStatus.Error) {
-      reject?.(result);
-    } else {
+    if (this.taskResult.status === TaskResultStatus.Success) {
       resolve?.(result);
+    } else {
+      reject?.(result);
     }
 
     this.clearCleanEffect();
@@ -212,9 +212,9 @@ export class Task implements ITaskExecutor {
     this.emit('finish');
   }
 
-  pause(): Promise<void> {
-    this.emit('pause');
+  async pause(): Promise<void> {
     this.executorInfo.status = ExecutorStatus.Paused;
+    this.emit('pause');
     // 单个action执行无法中断，需要一个promise来等待
     if (this.executorInfo.waitPromise) {
       return this.executorInfo.waitPromise;
@@ -226,12 +226,12 @@ export class Task implements ITaskExecutor {
   }
 
   resume() {
-    this.emit('resume');
     const { instructions, currentIndex } = this.executorInfo;
     if (currentIndex > instructions.length - 1) {
       this.finish();
     }
     this.executorInfo.status = ExecutorStatus.Running;
+    this.emit('resume');
     this.start();
   }
 
@@ -252,5 +252,13 @@ export class Task implements ITaskExecutor {
       await this.pause();
     }
     this.finish();
+  }
+
+  public getExecutorIProgressInfo() {
+    return {
+      currentIndex: this.executorInfo.currentIndex,
+      totalSteps: this.executorInfo.instructions.length,
+      status: this.executorInfo.status
+    };
   }
 }
