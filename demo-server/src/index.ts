@@ -9,6 +9,7 @@ import { createChat } from './chat';
 dotenv.config();
 
 const chatConfigFn = (req: Request) => ({
+  agentStrategy: 'ReAct',
   llmConfig: {
     url: process.env.url,
     apiKey: process.env.apiKey,

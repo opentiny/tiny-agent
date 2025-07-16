@@ -2,8 +2,10 @@ import { McpClientChat } from '../mcp-client-chat.js';
 import type {
   ChatCompleteRequest,
   ChatCompleteResponse,
+  ChoiceMessage,
   MCPClientOptions,
   NonStreamingChoice,
+  StreamingChoice,
   ToolCall,
 } from '../type.js';
 import { Role } from '../type.js';
@@ -19,8 +21,17 @@ export class FunctionCallChat extends McpClientChat {
     return this.options.llmConfig.systemPrompt ?? DEFAULT_SYSTEM_PROMPT;
   }
 
-  protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
-    const message = (response.choices[0] as NonStreamingChoice).message;
+  protected async organizeToolCalls(
+    response: ChatCompleteResponse,
+  ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
+    let message: ChoiceMessage;
+
+    if (this.options.streamSwitch) {
+      message = (response.choices[0] as StreamingChoice).delta;
+    } else {
+      message = (response.choices[0] as NonStreamingChoice).message;
+    }
+
     const toolCalls = message.tool_calls || [];
     let finalAnswer = '';
 
@@ -28,7 +39,7 @@ export class FunctionCallChat extends McpClientChat {
       finalAnswer = message.content ?? '';
     }
 
-    return [toolCalls, finalAnswer];
+    return { toolCalls, finalAnswer };
   }
 
   protected async getChatBody(): Promise<ChatCompleteRequest> {

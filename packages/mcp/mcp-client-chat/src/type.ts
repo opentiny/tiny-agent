@@ -38,6 +38,7 @@ export interface MCPClientOptions {
   llmConfig: LlmConfig;
   mcpServersConfig: McpServersConfig; // MCP service configuration
   maxIterationSteps?: number; // Maximum execution steps
+  streamSwitch?: boolean;
 }
 
 export interface AvailableTool {
@@ -99,25 +100,23 @@ export type NonChatChoice = {
   error?: ErrorResponse;
 };
 
+export type ChoiceMessage = {
+  content: string | null;
+  role: Role;
+  tool_calls?: ToolCall[];
+};
+
 export type NonStreamingChoice = {
   finish_reason: string | null;
   native_finish_reason: string | null;
-  message: {
-    content: string | null;
-    role: Role;
-    tool_calls?: ToolCall[];
-  };
+  message: ChoiceMessage;
   error?: ErrorResponse;
 };
 
 export type StreamingChoice = {
   finish_reason: string | null;
   native_finish_reason: string | null;
-  delta: {
-    content: string | null;
-    role?: Role;
-    tool_calls?: ToolCall[];
-  };
+  delta: ChoiceMessage;
   error?: ErrorResponse;
 };
 
