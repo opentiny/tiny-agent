@@ -3,6 +3,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { AgentStrategy, Role } from './type.js';
+import { AiSDKInstance } from './ai-sdk-instance/index.js';
 
 import type {
   AvailableTool,
@@ -31,13 +32,25 @@ export abstract class McpClientChat {
   protected messages: Message[] = [];
   protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
+  protected aiInstance?: AiSDKInstance | AiRESTInstance;
 
   constructor(options: MCPClientOptions) {
     this.options = {
       ...options,
       agentStrategy: options.agentStrategy ?? DEFAULT_AGENT_STRATEGY,
+      useSDK: options.useSDK ?? true,
     };
     this.iterationSteps = options.maxIterationSteps || 1;
+
+    this.aiInstance = this.getAiInstance();
+  }
+
+  getAiInstance() {
+    if (this.options.useSDK) {
+      return new AiSDKInstance(this.options.llmConfig);
+    }
+
+    return new AiRESTInstance(this.options.llmConfig)
   }
 
   async init(): Promise<void> {
@@ -344,11 +357,11 @@ export abstract class McpClientChat {
   }
 
   protected async queryChatComplete(): Promise<ChatCompleteResponse | Error> {
-    const { url, apiKey } = this.options.llmConfig;
+    const { baseURL, apiKey } = this.options.llmConfig;
     const chatBody = await this.getChatBody();
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(baseURL, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -369,11 +382,11 @@ export abstract class McpClientChat {
   }
 
   protected async queryChatCompleteStreaming(): Promise<ReadableStream> {
-    const { url, apiKey } = this.options.llmConfig;
+    const { baseURL, apiKey } = this.options.llmConfig;
     const chatBody = await this.getChatBody();
 
     try {
-      const response = await fetch(url, {
+      const response = await fetch(baseURL, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${apiKey}`,
