@@ -47,18 +47,10 @@ export class ReActChat extends McpClientChat {
       text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
     }
 
-    // 修复正则表达式的回溯问题，避免使用容易导致指数级回溯的写法
-    // 只匹配 Thought: 和 Action:或FinalAnswer: 之间的内容，可能有多条
-    // 提取所有 Thought: 和 Action: 之间的内容，以及 Final Answer
-    // 这里我们用正则匹配 Thought: ... (Action: ...)? (Observation: ...)? (可多次) Final Answer: ...
-    // 但这里只需要提取 Thought 和 Action 片段，便于后续处理
-    // 另外也尝试提取第一个 Thought 作为思考内容
     let thought: string | undefined = undefined;
-
-    // 匹配 Thought: ... (Action: ...)? 片段
-    // 允许 Thought: 和 Action: 之间跨多行，非贪婪匹配
     const thoughtActionRegex = /Thought(.*?)(?:Action|Final Answer|$)/gs;
     const matches = [...text.matchAll(thoughtActionRegex)];
+    
     if (matches.length > 0) {
       // 取第一个 Thought 作为思考内容，去除首尾的符号
       thought = matches[0][1]?.replace(/^\W|$/, '')?.trim();
