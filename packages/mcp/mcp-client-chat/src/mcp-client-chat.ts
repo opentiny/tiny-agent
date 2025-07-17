@@ -298,7 +298,9 @@ export abstract class McpClientChat {
 
       while (true) {
         const { done, value } = await reader.read();
+
         if (done) break;
+
         if (!value || !(value instanceof Uint8Array)) continue;
 
         buffer += decoder.decode(value, { stream: true });
@@ -307,14 +309,17 @@ export abstract class McpClientChat {
         let lineEnd;
         while ((lineEnd = buffer.indexOf('\n')) !== -1) {
           const line = buffer.slice(0, lineEnd).trim();
+
           buffer = buffer.slice(lineEnd + 1);
 
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
+
             if (data === '[DONE]') break;
+
             try {
               const obj = JSON.parse(data);
-              console.log(JSON.stringify(obj.choices[0].delta));
+
               result.push(obj);
             } catch (_e) {
               // 不是合法JSON可忽略或记录
