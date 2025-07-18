@@ -1,4 +1,5 @@
-import type { ChatBody, ChatCompleteResponse, LlmConfig } from '../type.js';
+import type { ChatBody, ChatCompleteResponse, LlmConfig } from '../../type.js';
+import { BaseAIInstance } from '../base-ai-instance.js';
 import { ProviderType } from './types.js';
 import type { BaseAIProvider, BaseProviderConfig } from './types.js';
 // import { AnthropicAIProvider } from './providers/anthropic/index.js';
@@ -6,14 +7,14 @@ import { OpenAIProvider } from './providers/openai/index.js';
 import { providerConfigs } from './providers/providerConfigs.js';
 
 /**
- * AI 提供者管理器
- * 负责管理多个 AI 提供者，提供统一的接口
+ * AI SDK实例
  */
-export class AiSDKInstance {
+export class AiSDKInstance extends BaseAIInstance {
   private providers = new Map<string, BaseAIProvider>();
   private defaultProvider: string | null = null;
 
   constructor(llmConfig: LlmConfig) {
+    super();
     this.initProviders(llmConfig);
   }
 
@@ -124,7 +125,7 @@ export class AiSDKInstance {
   /**
    * 统一聊天接口（使用默认提供者）
    */
-  async chat(request: ChatBody): Promise<ChatCompleteResponse> {
+  async chat(request: ChatBody): Promise<globalThis.ReadableStream> {
     const provider = this.getDefaultProvider();
     if (!provider) {
       throw new Error('没有可用的 AI 提供者');

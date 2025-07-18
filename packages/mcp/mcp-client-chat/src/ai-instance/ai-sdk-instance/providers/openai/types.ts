@@ -1,4 +1,4 @@
-import type { AvailableTool, Message, Role } from '../../../type.js';
+import type { AvailableTool, Message, Role } from '../../../../type.js';
 
 export interface OpenAIConfig {
   /**

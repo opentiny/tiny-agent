@@ -1,4 +1,4 @@
-import { LlmConfig } from '../type.js';
+import { LlmConfig } from '../../type.js';
 
 export class AiRESTInstance {
   config: LlmConfig;

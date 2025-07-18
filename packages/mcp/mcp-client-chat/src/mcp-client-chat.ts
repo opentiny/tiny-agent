@@ -1,19 +1,20 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ChatCompletionTool } from '@modelcontextprotocol/sdk/types.js';
 import { AgentStrategy, Role } from './type.js';
-import { AiSDKInstance } from './ai-sdk-instance/index.js';
+import { AiRESTInstance } from './ai-instance/ai-rest-instance/index.js';
+import { AiSDKInstance } from './ai-instance/ai-sdk-instance/index.js';
 
 import type {
   AvailableTool,
   ChatBody,
   ChatCompleteResponse,
+  ChatCompletionMessageParam,
   CustomTransportMcpServer,
   IChatOptions,
   MCPClientOptions,
   McpServer,
-  Message,
   ToolCall,
   ToolResults,
 } from './type.js';
@@ -29,7 +30,7 @@ export abstract class McpClientChat {
   protected iterationSteps: number;
   protected clientsMap: Map<string, Client> = new Map<string, Client>();
   protected toolClientMap: Map<string, Client> = new Map<string, Client>();
-  protected messages: Message[] = [];
+  protected messages: ChatCompletionMessageParam[] = [];
   protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
   protected aiInstance?: AiSDKInstance | AiRESTInstance;
@@ -108,7 +109,7 @@ export abstract class McpClientChat {
     const toolClientMap = new Map();
 
     for (const [, client] of this.clientsMap) {
-      const tools = (await client.listTools()).tools as unknown as Tool[];
+      const tools = (await client.listTools()).tools as unknown as ChatCompletionTool[];
       const openaiTools = tools.map((tool) => ({
         type: 'function' as const,
         function: {
@@ -134,7 +135,7 @@ export abstract class McpClientChat {
     return availableTools;
   }
 
-  protected organizePromptMessages(message: Message): void {
+  protected organizePromptMessages(message: ChatCompletionMessageParam): void {
     this.messages.push(message);
   }
 
@@ -142,7 +143,7 @@ export abstract class McpClientChat {
     this.messages = [];
   }
 
-  async chat(queryOrMessages: string | Array<Message>, chatOptions?: IChatOptions): Promise<ReadableStream | Error> {
+  async chat(queryOrMessages: string | Array<ChatCompletionMessageParam>, chatOptions?: IChatOptions): Promise<ReadableStream | Error> {
     this.chatOptions = chatOptions;
 
     let systemPrompt: string;
@@ -250,9 +251,9 @@ export abstract class McpClientChat {
     }
   }
 
-  protected async callTools(toolCalls: ToolCall[]): Promise<{ results: ToolResults; messages: Message[] }> {
+  protected async callTools(toolCalls: ToolCall[]): Promise<{ results: ToolResults; messages: ChatCompletionMessageParam[] }> {
     const results: ToolResults = [];
-    const messages: Message[] = [];
+    const messages: ChatCompletionMessageParam[] = [];
 
     for (const toolCall of toolCalls) {
       const toolName = toolCall.function.name;
@@ -287,7 +288,7 @@ export abstract class McpClientChat {
           arguments: toolArgs,
         })) as CallToolResult;
         const callToolContent = this.getToolCallContent(callToolResult);
-        const message: Message = {
+        const message: ChatCompletionMessageParam = {
           role: Role.TOOL,
           tool_call_id: toolCall.id,
           content: `Tool "${toolName}" executed successfully: ${callToolContent}`,
@@ -311,7 +312,7 @@ export abstract class McpClientChat {
           await this.writeMessageDelta('Tool call failed: ' + (error as Error).message);
         }
 
-        const message: Message = {
+        const message: ChatCompletionMessageParam = {
           role: Role.TOOL,
           tool_call_id: toolCall.id,
           content: `Tool "${toolName}" execution failed. Please check the parameters or try again.`,

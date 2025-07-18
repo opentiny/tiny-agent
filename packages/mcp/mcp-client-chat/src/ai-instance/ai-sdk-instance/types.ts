@@ -1,4 +1,4 @@
-import type { ChatBody, ChatCompleteResponse, LlmConfig } from '../type.js';
+import type { ChatBody, ChatCompleteResponse, LlmConfig } from '../../type.js';
 
 /**
  * AI 提供者基础接口

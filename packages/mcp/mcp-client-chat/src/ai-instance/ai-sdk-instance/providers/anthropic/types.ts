@@ -1,4 +1,4 @@
-import type { AvailableTool, Role } from '../../../type.js';
+import type { AvailableTool, Role } from '../../../../type.js';
 
 export interface AnthropicChatRequest {
   messages: Array<{

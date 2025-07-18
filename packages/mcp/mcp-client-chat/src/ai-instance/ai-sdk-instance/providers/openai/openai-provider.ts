@@ -7,7 +7,7 @@ import type {
   Role,
   StreamingChoice,
   ToolCall,
-} from '../../../type.js';
+} from '../../../../type.js';
 import type { BaseAIProvider } from '../../types.js';
 import type { OpenAIConfig } from './types.js';
 
@@ -24,17 +24,17 @@ export class OpenAIProvider implements BaseAIProvider {
   /**
    * 处理聊天请求（非流式）
    */
-  async chat(request: ChatBody): Promise<ChatCompleteResponse> {
-    try {
-      const openAIRequest = this.transformRequest(request, false);
+  // async chat(request: ChatBody): Promise<ChatCompleteResponse> {
+  //   try {
+  //     const openAIRequest = this.transformRequest(request, false);
 
-      const response = await this.sdkInstance.chat.completions.create(openAIRequest as any);
+  //     const response = await this.sdkInstance.chat.completions.create(openAIRequest as any);
 
-      return this.transformResponse(response);
-    } catch (error) {
-      throw this.handleError(error);
-    }
-  }
+  //     return this.transformResponse(response);
+  //   } catch (error) {
+  //     throw this.handleError(error);
+  //   }
+  // }
 
   /**
    * 处理聊天请求（流式）

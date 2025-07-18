@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { ChatBody, ChatCompleteResponse, LlmConfig, ResponseUsage, Role, StreamingChoice } from '../../../type.js';
+import type { ChatBody, ChatCompleteResponse, LlmConfig, ResponseUsage, Role, StreamingChoice } from '../../../../type.js';
 import type { BaseAIProvider, BaseProviderConfig } from '../../types.js';
 import type { AnthropicClientOptions } from './types.js';
 

@@ -1,120 +1,62 @@
+import { Response } from 'express';
 // OpenAI Chat Completions API 类型定义（2024-10-21）
 // 参考：https://platform.openai.com/docs/api-reference/chat/create
+import type OpenAI from 'openai';
 
-export type ChatCompletionRole = 'system' | 'user' | 'assistant' | 'tool';
+export type ChatCompletionRole = OpenAI.Chat.Completions.ChatCompletionRole;
 
-export interface ChatCompletionMessage {
-  role: ChatCompletionRole;
-  content: string | null;
-  // assistant 角色可带 tool_calls
-  tool_calls?: ChatCompletionToolCall[];
-  // Azure 专用，带 citations/context
-  context?: Record<string, any>;
-  // tool 角色需带 tool_call_id
-  tool_call_id?: string;
-  name?: string;
-}
+export type ChatCompletionRequest = OpenAI.Chat.Completions.ChatCompletionCreateParams;
 
-export interface ChatCompletionToolCall {
-  id: string;
-  type: 'function';
-  function: {
-    name: string;
-    arguments: string;
-  };
-}
+// export type ChatCompletionCreateParamsBase = OpenAI.Chat.Completions.ChatCompletionCreateParamsBase;
 
-export interface ChatCompletionRequest {
-  model: string;
-  messages: ChatCompletionMessage[];
-  temperature?: number;
-  top_p?: number;
-  n?: number;
-  stream?: boolean;
-  stop?: string | string[];
-  max_tokens?: number;
-  max_completion_tokens?: number;
-  presence_penalty?: number;
-  frequency_penalty?: number;
-  logit_bias?: Record<string, number>;
-  user?: string;
-  tools?: ChatCompletionTool[];
-  tool_choice?: 'none' | 'auto' | 'required' | { type: 'function'; function: { name: string } };
-  function_call?: string | { name: string }; // 已废弃，建议用 tool_choice
-  functions?: ChatCompletionTool[]; // 已废弃，建议用 tools
-  response_format?: { type: 'json_object' } | { type: 'json_schema'; json_schema: object };
-  seed?: number;
-  logprobs?: boolean;
-  top_logprobs?: number;
-  parallel_tool_calls?: boolean;
-  data_sources?: any[]; // Azure 专用
-}
+// export type ChatCompletionCreateParamsNonStreaming = OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming;
 
-export interface ChatCompletionTool {
-  type: 'function';
-  function: {
-    name: string;
-    description?: string;
-    parameters: object; // JSON Schema
-  };
-}
+// export type ChatCompletionCreateParamsStreaming = OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming;
 
-export interface ChatCompletionResponse {
-  id: string;
-  object: 'chat.completion';
-  created: number;
-  model: string;
-  choices: Array<{
-    index: number;
-    finish_reason: string | null;
-    message: ChatCompletionMessage;
-  }>;
-  usage?: {
-    completion_tokens: number;
-    prompt_tokens: number;
-    total_tokens: number;
-  };
-  system_fingerprint?: string;
-}
+// // messages
+// export type ChatCompletionMessageParam = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
-export interface ChatCompletionStreamResponse {
-  id: string;
-  object: 'chat.completion.chunk';
-  created: number;
-  model: string;
-  choices: Array<{
-    index: number;
-    delta: Partial<ChatCompletionMessage>;
-    finish_reason: string | null;
-  }>;
-}
+// export type ChatCompletionTool = OpenAI.Chat.Completions.ChatCompletionTool;
+export type ChatCompletionChunk = OpenAI.Chat.Completions.ChatCompletionChunk;
 
-// === 错误类型 ===
-
-// 非流式响应错误
-export interface OpenAIErrorResponse {
-  error: {
-    message: string;
-    type: string;
-    param?: string;
-    code?: string | number;
-    [key: string]: any;
-  };
-}
-
-// 流式响应错误事件（SSE）
-export interface OpenAIStreamErrorEvent {
-  error: {
-    message: string;
-    type: string;
-    param?: string;
-    code?: string | number;
-    [key: string]: any;
-  };
-}
-
-// 扩展联合类型，流式响应可能事件
-export type ChatCompletionStreamResponseWithError =
-  | ChatCompletionStreamResponse
-  | OpenAIStreamErrorEvent;
+// export {
+//   Chat as Chat,
+//   type ChatCompletion as ChatCompletion,
+//   type ChatCompletionAssistantMessageParam as ChatCompletionAssistantMessageParam,
+//   type ChatCompletionAudio as ChatCompletionAudio,
+//   type ChatCompletionAudioParam as ChatCompletionAudioParam,
+//   type ChatCompletionChunk as ChatCompletionChunk,
+//   type ChatCompletionContentPart as ChatCompletionContentPart,
+//   type ChatCompletionContentPartImage as ChatCompletionContentPartImage,
+//   type ChatCompletionContentPartInputAudio as ChatCompletionContentPartInputAudio,
+//   type ChatCompletionContentPartRefusal as ChatCompletionContentPartRefusal,
+//   type ChatCompletionContentPartText as ChatCompletionContentPartText,
+//   type ChatCompletionDeleted as ChatCompletionDeleted,
+//   type ChatCompletionDeveloperMessageParam as ChatCompletionDeveloperMessageParam,
+//   type ChatCompletionFunctionCallOption as ChatCompletionFunctionCallOption,
+//   type ChatCompletionFunctionMessageParam as ChatCompletionFunctionMessageParam,
+//   type ChatCompletionMessage as ChatCompletionMessage,
+//   type ChatCompletionMessageParam as ChatCompletionMessageParam,
+//   type ChatCompletionMessageToolCall as ChatCompletionMessageToolCall,
+//   type ChatCompletionModality as ChatCompletionModality,
+//   type ChatCompletionNamedToolChoice as ChatCompletionNamedToolChoice,
+//   type ChatCompletionPredictionContent as ChatCompletionPredictionContent,
+//   type ChatCompletionRole as ChatCompletionRole,
+//   type ChatCompletionStoreMessage as ChatCompletionStoreMessage,
+//   type ChatCompletionStreamOptions as ChatCompletionStreamOptions,
+//   type ChatCompletionSystemMessageParam as ChatCompletionSystemMessageParam,
+//   type ChatCompletionTokenLogprob as ChatCompletionTokenLogprob,
+//   type ChatCompletionTool as ChatCompletionTool,
+//   type ChatCompletionToolChoiceOption as ChatCompletionToolChoiceOption,
+//   type ChatCompletionToolMessageParam as ChatCompletionToolMessageParam,
+//   type ChatCompletionUserMessageParam as ChatCompletionUserMessageParam,
+//   type CreateChatCompletionRequestMessage as CreateChatCompletionRequestMessage,
+//   type ChatCompletionReasoningEffort as ChatCompletionReasoningEffort,
+//   ChatCompletionsPage as ChatCompletionsPage,
+//   type ChatCompletionCreateParams as ChatCompletionCreateParams,
+//   type ChatCompletionCreateParamsNonStreaming as ChatCompletionCreateParamsNonStreaming,
+//   type ChatCompletionCreateParamsStreaming as ChatCompletionCreateParamsStreaming,
+//   type ChatCompletionUpdateParams as ChatCompletionUpdateParams,
+//   type ChatCompletionListParams as ChatCompletionListParams,
+// };
 

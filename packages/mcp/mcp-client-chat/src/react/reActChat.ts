@@ -1,5 +1,5 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, Tool, ToolCall } from '../type.js';
+import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ChatCompletionTool, ToolCall } from '../type.js';
 import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
 
 const FINAL_ANSWER_TAG = 'Final Answer:';
@@ -13,7 +13,7 @@ export class ReActChat extends McpClientChat {
   }
 
   protected async initSystemPromptMessages(): Promise<string> {
-    let tools: Tool[] = [];
+    let tools: ChatCompletionTool[] = [];
 
     try {
       tools = await this.fetchToolsList();
