@@ -1,5 +1,13 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, ToolCall } from '../type.js';
+import type {
+  ChatBody,
+  ChatCompleteResponse,
+  ChoiceMessage,
+  MCPClientOptions,
+  NonStreamingChoice,
+  StreamingChoice,
+  ToolCall,
+} from '../type.js';
 import { Role } from '../type.js';
 import { DEFAULT_SUMMARY_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT } from './systemPrompt.js';
 
@@ -14,7 +22,14 @@ export class FunctionCallChat extends McpClientChat {
   }
 
   protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
-    const message = (response.choices[0] as NonStreamingChoice).message;
+    let message: ChoiceMessage;
+
+    if (this.options.llmConfig.streamSwitch) {
+      message = (response.choices[0] as StreamingChoice).delta;
+    } else {
+      message = (response.choices[0] as NonStreamingChoice).message;
+    }
+
     const toolCalls = message.tool_calls || [];
     let finalAnswer = '';
 
@@ -31,7 +46,7 @@ export class FunctionCallChat extends McpClientChat {
     const { model } = this.options.llmConfig;
 
     // 过滤和验证消息格式，确保符合 API 要求
-    const processedMessages = this.messages.map(msg => {
+    const processedMessages = this.messages.map((msg) => {
       // 确保消息内容不为空
       if (msg.role === Role.ASSISTANT && msg.tool_calls && !msg.content) {
         return { ...msg, content: '' }; // DeepSeek API 要求 content 字段存在

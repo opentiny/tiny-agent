@@ -3,7 +3,6 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { AgentStrategy, Role } from './type.js';
-
 import type {
   AvailableTool,
   ChatBody,
@@ -13,9 +12,12 @@ import type {
   MCPClientOptions,
   McpServer,
   Message,
+  NonStreamingChoice,
+  StreamingChoice,
   ToolCall,
   ToolResults,
 } from './type.js';
+import { type BaseAi, getAiInstance } from './ai/index.js';
 
 export function isCustomTransportMcpServer(
   serverConfig: McpServer | CustomTransportMcpServer,
@@ -31,13 +33,19 @@ export abstract class McpClientChat {
   protected messages: Message[] = [];
   protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
+  protected aiInstance: BaseAi;
 
   constructor(options: MCPClientOptions) {
     this.options = {
       ...options,
       agentStrategy: options.agentStrategy ?? DEFAULT_AGENT_STRATEGY,
+      llmConfig: {
+        ...options.llmConfig,
+        streamSwitch: options.llmConfig.streamSwitch ?? true,
+      },
     };
     this.iterationSteps = options.maxIterationSteps || 1;
+    this.aiInstance = getAiInstance(options.llmConfig);
   }
 
   async init(): Promise<void> {
@@ -129,7 +137,10 @@ export abstract class McpClientChat {
     this.messages = [];
   }
 
-  async chat(queryOrMessages: string | Array<Message>, chatOptions?: IChatOptions): Promise<ReadableStream | Error> {
+  async chat(
+    queryOrMessages: string | Array<Message>,
+    chatOptions?: IChatOptions,
+  ): Promise<globalThis.ReadableStream | Error> {
     this.chatOptions = chatOptions;
 
     let systemPrompt: string;
@@ -167,7 +178,13 @@ export abstract class McpClientChat {
   protected async chatIteration(): Promise<void> {
     try {
       while (this.iterationSteps > 0) {
-        const response: ChatCompleteResponse | Error = await this.queryChatComplete();
+        let response: ChatCompleteResponse | Error;
+        if (this.options.llmConfig.streamSwitch) {
+          const streamResponses: ReadableStream = await this.queryChatCompleteStreaming();
+          response = await this.generateStreamingResponses(streamResponses);
+        } else {
+          response = await this.queryChatComplete();
+        }
 
         if (response instanceof Error) {
           this.organizePromptMessages({
@@ -229,8 +246,10 @@ export abstract class McpClientChat {
       this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
 
       const result = await this.queryChatCompleteStreaming();
-
       result.pipeTo(this.transformStream.writable);
+
+      // TODO: Implement context memory feature, for now clear after each request
+      this.clearPromptMessages();
     } catch (error) {
       console.error('Chat iteration failed:', error);
       throw error;
@@ -287,8 +306,9 @@ export abstract class McpClientChat {
             throw error;
           })) as CallToolResult;
         const callToolContent = this.getToolCallContent(callToolResult);
-        
+
         const message: Message = {
+          name: toolName,
           role: Role.TOOL,
           tool_call_id: toolCall.id,
           content: `Tool "${toolName}" executed successfully: ${callToolContent}`,
@@ -357,24 +377,166 @@ export abstract class McpClientChat {
     return str;
   }
 
+  protected mergeStreamingToolCalls(result: ToolCall[], tool_calls: ToolCall[]): void {
+    try {
+      tool_calls.forEach((toolCall: ToolCall) => {
+        if (!toolCall.id) {
+          // 修复：确保 result.at(-1) 存在且 function/arguments 字段存在
+          const last = result.at(-1);
+          if (
+            last &&
+            last.function &&
+            typeof last.function.arguments === 'string' &&
+            typeof toolCall.function?.arguments === 'string'
+          ) {
+            last.function.arguments += toolCall.function.arguments;
+          }
+          return;
+        }
+
+        result.push(toolCall);
+      });
+    } catch (error) {
+      console.error(`mergeStreamingToolCalls failed: ${error}`);
+    }
+  }
+
+  protected mergeStreamingResponses(responses: ChatCompleteResponse[]): ChatCompleteResponse {
+    try {
+      const toolCalls: ToolCall[] = [];
+      const isStream = 'delta' in responses[0].choices[0];
+      const mergedContent = responses
+        .flatMap((r) => r.choices)
+        .map((choice) => {
+          if ('message' in choice) {
+            if (choice.message.tool_calls?.length) {
+              this.mergeStreamingToolCalls(toolCalls, choice.message.tool_calls);
+            }
+
+            return choice.message?.content ?? '';
+          }
+
+          if ('delta' in choice) {
+            if (choice.delta.tool_calls?.length) {
+              this.mergeStreamingToolCalls(toolCalls, choice.delta.tool_calls);
+            }
+
+            return choice.delta.content ?? '';
+          }
+
+          return '';
+        })
+        .join('');
+      const result = {
+        ...responses[0], // 以第一个为基础
+        choices: [
+          {
+            ...(responses[0].choices[0] as any),
+          },
+        ],
+      };
+
+      if (isStream) {
+        result.choices[0].delta = {
+          ...(responses[0].choices[0] as StreamingChoice).delta,
+          content: mergedContent,
+          tool_calls: toolCalls,
+        };
+      } else {
+        result.choices[0].message = {
+          ...(responses[0].choices[0] as NonStreamingChoice).message,
+          content: mergedContent,
+          tool_calls: toolCalls,
+        };
+      }
+
+      // 返回聚合后的 ChatCompleteResponse
+      return result;
+    } catch (error) {
+      console.error(`mergeStreamingResponses failed: ${error}`);
+
+      return {
+        ...responses[0],
+        choices: [
+          {
+            finish_reason: 'error',
+            text: 'merge streaming responses failed!',
+            error: { code: 400, message: 'merge streaming responses failed!' },
+          },
+        ],
+      };
+    }
+  }
+
+  protected async generateStreamingResponses(
+    stream: globalThis.ReadableStream<ChatCompleteResponse>,
+  ): Promise<ChatCompleteResponse> {
+    try {
+      const reader = stream.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+      const result: any[] = [];
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        if (!value || !(value instanceof Uint8Array)) continue;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // 按行处理
+        let lineEnd;
+        while ((lineEnd = buffer.indexOf('\n')) !== -1) {
+          const line = buffer.slice(0, lineEnd).trim();
+
+          buffer = buffer.slice(lineEnd + 1);
+
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+
+            if (data === '[DONE]') break;
+
+            try {
+              const obj = JSON.parse(data);
+
+              result.push(obj);
+            } catch (_e) {
+              // 不是合法JSON可忽略或记录
+            }
+          }
+        }
+      }
+
+      return this.mergeStreamingResponses(result);
+    } catch (error) {
+      console.error(error);
+
+      // 返回一个包含必要属性的空对象，防止类型错误
+      return {
+        id: '',
+        object: 'chat.completion.chunk',
+        created: 0,
+        model: '',
+        choices: [
+          {
+            finish_reason: 'error',
+            text: 'parse streamable response failed!',
+            error: { code: 400, message: 'parse streamable response failed!' },
+          },
+        ],
+      };
+    }
+  }
+
   protected async queryChatComplete(): Promise<ChatCompleteResponse | Error> {
-    const { url, apiKey } = this.options.llmConfig;
     const chatBody = await this.getChatBody();
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(chatBody),
-      });
-      if (!response.ok) {
-        return new Error(`HTTP error ${response.status}: ${await response.text()}`);
-      }
+      const response = await this.aiInstance.chat(chatBody);
 
-      return (await response.json()) as ChatCompleteResponse;
+      return response;
     } catch (error) {
       console.error('Error calling chat/complete:', error);
 
@@ -382,39 +544,17 @@ export abstract class McpClientChat {
     }
   }
 
-  protected async queryChatCompleteStreaming(): Promise<ReadableStream> {
-    const { url, apiKey } = this.options.llmConfig;
+  protected async queryChatCompleteStreaming(): Promise<globalThis.ReadableStream> {
     const chatBody = await this.getChatBody();
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ stream: true, ...chatBody }),
-      });
+      const response = await this.aiInstance.chatStream(chatBody);
 
-      if (!response.ok) {
-        // 获取详细的错误信息
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}\nError details: ${errorText}`);
-      }
-
-      if (!response.body) {
-        throw new Error('Response body is null');
-      }
-
-      return response.body;
+      return response;
     } catch (error) {
-      console.error('Error calling streaming chat/complete:', error);
+      console.error('Error calling chat/complete:', error);
 
       throw new Error(`Streaming chat API call failed: ${String(error)}`);
-    } finally {
-      // TODO: Implement context memory feature, for now clear after each request
-      this.clearPromptMessages();
     }
   }
 

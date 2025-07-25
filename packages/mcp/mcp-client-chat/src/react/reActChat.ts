@@ -1,5 +1,14 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, Tool, ToolCall } from '../type.js';
+import type {
+  ChatBody,
+  ChatCompleteResponse,
+  ChoiceMessage,
+  MCPClientOptions,
+  NonStreamingChoice,
+  StreamingChoice,
+  Tool,
+  ToolCall,
+} from '../type.js';
 import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
 
 const FINAL_ANSWER_TAG = 'Final Answer:';
@@ -28,7 +37,15 @@ export class ReActChat extends McpClientChat {
   }
 
   protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
-    const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
+    let message: ChoiceMessage;
+
+    if (this.options.llmConfig.streamSwitch) {
+      message = (response.choices[0] as StreamingChoice).delta;
+    } else {
+      message = (response.choices[0] as NonStreamingChoice).message;
+    }
+
+    const text = message.content ?? '';
 
     if (text.includes(FINAL_ANSWER_TAG) && !text.includes(ACTION_TAG)) {
       const parts = text.split(FINAL_ANSWER_TAG);
