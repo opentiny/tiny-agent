@@ -4,7 +4,7 @@ import { BaseAi } from '../base-ai.js';
 import { Role } from '../../type.js';
 import type { ChatBody, ChatCompleteResponse, LlmConfig, StreamingChoice } from '../../type.js';
 import { jsonSchemaToZod } from '../../utils/index.js';
-import { providerMap } from './providers/index.js';
+import { providers } from './providers/index.js';
 import type { GenerateTextOptions, Provider, ProviderInstance, StreamTextOptions } from './providers/index.js';
 
 export class AiSDK extends BaseAi {
@@ -15,11 +15,11 @@ export class AiSDK extends BaseAi {
 
     const { provider = 'openai' } = this.llmConfig;
 
-    if (!(provider in providerMap)) {
+    if (!(provider in providers)) {
       throw new Error(`Invalid provider: ${provider}`);
     }
 
-    const ProviderConstructor: Provider = providerMap[provider];
+    const ProviderConstructor: Provider = providers[provider as keyof typeof providers];
 
     this.provider = new ProviderConstructor(this.llmConfig);
   }
