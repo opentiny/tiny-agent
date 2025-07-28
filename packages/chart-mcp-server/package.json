@@ -1,0 +1,17 @@
+{
+  "name": "dashboad-mcp-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.13.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "zod": "^3.25.42",
+    "zod-to-json-schema": "^3.24.6"
+  }
+}

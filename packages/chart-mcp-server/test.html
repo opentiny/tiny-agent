@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <script>
+      // 方法1：先加载外部库
+      const loadScript = (src) => {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = src;
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      };
+
+      // 方法2：执行内联脚本
+      const executeScript = (code) => {
+        const script = document.createElement('script');
+        script.textContent = code;
+        document.head.appendChild(script);
+      };
+
+      // 方法3：创建 Web Component
+      const createWebComponent = () => {
+        const componentCode = `
+          class BarChart extends HTMLElement {
+            constructor() {
+              super();
+              this.attachShadow({ mode: 'open' });
+            }
+
+            connectedCallback() {
+              const container = document.createElement('div');
+              container.style.width = this.getAttribute('width');
+              container.style.height = this.getAttribute('height');
+              this.shadowRoot.appendChild(container);
+
+              this.chart = new G2.Chart({
+                container,
+              });
+
+              this.chart.options({"devicePixelRatio":3,"type":"interval","theme":{"type":"light","view":{"viewFill":"#FFF","plotFill":"transparent","mainFill":"transparent","contentFill":"transparent"},"interval":{"rect":{"fillOpacity":0.8}},"line":{"line":{"lineWidth":2}},"area":{"area":{"fillOpacity":0.6}},"point":{"point":{"lineWidth":1}}},"width":600,"height":400,"title":"","data":[{"category":"分类一","value":10},{"category":"分类二","value":20},{"category":"分类三","value":30}],"encode":{"x":"category","y":"value","color":"category"},"transform":[{"type":"stackY"}],"coordinate":{"transform":[{"type":"transpose"}]},"insetRight":24,"style":{"radiusTopLeft":4,"radiusTopRight":4,"columnWidthRatio":0.8},"axis":{"x":{"title":""},"y":{"title":""}},"labels":[{"text":"value","position":"inside","transform":[{"type":"overlapHide"},{"type":"contrastReverse"}],"fontSize":10}],"scale":{"y":{"nice":true}}});
+              this.chart.render();
+            }
+
+            disconnectedCallback() {
+              this.chart?.destroy();
+            }
+
+            static get observedAttributes() {
+              return ['data'];
+            }
+
+            attributeChangedCallback(name, oldValue, newValue) {
+              if (name === 'data' && this.chart) {
+                const data = JSON.parse(newValue);
+                this.chart.changeData(data);
+              }
+            }
+          }
+
+          customElements.define('bar-chart', BarChart);
+        `;
+        
+        executeScript(componentCode);
+      };
+
+      // 执行流程
+      async function init() {
+        try {
+          // 1. 加载 G2 库
+          await loadScript('https://unpkg.com/@antv/g2/dist/g2.min.js');
+          
+          // 2. 创建 Web Component
+          createWebComponent();
+          
+          // 3. 创建容器并插入组件
+          const div = document.createElement('div');
+          div.style.width = '600px';
+          div.style.height = '400px';
+          div.style.border = '1px solid #ddd';
+          div.style.margin = '20px';
+          
+          div.innerHTML = '<bar-chart width="100%" height="100%"></bar-chart>';
+          document.body.appendChild(div);
+          
+        } catch (error) {
+          console.error('Failed to load chart:', error);
+        }
+      }
+
+      // 启动
+      init();
+    </script>
+  </body>
+</html>
