@@ -1,5 +1,12 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, Tool, ToolCall } from '../type.js';
+import type {
+  ChatCompleteRequest,
+  ChatCompleteResponse,
+  MCPClientOptions,
+  NonStreamingChoice,
+  Tool,
+  ToolCall,
+} from '../type.js';
 import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
 
 const FINAL_ANSWER_TAG = 'Final Answer:';
@@ -27,17 +34,35 @@ export class ReActChat extends McpClientChat {
     return prompt;
   }
 
-  protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
+  protected async organizeToolCalls(
+    response: ChatCompleteResponse,
+  ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
     const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
+    let thought: string | undefined = undefined;
+    const thoughtActionRegex = /Thought(.*?)(?:Action|Final Answer|$)/gs;
+    const matches = [...text.matchAll(thoughtActionRegex)];
+    
+    if (matches.length > 0) {
+      // 取第一个 Thought 作为思考内容，去除首尾的符号
+      thought = matches[0][1]?.replace(/^\W|$/, '')?.trim();
+    }
 
     if (text.includes(FINAL_ANSWER_TAG) && !text.includes(ACTION_TAG)) {
       const parts = text.split(FINAL_ANSWER_TAG);
       const output = parts[parts.length - 1].trim();
-      return [[], output];
+      return {
+        toolCalls: [],
+        thought,
+        finalAnswer: output,
+      };
     }
 
     if (!text.includes(ACTION_TAG)) {
-      return [[], text.trim()];
+      return {
+        toolCalls: [],
+        thought,
+        finalAnswer: text.trim(),
+      };
     }
 
     const toolCalls: ToolCall[] = [];
@@ -72,14 +97,19 @@ export class ReActChat extends McpClientChat {
       });
     }
 
-    return [toolCalls, ''];
+    return {
+      toolCalls: toolCalls,
+      thought,
+      finalAnswer: text.trim(),
+    };
   }
 
-  protected async getChatBody(): Promise<ChatBody> {
-    const { model } = this.options.llmConfig;
-    const chatBody: ChatBody = {
+  protected async getChatBody(): Promise<ChatCompleteRequest> {
+    const { apiKey, url, systemPrompt, summarySystemPrompt, model, ...llmConfig } = this.options.llmConfig;
+    const chatBody: ChatCompleteRequest = {
       model,
       messages: this.messages,
+      ...llmConfig,
     };
 
     return chatBody;

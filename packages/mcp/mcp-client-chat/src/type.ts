@@ -26,16 +26,48 @@ export enum AgentStrategy {
   RE_ACT = 'ReAct',
 }
 
+export type ChatCompleteRequest = {
+  // Either "messages" or "prompt" is required
+  messages: Message[];
+  prompt?: string;
+  model?: string;
+  response_format?: { type: 'json_object' };
+  stop?: string | string[];
+  stream?: boolean; // Enable streaming
+  max_tokens?: number; // Range: [1, context_length)
+  temperature?: number; // Range: [0, 2]
+  tools?: Tool[];
+  tool_choice?: ToolChoice;
+  seed?: number; // Integer only
+  top_p?: number; // Range: (0, 1]
+  top_k?: number; // Range: [1, Infinity) Not available for OpenAI models
+  frequency_penalty?: number; // Range: [-2, 2]
+  presence_penalty?: number; // Range: [-2, 2]
+  repetition_penalty?: number; // Range: (0, 2]
+  logit_bias?: Record<number, number>;
+  top_logprobs?: number; // Integer only
+  min_p?: number; // Range: [0, 1]
+  top_a?: number; // Range: [0, 1]
+  prediction?: { type: 'content'; content: string };
+  transforms?: string[];
+  models?: string[];
+  route?: 'fallback';
+  provider?: {
+    name: string;
+    apiKey: string;
+  };
+};
+
+export type LlmConfig = {
+  url: string; // AI interface address
+  apiKey: string;
+  systemPrompt: string; // Instructions
+  summarySystemPrompt?: string; // Summary instructions for each round of chat
+} & Omit<ChatCompleteRequest, 'messages'>;
+
 export interface MCPClientOptions {
   agentStrategy?: AgentStrategy;
-  llmConfig: {
-    // Model configuration
-    url: string; // AI interface address
-    apiKey: string; // Model API key
-    model: string; // Model name
-    systemPrompt: string; // Instructions
-    summarySystemPrompt?: string; // Summary instructions for each round of chat
-  };
+  llmConfig: LlmConfig;
   mcpServersConfig: McpServersConfig; // MCP service configuration
   maxIterationSteps?: number; // Maximum execution steps
 }
@@ -62,6 +94,7 @@ export interface ChatBody {
   model: string;
   messages: Message[];
   tools?: AvailableTool[];
+  temperature?: number;
 }
 
 export type ToolResults = Array<{ call: string; result: CallToolResult }>;
@@ -98,25 +131,23 @@ export type NonChatChoice = {
   error?: ErrorResponse;
 };
 
+export type ChoiceMessage = {
+  content: string | null;
+  role: Role;
+  tool_calls?: ToolCall[];
+};
+
 export type NonStreamingChoice = {
   finish_reason: string | null;
   native_finish_reason: string | null;
-  message: {
-    content: string | null;
-    role: Role;
-    tool_calls?: ToolCall[];
-  };
+  message: ChoiceMessage;
   error?: ErrorResponse;
 };
 
 export type StreamingChoice = {
   finish_reason: string | null;
   native_finish_reason: string | null;
-  delta: {
-    content: string | null;
-    role?: Role;
-    tool_calls?: ToolCall[];
-  };
+  delta: ChoiceMessage;
   error?: ErrorResponse;
 };
 
@@ -197,35 +228,6 @@ export type ToolChoice =
         name: string;
       };
     };
-
-export type ChatCompleteRequest = {
-  // Either "messages" or "prompt" is required
-  messages?: Message[];
-  prompt?: string;
-  model?: string;
-  response_format?: { type: 'json_object' };
-  stop?: string | string[];
-  stream?: boolean; // Enable streaming
-  max_tokens?: number; // Range: [1, context_length)
-  temperature?: number; // Range: [0, 2]
-  tools?: Tool[];
-  tool_choice?: ToolChoice;
-  seed?: number; // Integer only
-  top_p?: number; // Range: (0, 1]
-  top_k?: number; // Range: [1, Infinity) Not available for OpenAI models
-  frequency_penalty?: number; // Range: [-2, 2]
-  presence_penalty?: number; // Range: [-2, 2]
-  repetition_penalty?: number; // Range: (0, 2]
-  logit_bias?: Record<number, number>;
-  top_logprobs?: number; // Integer only
-  min_p?: number; // Range: [0, 1]
-  top_a?: number; // Range: [0, 1]
-  prediction?: { type: 'content'; content: string };
-  transforms?: string[];
-  models?: string[];
-  route?: 'fallback';
-  // provider?: ProviderPreferences;
-};
 
 export interface IChatOptions {
   toolCallResponse?: boolean;

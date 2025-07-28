@@ -6,13 +6,14 @@ import { AgentStrategy, Role } from './type.js';
 
 import type {
   AvailableTool,
-  ChatBody,
+  ChatCompleteRequest,
   ChatCompleteResponse,
   CustomTransportMcpServer,
   IChatOptions,
   MCPClientOptions,
   McpServer,
   Message,
+  NonChatChoice,
   ToolCall,
   ToolResults,
 } from './type.js';
@@ -46,11 +47,16 @@ export abstract class McpClientChat {
     for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
       const client = await this.initClients(serverName, serverConfig as McpServer);
 
-      this.clientsMap.set(serverName, client);
+      if (client) {
+        this.clientsMap.set(serverName, client);
+      }
     }
   }
 
-  protected async initClients(serverName: string, serverConfig: McpServer | CustomTransportMcpServer): Promise<Client> {
+  protected async initClients(
+    serverName: string,
+    serverConfig: McpServer | CustomTransportMcpServer,
+  ): Promise<Client | null> {
     const client = new Client({
       name: serverName,
       version: '1.0.0',
@@ -78,14 +84,22 @@ export abstract class McpClientChat {
       });
       await client.connect(transport);
     } catch (_error) {
-      const sseTransport = new SSEClientTransport(baseUrl, {
-        requestInit: {
-          headers: serverConfig.headers,
-        },
-      });
+      try {
+        const sseTransport = new SSEClientTransport(baseUrl, {
+          requestInit: {
+            headers: serverConfig.headers,
+          },
+        });
 
-      await client.connect(sseTransport);
+        await client.connect(sseTransport);
+      } catch (error) {
+        console.error(`Init ${serverName} failed: ${error}`);
+
+        return null;
+      }
     }
+
+    console.log(`Successfully connected to MCP server: ${serverName}`);
 
     return client;
   }
@@ -189,19 +203,19 @@ export abstract class McpClientChat {
           continue;
         }
 
-        const [tool_calls, finalAnswer] = await this.organizeToolCalls(response as ChatCompleteResponse);
+        const { toolCalls, finalAnswer } = await this.organizeToolCalls(response as ChatCompleteResponse);
 
         // 工具调用
-        if (tool_calls.length) {
+        if (toolCalls.length) {
           try {
             // 首先添加包含 tool_calls 的 assistant 消息
             this.organizePromptMessages({
               role: Role.ASSISTANT,
               content: '', // assistant 消息内容可以为空，但必须包含 tool_calls
-              tool_calls: tool_calls,
+              tool_calls: toolCalls,
             });
 
-            const { messages } = await this.callTools(tool_calls);
+            const { messages } = await this.callTools(toolCalls);
 
             messages.forEach((m) => this.organizePromptMessages(m));
 
@@ -238,18 +252,33 @@ export abstract class McpClientChat {
   }
 
   protected async callTools(toolCalls: ToolCall[]): Promise<{ results: ToolResults; messages: Message[] }> {
-    const results: ToolResults = [];
-    const messages: Message[] = [];
+    try {
+      const toolResults: ToolResults = [];
+      const toolCallMessages: Message[] = [];
 
-    for (const toolCall of toolCalls) {
-      const toolName = toolCall.function.name;
-      const client = this.toolClientMap.get(toolName);
+      for (const toolCall of toolCalls) {
+        const toolName = toolCall.function.name;
+        const client = this.toolClientMap.get(toolName);
 
-      if (!client) {
-        throw new Error(`Tool "${toolName}" is not registered.`);
-      }
+        if (!client) {
+          toolCallMessages.push({
+            role: Role.TOOL,
+            tool_call_id: toolCall.id,
+            content: `Tool "${toolName}" not found.`,
+          });
+          toolResults.push({
+            call: toolName,
+            result: {
+              content: [],
+              isError: true,
+              error: `Tool "${toolName}" not found.`,
+            },
+          });
+          console.error(`Tool "${toolName}" not found.`);
 
-      try {
+          continue;
+        }
+
         let toolArgs = {};
 
         try {
@@ -257,9 +286,8 @@ export abstract class McpClientChat {
             typeof toolCall.function.arguments === 'string'
               ? JSON.parse(toolCall.function.arguments)
               : toolCall.function.arguments;
-        } catch (_error) {
-          console.error(`Failed to parse tool arguments for ${toolName}:`, _error);
-
+        } catch (error) {
+          console.error(`Failed to parse tool arguments for ${toolName}:`, error);
           toolArgs = {};
         }
 
@@ -276,26 +304,26 @@ export abstract class McpClientChat {
           })
           .catch(async (error) => {
             if (this.chatOptions?.toolCallResponse) {
-              await this.writeMessageDelta('Tool call result: failed \n\n', 'assistant', {
+              await this.writeMessageDelta(`[${toolCall.function.name}] Tool call result: failed. \n\n`, 'assistant', {
                 toolCall,
                 callToolResult: {
                   isError: true,
-                  error: error instanceof Error ? error.message : String(error),
+                  error: error instanceof Error ? error.message : JSON.stringify(error),
                 },
               });
             }
-            throw error;
+            console.error(`Failed to call tool "${toolName}":`, error);
+
+            return {
+              isError: true,
+              error: error instanceof Error ? error.message : JSON.stringify(error),
+            };
           })) as CallToolResult;
         const callToolContent = this.getToolCallContent(callToolResult);
-        
         const message: Message = {
           role: Role.TOOL,
           tool_call_id: toolCall.id,
-          content: `Tool "${toolName}" executed successfully: ${callToolContent}`,
-        };
-        const result = {
-          call: toolName,
-          result: callToolResult,
+          content: callToolContent,
         };
 
         if (this.chatOptions?.toolCallResponse) {
@@ -305,35 +333,21 @@ export abstract class McpClientChat {
           });
         }
 
-        messages.push(message);
-        results.push(result);
-      } catch (error) {
-        if (this.chatOptions?.toolCallResponse) {
-          await this.writeMessageDelta('Tool call failed: ' + (error as Error).message);
-        }
-
-        const message: Message = {
-          role: Role.TOOL,
-          tool_call_id: toolCall.id,
-          content: `Tool "${toolName}" execution failed. Please check the parameters or try again.`,
-        };
-
-        const callToolResult: CallToolResult = {
-          content: [{ type: 'text', text: 'Tool call failed!' }],
-          isError: true,
-        };
-
-        const result = {
+        toolCallMessages.push(message);
+        toolResults.push({
           call: toolName,
           result: callToolResult,
-        };
+        });
 
-        messages.push(message);
-        results.push(result);
+        console.log(`Successfully called tool "${toolName}". Result:`, callToolContent);
       }
-    }
 
-    return { results, messages };
+      return { results: toolResults, messages: toolCallMessages };
+    } catch (error) {
+      console.error('Failed to call tools:', error);
+
+      return { results: [], messages: [{ role: Role.ASSISTANT, content: 'call tools failed!' }] };
+    }
   }
 
   protected getToolCallContent(toolCallResult: CallToolResult): string {
@@ -376,10 +390,38 @@ export abstract class McpClientChat {
 
       return (await response.json()) as ChatCompleteResponse;
     } catch (error) {
-      console.error('Error calling chat/complete:', error);
+      console.error('Error calling chat:', error);
 
-      return error as Error;
+      if (error instanceof Error) {
+        return error;
+      } else {
+        return new Error(String(error));
+      }
     }
+  }
+
+  protected generateErrorStream(errorMessage: string) {
+    // 保持和正常流一致的格式
+    const choice: NonChatChoice = {
+      finish_reason: 'error',
+      text: errorMessage,
+    };
+    const errorResponse: ChatCompleteResponse = {
+      choices: [choice],
+      model: this.options.llmConfig.model as string,
+      id: '',
+      created: 0,
+      object: 'chat.completion.chunk',
+    };
+    const data = `data: ${JSON.stringify(errorResponse)}\n`;
+
+    return new ReadableStream({
+      start(controller) {
+        controller.enqueue(data);
+        controller.enqueue('data: [DONE]\n');
+        controller.close();
+      },
+    });
   }
 
   protected async queryChatCompleteStreaming(): Promise<ReadableStream> {
@@ -400,21 +442,19 @@ export abstract class McpClientChat {
         // 获取详细的错误信息
         const errorText = await response.text();
         console.error('API Error Response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}\nError details: ${errorText}`);
+
+        return this.generateErrorStream('Failed to fetch API!');
       }
 
       if (!response.body) {
-        throw new Error('Response body is null');
+        return this.generateErrorStream('Response body is empty!');
       }
 
       return response.body;
     } catch (error) {
-      console.error('Error calling streaming chat/complete:', error);
+      console.error('Failed to call streaming chat/complete:', error);
 
-      throw new Error(`Streaming chat API call failed: ${String(error)}`);
-    } finally {
-      // TODO: Implement context memory feature, for now clear after each request
-      this.clearPromptMessages();
+      return this.generateErrorStream('Failed to call chat API!');
     }
   }
 
@@ -444,9 +484,11 @@ export abstract class McpClientChat {
     }
   }
 
-  protected abstract getChatBody(): Promise<ChatBody>;
+  protected abstract getChatBody(): Promise<ChatCompleteRequest>;
 
-  protected abstract organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]>;
+  protected abstract organizeToolCalls(
+    response: ChatCompleteResponse,
+  ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }>;
 
   protected abstract initSystemPromptMessages(): Promise<string>;
 }
