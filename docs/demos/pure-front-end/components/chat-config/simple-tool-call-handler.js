@@ -29,7 +29,7 @@ export class SimpleToolCallHandler {
   }
 
   handlerStatic(extra) {
-    if(extra.toolCall && extra.callToolResult) {
+    if (extra.toolCall && extra.callToolResult) {
       this.updateTool(extra);
       return this.createElement(extra);
     }
@@ -53,13 +53,13 @@ export class SimpleToolCallHandler {
   }
 
   getElement(extra) {
-    return document.querySelector(`div.tool-call#${extra.toolCall.id}`)
+    return document.querySelector(`div.tool-call#${extra.toolCall.id}`);
   }
 
   updateTool(extra) {
     const style = this.getStyle(extra);
     if (!style) {
-      console.warn('no tool call info')
+      console.warn('no tool call info');
       return;
     }
 
@@ -71,13 +71,19 @@ export class SimpleToolCallHandler {
        .tool-call#${extra.toolCall.id}::after {
          content: '调用工具 ${sanitizedToolName} ${extra.callToolResult.isError ? '失败 ❌' : '成功 ✅'}'
        }
-      `
+      `;
+    } else if (extra.progress) {
+      style.innerHTML = `
+       .tool-call#${extra.toolCall.id}::after {
+         content: '正在调用工具 ${sanitizedToolName} (${extra.progress.progress}/${extra.progress.total}) ${extra.progress.status === 'paused' ? '(暂停中)' : ''}'
+       }
+      `;
     } else {
       style.innerHTML = `
        .tool-call#${extra.toolCall.id}::after {
          content: '正在调用工具 ${sanitizedToolName} ...'
        }
-         `
+      `;
     }
   }
 
@@ -92,7 +98,7 @@ export class SimpleToolCallHandler {
         border: #EEE 1px solid;
         border-radius: 10px;
       }
-    `
+    `;
     document.head.appendChild(style);
     this.styleElementIds.add(style.id);
   }
@@ -103,7 +109,7 @@ export class SimpleToolCallHandler {
       this.updateToolTimer = null;
     }
 
-    this.styleElementIds.forEach(styleId => {
+    this.styleElementIds.forEach((styleId) => {
       const element = document.getElementById(styleId);
       element?.remove();
     });
