@@ -38,7 +38,7 @@ export class ReActChat extends McpClientChat {
     response: ChatCompleteResponse,
   ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
     const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
-    let thought: string | undefined = undefined;
+    let thought: string | undefined;
     const thoughtActionRegex = /Thought(.*?)(?:Action|Final Answer|$)/gs;
     const matches = [...text.matchAll(thoughtActionRegex)];
     

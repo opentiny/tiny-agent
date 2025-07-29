@@ -27,7 +27,6 @@ export enum AgentStrategy {
 }
 
 export type ChatCompleteRequest = {
-  // Either "messages" or "prompt" is required
   messages: Message[];
   prompt?: string;
   model?: string;
