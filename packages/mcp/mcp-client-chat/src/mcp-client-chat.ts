@@ -1,7 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, Progress, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { AgentStrategy, Role } from './type.js';
 
 import type {
@@ -17,6 +17,7 @@ import type {
   ToolCall,
   ToolResults,
 } from './type.js';
+import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js';
 
 export function isCustomTransportMcpServer(
   serverConfig: McpServer | CustomTransportMcpServer,
@@ -298,13 +299,21 @@ export abstract class McpClientChat {
         }
 
         const callToolResult = (await client
-          .callTool({
-            name: toolName,
-            arguments: toolArgs,
-          })
+          .callTool(
+            {
+              name: toolName,
+              arguments: toolArgs,
+            },
+            undefined,
+            {
+              onprogress: async (progress: Progress) => this.writeToolCallProgress(toolCall, progress),
+              resetTimeoutOnProgress: true,
+              maxTotalTimeout: 10 * DEFAULT_REQUEST_TIMEOUT_MSEC,
+            },
+          )
           .catch(async (error) => {
             if (this.chatOptions?.toolCallResponse) {
-              await this.writeMessageDelta(`[${toolCall.function.name}] Tool call result: failed. \n\n`, 'assistant', {
+              await this.writeMessageDelta(`[${toolCall.function.name}] Tool call result: failed \n\n`, 'assistant', {
                 toolCall,
                 callToolResult: {
                   isError: true,
@@ -327,10 +336,14 @@ export abstract class McpClientChat {
         };
 
         if (this.chatOptions?.toolCallResponse) {
-          await this.writeMessageDelta('Tool call result: ' + JSON.stringify(callToolContent) + '\n\n', 'assistant', {
-            toolCall,
-            callToolResult,
-          });
+          await this.writeMessageDelta(
+            `[${toolCall.function.name}] Tool call result: ${JSON.stringify(callToolContent)}\n\n`,
+            'assistant',
+            {
+              toolCall,
+              callToolResult,
+            },
+          );
         }
 
         toolCallMessages.push(message);
@@ -456,6 +469,16 @@ export abstract class McpClientChat {
 
       return this.generateErrorStream('Failed to call chat API!');
     }
+  }
+
+  protected async writeToolCallProgress(toolCall: ToolCall, progress: Progress) {
+    await this.writeMessageDelta(
+      `[${toolCall.function.name}] ` +
+        ((progress.message as string) || `${progress.progress}${progress.total ? `/${progress.total}` : ''}`) +
+        '\n\n',
+      'assistant',
+      { toolCall, progress },
+    );
   }
 
   protected async writeMessageDelta(
