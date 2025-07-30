@@ -4,6 +4,7 @@ import type {
   ChatCompleteResponse,
   MCPClientOptions,
   NonStreamingChoice,
+  Tool,
   ToolCall,
 } from '../type.js';
 import { Role } from '../type.js';
@@ -35,7 +36,13 @@ export class FunctionCallChat extends McpClientChat {
   }
 
   protected async getChatBody(): Promise<ChatCompleteRequest> {
-    const tools = await this.fetchToolsList();
+    let tools: Tool[] = [];
+
+    try {
+      tools = await this.fetchToolsList();
+    } catch (_error) {
+      tools = [];
+    }
     // 过滤和验证消息格式，确保符合 API 要求
     const processedMessages = this.messages.map((msg) => {
       // 确保消息内容不为空

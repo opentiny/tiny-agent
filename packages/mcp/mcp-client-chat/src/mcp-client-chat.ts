@@ -2,6 +2,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { CallToolResult, Progress, Tool } from '@modelcontextprotocol/sdk/types.js';
+import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js';
 import { AgentStrategy, Role } from './type.js';
 
 import type {
@@ -17,7 +18,6 @@ import type {
   ToolCall,
   ToolResults,
 } from './type.js';
-import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js';
 
 export function isCustomTransportMcpServer(
   serverConfig: McpServer | CustomTransportMcpServer,
@@ -70,8 +70,14 @@ export abstract class McpClientChat {
       } else {
         clientTransport = serverConfig.customTransport;
       }
+
+      try {
       await client.connect(clientTransport);
       return client;
+      } catch (error) {
+        console.error(`Init ${serverName} failed:`, error);
+        return null;
+      }
     }
 
     const { url } = serverConfig;
@@ -91,16 +97,12 @@ export abstract class McpClientChat {
             headers: serverConfig.headers,
           },
         });
-
         await client.connect(sseTransport);
       } catch (error) {
-        console.error(`Init ${serverName} failed: ${error}`);
-
+        console.error(`Failed to connect to ${serverName}:`, error);
         return null;
       }
     }
-
-    console.log(`Successfully connected to MCP server: ${serverName}`);
 
     return client;
   }
@@ -110,6 +112,7 @@ export abstract class McpClientChat {
     const toolClientMap = new Map();
 
     for (const [, client] of this.clientsMap) {
+      try {
       const tools = (await client.listTools()).tools as unknown as Tool[];
       const openaiTools = tools.map((tool) => ({
         type: 'function' as const,
@@ -129,6 +132,9 @@ export abstract class McpClientChat {
       tools.forEach((tool) => {
         toolClientMap.set(tool.name, client);
       });
+      } catch (error) {
+        console.error('Failed to fetch tools from client:', error);
+      }
     }
 
     this.toolClientMap = toolClientMap;
@@ -221,7 +227,8 @@ export abstract class McpClientChat {
             messages.forEach((m) => this.organizePromptMessages(m));
 
             this.iterationSteps--;
-          } catch (_error) {
+          } catch (error) {
+            console.error('Tool call failed:', error);
             this.organizePromptMessages({
               role: Role.ASSISTANT,
               content: 'Tool call failed, retrying...',
