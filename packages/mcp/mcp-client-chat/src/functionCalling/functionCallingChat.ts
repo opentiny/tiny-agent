@@ -40,7 +40,8 @@ export class FunctionCallChat extends McpClientChat {
 
     try {
       tools = await this.fetchToolsList();
-    } catch (_error) {
+    } catch (error) {
+      console.error('Failed to fetch tools list:', error);
       tools = [];
     }
     // 过滤和验证消息格式，确保符合 API 要求

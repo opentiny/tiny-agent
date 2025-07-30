@@ -24,7 +24,8 @@ export class ReActChat extends McpClientChat {
 
     try {
       tools = await this.fetchToolsList();
-    } catch (_error) {
+    } catch (error) {
+      console.error('Failed to fetch tools list:', error);
       tools = [];
     }
 

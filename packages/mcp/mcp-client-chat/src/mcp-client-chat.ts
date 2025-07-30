@@ -72,8 +72,8 @@ export abstract class McpClientChat {
       }
 
       try {
-      await client.connect(clientTransport);
-      return client;
+        await client.connect(clientTransport);
+        return client;
       } catch (error) {
         console.error(`Init ${serverName} failed:`, error);
         return null;
@@ -113,25 +113,25 @@ export abstract class McpClientChat {
 
     for (const [, client] of this.clientsMap) {
       try {
-      const tools = (await client.listTools()).tools as unknown as Tool[];
-      const openaiTools = tools.map((tool) => ({
-        type: 'function' as const,
-        function: {
-          name: tool.name as string,
-          description: tool.description as string,
-          parameters: {
-            type: 'object' as const,
-            properties: tool.inputSchema.properties as Record<string, unknown>,
-            required: tool.inputSchema.required as string[],
+        const tools = (await client.listTools()).tools as unknown as Tool[];
+        const openaiTools = tools.map((tool) => ({
+          type: 'function' as const,
+          function: {
+            name: tool.name as string,
+            description: tool.description as string,
+            parameters: {
+              type: 'object' as const,
+              properties: tool.inputSchema.properties as Record<string, unknown>,
+              required: tool.inputSchema.required as string[],
+            },
           },
-        },
-      }));
+        }));
 
-      availableTools.push(...openaiTools);
+        availableTools.push(...openaiTools);
 
-      tools.forEach((tool) => {
-        toolClientMap.set(tool.name, client);
-      });
+        tools.forEach((tool) => {
+          toolClientMap.set(tool.name, client);
+        });
       } catch (error) {
         console.error('Failed to fetch tools from client:', error);
       }
@@ -421,17 +421,21 @@ export abstract class McpClientChat {
   }
 
   protected generateErrorStream(errorMessage: string) {
-    // 保持和正常流一致的格式
-    const choice: NonChatChoice = {
-      finish_reason: 'error',
-      text: errorMessage,
-    };
     const errorResponse: ChatCompleteResponse = {
-      choices: [choice],
-      model: this.options.llmConfig.model as string,
-      id: '',
-      created: 0,
+      id: `chat-error-${Date.now()}`,
       object: 'chat.completion.chunk',
+      created: Math.floor(Date.now() / 1000),
+      model: this.options.llmConfig.model as string,
+      choices: [
+        {
+          finish_reason: 'error',
+          native_finish_reason: 'error',
+          delta: {
+            role: Role.ASSISTANT,
+            content: errorMessage,
+          },
+        },
+      ],
     };
     const data = `data: ${JSON.stringify(errorResponse)}\n`;
 
@@ -458,23 +462,23 @@ export abstract class McpClientChat {
         body: JSON.stringify({ stream: true, ...chatBody }),
       });
 
+      if (!response.body) {
+        return this.generateErrorStream('Response body is empty!');
+      }
+      
       if (!response.ok) {
         // 获取详细的错误信息
         const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-
-        return this.generateErrorStream('Failed to fetch API!');
-      }
-
-      if (!response.body) {
-        return this.generateErrorStream('Response body is empty!');
+        const errorMessage = `Failed to call chat API! ${errorText}`;
+        console.error('Failed to call chat API:', errorMessage);
+        return this.generateErrorStream(errorMessage);
       }
 
       return response.body;
     } catch (error) {
       console.error('Failed to call streaming chat/complete:', error);
 
-      return this.generateErrorStream('Failed to call chat API!');
+      return this.generateErrorStream(`Failed to call chat API! ${error}`);
     }
   }
 
