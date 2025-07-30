@@ -365,7 +365,15 @@ export abstract class McpClientChat {
     } catch (error) {
       console.error('Failed to call tools:', error);
 
-      return { results: [], messages: [{ role: Role.ASSISTANT, content: 'call tools failed!' }] };
+      return {
+        results: [],
+        messages: [
+          {
+            role: Role.ASSISTANT,
+            content: `Tool execution failed: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+      };
     }
   }
 
@@ -464,7 +472,7 @@ export abstract class McpClientChat {
       if (!response.body) {
         return this.generateErrorStream('Response body is empty!');
       }
-      
+
       if (!response.ok) {
         // 获取详细的错误信息
         const errorText = await response.text();
