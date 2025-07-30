@@ -1,5 +1,12 @@
 import { McpClientChat } from '../mcp-client-chat.js';
-import type { ChatBody, ChatCompleteResponse, MCPClientOptions, NonStreamingChoice, Tool, ToolCall } from '../type.js';
+import type {
+  ChatCompleteRequest,
+  ChatCompleteResponse,
+  MCPClientOptions,
+  NonStreamingChoice,
+  Tool,
+  ToolCall,
+} from '../type.js';
 import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
 
 const FINAL_ANSWER_TAG = 'Final Answer:';
@@ -17,7 +24,8 @@ export class ReActChat extends McpClientChat {
 
     try {
       tools = await this.fetchToolsList();
-    } catch (_error) {
+    } catch (error) {
+      console.error('Failed to fetch tools list:', error);
       tools = [];
     }
 
@@ -27,59 +35,93 @@ export class ReActChat extends McpClientChat {
     return prompt;
   }
 
-  protected async organizeToolCalls(response: ChatCompleteResponse): Promise<[ToolCall[], string]> {
-    const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
+  protected async organizeToolCalls(
+    response: ChatCompleteResponse,
+  ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
+    try {
+      const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
+      let thought: string | undefined;
+      const thoughtActionRegex = /Thought(.*?)(?:Action|Final Answer|$)/gs;
+      const matches = [...text.matchAll(thoughtActionRegex)];
 
-    if (text.includes(FINAL_ANSWER_TAG) && !text.includes(ACTION_TAG)) {
-      const parts = text.split(FINAL_ANSWER_TAG);
-      const output = parts[parts.length - 1].trim();
-      return [[], output];
-    }
+      if (matches.length > 0) {
+        // 取第一个 Thought 作为思考内容，去除首尾的符号
+        thought = matches[0][1]?.replace(/^\W|$/, '')?.trim();
+      }
 
-    if (!text.includes(ACTION_TAG)) {
-      return [[], text.trim()];
-    }
+      if (text.includes(FINAL_ANSWER_TAG) && !text.includes(ACTION_TAG)) {
+        const parts = text.split(FINAL_ANSWER_TAG);
+        const output = parts[parts.length - 1].trim();
+        return {
+          toolCalls: [],
+          thought,
+          finalAnswer: output,
+        };
+      }
 
-    const toolCalls: ToolCall[] = [];
+      if (!text.includes(ACTION_TAG)) {
+        return {
+          toolCalls: [],
+          thought,
+          finalAnswer: text.trim(),
+        };
+      }
 
-    if (text.includes('```')) {
-      const actionBlocks = text
-        .trim()
-        .split(/```(?:json)?/)
-        .filter((block: string) => block.includes(ACTION_TAG));
+      const toolCalls: ToolCall[] = [];
 
-      actionBlocks.forEach((block: string) => {
-        try {
-          const { action, action_input } = JSON.parse(block.trim());
+      if (text.includes('```')) {
+        const actionBlocks = text
+          .trim()
+          .split(/```(?:json)?/)
+          .filter((block: string) => block.includes(ACTION_TAG));
 
-          if (!action || typeof action !== 'string') {
-            console.error('Invalid tool call: missing or invalid action field');
+        actionBlocks.forEach((block: string) => {
+          try {
+            const { action, action_input } = JSON.parse(block.trim());
 
-            return;
+            if (!action || typeof action !== 'string') {
+              console.error('Invalid tool call: missing or invalid action field');
+
+              return;
+            }
+
+            toolCalls.push({
+              id: `call_${Math.random().toString(36).slice(2)}`,
+              type: 'function',
+              function: {
+                name: action,
+                arguments: typeof action_input === 'string' ? action_input : JSON.stringify(action_input || {}),
+              },
+            });
+          } catch (error) {
+            console.error('Failed to parse tool call JSON:', error);
           }
+        });
+      }
 
-          toolCalls.push({
-            id: `call_${Math.random().toString(36).slice(2)}`,
-            type: 'function',
-            function: {
-              name: action,
-              arguments: typeof action_input === 'string' ? action_input : JSON.stringify(action_input || {}),
-            },
-          });
-        } catch (error) {
-          console.error('Failed to parse tool call JSON:', error);
-        }
-      });
+      return {
+        toolCalls: toolCalls,
+        thought,
+        finalAnswer: text.trim(),
+      };
+    } catch (error) {
+      console.error('Failed to organize tool calls:', error);
+      const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
+
+      return {
+        toolCalls: [],
+        thought: '',
+        finalAnswer: text,
+      };
     }
-
-    return [toolCalls, ''];
   }
 
-  protected async getChatBody(): Promise<ChatBody> {
-    const { model } = this.options.llmConfig;
-    const chatBody: ChatBody = {
+  protected async getChatBody(): Promise<ChatCompleteRequest> {
+    const { apiKey, url, systemPrompt, summarySystemPrompt, model, ...llmConfig } = this.options.llmConfig;
+    const chatBody: ChatCompleteRequest = {
       model,
       messages: this.messages,
+      ...llmConfig,
     };
 
     return chatBody;
