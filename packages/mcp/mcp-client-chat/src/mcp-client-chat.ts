@@ -14,7 +14,6 @@ import type {
   MCPClientOptions,
   McpServer,
   Message,
-  NonChatChoice,
   ToolCall,
   ToolResults,
 } from './type.js';
