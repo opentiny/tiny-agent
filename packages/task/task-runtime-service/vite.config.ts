@@ -11,6 +11,9 @@ export default defineConfig({
     },
     sourcemap: true,
     rollupOptions: {
+      output: {
+        banner: 'import "./index.css";',
+      },
       external: Object.keys(packageJson.dependencies || {}),
     },
   },
