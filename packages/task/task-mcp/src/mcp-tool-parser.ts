@@ -148,7 +148,7 @@ export class McpToolParser {
   }
 
   sendTaskProgressNotification(task: Task, extra: RequestHandlerExtra<Request, Notification>) {
-    const { currentIndex, totalSteps, status } = task.getProgressInfo();
+    const { currentIndex, totalSteps, status } = task.getExecutorProgressInfo();
     const i = currentIndex + 1;
     extra.sendNotification({
       method: 'notifications/progress',
