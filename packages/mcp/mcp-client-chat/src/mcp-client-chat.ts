@@ -27,6 +27,7 @@ export function isCustomTransportMcpServer(
   return !!serverConfig.customTransport;
 }
 const DEFAULT_AGENT_STRATEGY = AgentStrategy.FUNCTION_CALLING;
+
 export abstract class McpClientChat {
   protected options: MCPClientOptions;
   protected iterationSteps: number;
@@ -81,8 +82,16 @@ export abstract class McpClientChat {
       return client;
     }
 
-    const { url } = serverConfig;
-    const baseUrl = new URL(url);
+    let baseUrl: URL;
+
+    try {
+      const { url } = serverConfig;
+      baseUrl = new URL(url);
+    } catch (error) {
+      logger.error(`Init ${serverName} failed: ${error}`);
+
+      return null;
+    }
 
     try {
       const transport = new StreamableHTTPClientTransport(baseUrl, {
@@ -267,7 +276,6 @@ export abstract class McpClientChat {
         };
       }
 
-      // 返回聚合后的 ChatCompleteResponse
       return result;
     } catch (error) {
       logger.error(`mergeStreamingResponses failed: ${error}`);
@@ -317,6 +325,10 @@ export abstract class McpClientChat {
               const obj = JSON.parse(data);
 
               result.push(obj);
+
+              if (obj.choices[0].delta.content) {
+                await this.writeMessageDelta(obj.choices[0].delta.content);
+              }
             } catch (_e) {
               // 不是合法JSON可忽略或记录
             }
@@ -380,7 +392,7 @@ export abstract class McpClientChat {
 
         const { toolCalls, thought, finalAnswer } = await this.organizeToolCalls(response as ChatCompleteResponse);
 
-        if (thought) {
+        if (!this.options.streamSwitch && thought) {
           await this.writeMessageDelta(thought);
         }
 
