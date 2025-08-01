@@ -23,7 +23,7 @@ export class FunctionCallChat extends McpClientChat {
 
   protected async organizeToolCalls(
     response: ChatCompleteResponse,
-  ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
+  ): Promise<{ toolCalls: ToolCall[]; finalAnswer: string; thought?: string }> {
     let message: ChoiceMessage;
 
     if (this.options.streamSwitch) {
@@ -39,7 +39,9 @@ export class FunctionCallChat extends McpClientChat {
       finalAnswer = message.content ?? '';
     }
 
-    return { toolCalls, finalAnswer };
+    const thought = message.reasoning ?? message.content ?? '';
+
+    return { toolCalls, finalAnswer, thought };
   }
 
   protected async getChatBody(): Promise<ChatCompleteRequest> {

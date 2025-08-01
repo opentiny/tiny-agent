@@ -103,6 +103,7 @@ export type NonChatChoice = {
 export type ChoiceMessage = {
   content: string | null;
   role: Role;
+  reasoning?: string | null;
   tool_calls?: ToolCall[];
 };
 

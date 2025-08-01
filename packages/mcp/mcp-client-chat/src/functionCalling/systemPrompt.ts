@@ -1,3 +1,9 @@
-export const DEFAULT_SYSTEM_PROMPT = 'You are a helpful assistant with access to tools.';
+export const DEFAULT_SYSTEM_PROMPT =
+  `你是一个智能助手。请按照以下格式输出：
+  问题分析[分析用户需求]；
+  思考过程[详细说明为什么需要调用工具，如何选择工具，如何设计参数，但是不要输出工具名称！]；
+  工具调用[调用相应的工具]；
+  建议[提供有用的建议和后续行动]；
+  请确保在调用工具前，在消息内容中完整输出上述所有部分。组织好语言直接输出段落，不要分段输出，不要输出标题如“问题分析”！`;
 
-export const DEFAULT_SUMMARY_SYSTEM_PROMPT = 'Please provide a brief summary!';
+export const DEFAULT_SUMMARY_SYSTEM_PROMPT = '请对以上内容进行简明扼要的总结，突出核心要点，便于快速理解。';
