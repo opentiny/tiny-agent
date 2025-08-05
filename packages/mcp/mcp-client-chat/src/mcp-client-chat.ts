@@ -36,6 +36,7 @@ export abstract class McpClientChat {
   protected messages: Message[] = [];
   protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
+  protected abortController: AbortController | null = null;
 
   constructor(options: MCPClientOptions) {
     this.options = {
@@ -44,6 +45,13 @@ export abstract class McpClientChat {
       streamSwitch: options.streamSwitch ?? true,
     };
     this.iterationSteps = options.maxIterationSteps || 1;
+  }
+
+  protected abort() {
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
   }
 
   async init(): Promise<void> {
@@ -147,7 +155,7 @@ export abstract class McpClientChat {
           toolClientMap.set(tool.name, client);
         });
       } catch (error) {
-        console.error('Failed to fetch tools from client:', error);
+        logger.error('Failed to fetch tools from client:', error);
       }
     }
 
@@ -358,7 +366,15 @@ export abstract class McpClientChat {
 
   protected async chatIteration(): Promise<void> {
     try {
+      this.abortController = new AbortController();
+      const signal = this.abortController.signal;
+
       while (this.iterationSteps > 0) {
+        if (signal.aborted) {
+          logger.info('🛑 Chat iteration aborted');
+          break;
+        }
+
         let response: ChatCompleteResponse | Error;
 
         if (this.options.streamSwitch) {
@@ -399,6 +415,11 @@ export abstract class McpClientChat {
         // 工具调用
         if (toolCalls.length) {
           try {
+            if (signal.aborted) {
+              logger.info('🛑 Tool calls aborted');
+              break;
+            }
+            
             // 首先添加包含 tool_calls 的 assistant 消息
             this.organizePromptMessages({
               role: Role.ASSISTANT,
@@ -429,6 +450,11 @@ export abstract class McpClientChat {
         }
       }
 
+      if (signal.aborted) {
+        logger.info('🛑 Skipping summary due to abort');
+        return;
+      }
+
       const summaryPrompt = this.options.llmConfig.summarySystemPrompt || 'Please provide a brief summary.';
 
       this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
@@ -439,6 +465,8 @@ export abstract class McpClientChat {
     } catch (error) {
       logger.error('Chat iteration failed:', error);
       throw error;
+    } finally {
+      this.abortController = null;
     }
   }
 
@@ -574,6 +602,7 @@ export abstract class McpClientChat {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ stream: true, ...chatBody }),
+        signal: this.abortController?.signal,
       });
       if (!response.ok) {
         return new Error(`Failed to fetch ${url}: ${response.status}:${await response.text()}`);
@@ -581,6 +610,11 @@ export abstract class McpClientChat {
 
       return (await response.json()) as ChatCompleteResponse;
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.info('🛑 Chat API request aborted');
+        return new Error('Request was aborted');
+      }
+
       logger.error('Error calling chat/complete:', error);
 
       if (error instanceof Error) {
@@ -631,6 +665,7 @@ export abstract class McpClientChat {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ stream: true, ...chatBody }),
+        signal: this.abortController?.signal,
       });
 
       if (!response.body) {
@@ -641,14 +676,18 @@ export abstract class McpClientChat {
         // 获取详细的错误信息
         const errorText = await response.text();
         const errorMessage = `Failed to call chat API! ${errorText}`;
-        console.error('Failed to call chat API:', errorMessage);
+        logger.error('Failed to call chat API:', errorMessage);
         return this.generateErrorStream(errorMessage);
       }
 
       return response.body;
     } catch (error) {
-      console.error('Failed to call streaming chat/complete:', error);
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.error('🛑 Chat API request aborted');
+        return this.generateErrorStream('Request was aborted by user');
+      }
 
+      logger.error('Failed to call streaming chat/complete:', error);
       return this.generateErrorStream(`Failed to call chat API! ${error}`);
     }
   }
