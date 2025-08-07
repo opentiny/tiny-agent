@@ -238,6 +238,9 @@ export abstract class McpClientChat {
   protected mergeStreamingResponses(responses: ChatCompleteResponse[]): ChatCompleteResponse {
     try {
       const toolCalls: ToolCall[] = [];
+      if (responses[0].choices[0].finish_reason === 'error') {
+        return responses[0];
+      }
       const isStream = 'delta' in responses[0].choices[0];
       const mergedContent = responses
         .flatMap((r) => r.choices)
@@ -389,7 +392,7 @@ export abstract class McpClientChat {
             role: Role.ASSISTANT,
             content: response.message,
           });
-          this.iterationSteps = 0;
+          this.iterationSteps = -1; // 手动结束为-1
           logger.error(`queryChatComplete failed: ${response}`);
 
           continue;
@@ -400,7 +403,7 @@ export abstract class McpClientChat {
             role: Role.ASSISTANT,
             content: response.choices[0].error.message,
           });
-          this.iterationSteps = 0;
+          this.iterationSteps = -1;
           logger.error(`queryChatComplete failed: ${response.choices[0].error.message}`);
 
           continue;
@@ -408,7 +411,7 @@ export abstract class McpClientChat {
 
         const { toolCalls, thought, finalAnswer } = await this.organizeToolCalls(response as ChatCompleteResponse);
 
-        if (!this.options.streamSwitch && thought) {
+        if (!this.options.streamSwitch && thought && (toolCalls.length || thought !== finalAnswer)) {
           await this.writeMessageDelta(thought);
         }
 
@@ -445,7 +448,6 @@ export abstract class McpClientChat {
             role: Role.ASSISTANT,
             content: finalAnswer,
           });
-
           this.iterationSteps = 0;
         }
       }
@@ -454,7 +456,14 @@ export abstract class McpClientChat {
         logger.info('🛑 Skipping summary due to abort');
         return;
       }
-
+      if (this.messages[this.messages.length - 1].role === Role.ASSISTANT && this.messages[this.messages.length - 1].content?.length > 0) {
+        if (this.iterationSteps === -1) {
+          await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
+        }
+      
+        this.writeMessageEnd();
+        return;
+      }
       const summaryPrompt = this.options.llmConfig.summarySystemPrompt || 'Please provide a brief summary.';
 
       this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
@@ -690,6 +699,13 @@ export abstract class McpClientChat {
       logger.error('Failed to call streaming chat/complete:', error);
       return this.generateErrorStream(`Failed to call chat API! ${error}`);
     }
+  }
+
+  protected async writeMessageEnd() {
+    const writer = this.transformStream.writable.getWriter();
+    await writer.ready;
+    await writer.write(new TextEncoder().encode('data: [DONE]\n\n'));
+    await writer.close();
   }
 
   protected async writeMessageDelta(
