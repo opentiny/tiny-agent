@@ -13,7 +13,10 @@ export default defineConfig({
       external: [
         ...Object.keys(packageJson.dependencies || {}),
         ...[
-          'node:stream'
+          'node:stream',
+          'node:fs',
+          'node:path',
+          'node:url',
         ]
       ]
     },
