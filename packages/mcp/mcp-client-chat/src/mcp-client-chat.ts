@@ -7,19 +7,19 @@ import { logger } from './logger/index.js';
 
 import type {
   AvailableTool,
-  ChatCompleteRequest,
+  ChatBody,
   ChatCompleteResponse,
   CustomTransportMcpServer,
   IChatOptions,
   MCPClientOptions,
   McpServer,
   Message,
-  NonChatChoice,
   NonStreamingChoice,
   StreamingChoice,
   ToolCall,
   ToolResults,
 } from './type.js';
+import { type BaseAi, getAiInstance } from './ai/index.js';
 
 export function isCustomTransportMcpServer(
   serverConfig: McpServer | CustomTransportMcpServer,
@@ -37,6 +37,7 @@ export abstract class McpClientChat {
   protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
   protected abortController: AbortController | null = null;
+  protected aiInstance: BaseAi;
 
   constructor(options: MCPClientOptions) {
     this.options = {
@@ -45,6 +46,7 @@ export abstract class McpClientChat {
       streamSwitch: options.streamSwitch ?? true,
     };
     this.iterationSteps = options.maxIterationSteps || 1;
+    this.aiInstance = getAiInstance(options.llmConfig);
   }
 
   protected abort() {
@@ -340,8 +342,9 @@ export abstract class McpClientChat {
               if (obj.choices[0].delta.content) {
                 await this.writeMessageDelta(obj.choices[0].delta.content);
               }
-            } catch (_e) {
+            } catch (_error) {
               // 不是合法JSON可忽略或记录
+              logger.error('invalid streamable response:', data);
             }
           }
         }
@@ -422,7 +425,7 @@ export abstract class McpClientChat {
               logger.info('🛑 Tool calls aborted');
               break;
             }
-            
+
             // 首先添加包含 tool_calls 的 assistant 消息
             this.organizePromptMessages({
               role: Role.ASSISTANT,
@@ -456,11 +459,14 @@ export abstract class McpClientChat {
         logger.info('🛑 Skipping summary due to abort');
         return;
       }
-      if (this.messages[this.messages.length - 1].role === Role.ASSISTANT && this.messages[this.messages.length - 1].content?.length > 0) {
+      if (
+        this.messages[this.messages.length - 1].role === Role.ASSISTANT &&
+        this.messages[this.messages.length - 1].content?.length > 0
+      ) {
         if (this.iterationSteps === -1) {
           await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
         }
-      
+
         this.writeMessageEnd();
         return;
       }
@@ -491,6 +497,7 @@ export abstract class McpClientChat {
         if (!client) {
           toolCallMessages.push({
             role: Role.TOOL,
+            name: toolName,
             tool_call_id: toolCall.id,
             content: `Tool "${toolName}" not found.`,
           });
@@ -551,6 +558,7 @@ export abstract class McpClientChat {
         const message: Message = {
           role: Role.TOOL,
           tool_call_id: toolCall.id,
+          name: toolName,
           content: callToolContent,
         };
 
@@ -600,37 +608,30 @@ export abstract class McpClientChat {
   }
 
   protected async queryChatComplete(): Promise<ChatCompleteResponse | Error> {
-    const { url, apiKey } = this.options.llmConfig;
     const chatBody = await this.getChatBody();
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ stream: true, ...chatBody }),
-        signal: this.abortController?.signal,
-      });
-      if (!response.ok) {
-        return new Error(`Failed to fetch ${url}: ${response.status}:${await response.text()}`);
-      }
+      const response = await this.aiInstance.chat(chatBody);
 
-      return (await response.json()) as ChatCompleteResponse;
+      return response;
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        logger.info('🛑 Chat API request aborted');
-        return new Error('Request was aborted');
-      }
-
       logger.error('Error calling chat/complete:', error);
 
-      if (error instanceof Error) {
-        return error;
-      } else {
-        return new Error(String(error));
-      }
+      return error as Error;
+    }
+  }
+
+  protected async queryChatCompleteStreaming(): Promise<globalThis.ReadableStream> {
+    const chatBody = await this.getChatBody();
+
+    try {
+      const response = await this.aiInstance.chatStream(chatBody);
+
+      return response;
+    } catch (error) {
+      logger.error('Error calling chat/complete:', error);
+
+      throw new Error(`Streaming chat API call failed: ${String(error)}`);
     }
   }
 
@@ -660,45 +661,6 @@ export abstract class McpClientChat {
         controller.close();
       },
     });
-  }
-
-  protected async queryChatCompleteStreaming(): Promise<ReadableStream> {
-    const { url, apiKey } = this.options.llmConfig;
-    const chatBody = await this.getChatBody();
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ stream: true, ...chatBody }),
-        signal: this.abortController?.signal,
-      });
-
-      if (!response.body) {
-        return this.generateErrorStream('Response body is empty!');
-      }
-
-      if (!response.ok) {
-        // 获取详细的错误信息
-        const errorText = await response.text();
-        const errorMessage = `Failed to call chat API! ${errorText}`;
-        logger.error('Failed to call chat API:', errorMessage);
-        return this.generateErrorStream(errorMessage);
-      }
-
-      return response.body;
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        logger.error('🛑 Chat API request aborted');
-        return this.generateErrorStream('Request was aborted by user');
-      }
-
-      logger.error('Failed to call streaming chat/complete:', error);
-      return this.generateErrorStream(`Failed to call chat API! ${error}`);
-    }
   }
 
   protected async writeMessageEnd() {
@@ -734,7 +696,7 @@ export abstract class McpClientChat {
     }
   }
 
-  protected abstract getChatBody(): Promise<ChatCompleteRequest>;
+  protected abstract getChatBody(): Promise<ChatBody>;
 
   protected abstract organizeToolCalls(
     response: ChatCompleteResponse,

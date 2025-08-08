@@ -1,5 +1,6 @@
 import { McpClientChat } from '../mcp-client-chat.js';
 import type {
+  ChatBody,
   ChatCompleteRequest,
   ChatCompleteResponse,
   ChoiceMessage,
@@ -44,7 +45,7 @@ export class FunctionCallChat extends McpClientChat {
     return { toolCalls, finalAnswer, thought };
   }
 
-  protected async getChatBody(): Promise<ChatCompleteRequest> {
+  protected async getChatBody(): Promise<ChatBody> {
     const tools = await this.fetchToolsList();
 
     const { model } = this.options.llmConfig;
@@ -57,12 +58,10 @@ export class FunctionCallChat extends McpClientChat {
       }
       return msg;
     });
-    const { apiKey, url, systemPrompt, summarySystemPrompt, ...llmConfig } = this.options.llmConfig;
 
-    const chatBody: ChatCompleteRequest = {
+    const chatBody: ChatBody = {
       model,
       messages: processedMessages,
-      ...llmConfig,
     };
 
     // 只有在有工具且当前迭代步数大于0时才添加tools字段

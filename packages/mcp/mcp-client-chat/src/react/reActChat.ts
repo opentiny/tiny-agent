@@ -1,7 +1,7 @@
 import { logger } from '../logger/index.js';
 import { McpClientChat } from '../mcp-client-chat.js';
 import type {
-  ChatCompleteRequest,
+  ChatBody,
   ChatCompleteResponse,
   MCPClientOptions,
   NonStreamingChoice,
@@ -88,7 +88,7 @@ export class ReActChat extends McpClientChat {
             const { action, action_input } = JSON.parse(block.trim());
 
             if (!action || typeof action !== 'string') {
-              console.error('Invalid tool call: missing or invalid action field');
+              logger.error('Invalid tool call: missing or invalid action field');
 
               return;
             }
@@ -102,7 +102,7 @@ export class ReActChat extends McpClientChat {
               },
             });
           } catch (error) {
-            console.error('Failed to parse tool call JSON:', error);
+            logger.error('Failed to parse tool call JSON:', error);
           }
         });
       }
@@ -113,7 +113,7 @@ export class ReActChat extends McpClientChat {
         finalAnswer: text.trim(),
       };
     } catch (error) {
-      console.error('Failed to organize tool calls:', error);
+      logger.error('Failed to organize tool calls:', error);
       const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
 
       return {
@@ -124,13 +124,11 @@ export class ReActChat extends McpClientChat {
     }
   }
 
-  protected async getChatBody(): Promise<ChatCompleteRequest> {
+  protected async getChatBody(): Promise<ChatBody> {
     const { model } = this.options.llmConfig;
-    const { apiKey, url, systemPrompt, summarySystemPrompt, ...llmConfig } = this.options.llmConfig;
-    const chatBody: ChatCompleteRequest = {
+    const chatBody: ChatBody = {
       model,
       messages: this.messages,
-      ...llmConfig,
     };
 
     return chatBody;
