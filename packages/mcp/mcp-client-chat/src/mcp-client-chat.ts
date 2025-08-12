@@ -219,12 +219,8 @@ export abstract class McpClientChat {
         if (!toolCall.id) {
           // 修复：确保 result.at(-1) 存在且 function/arguments 字段存在
           const last = result.at(-1);
-          if (
-            last &&
-            last.function &&
-            typeof last.function.arguments === 'string' &&
-            typeof toolCall.function?.arguments === 'string'
-          ) {
+          if (last && last.function && typeof toolCall.function?.arguments === 'string') {
+            last.function.arguments = last.function.arguments || '';
             last.function.arguments += toolCall.function.arguments;
           }
           return;
