@@ -217,12 +217,8 @@ export abstract class McpClientChat {
         if (!toolCall.id) {
           // 修复：确保 result.at(-1) 存在且 function/arguments 字段存在
           const last = result.at(-1);
-          if (
-            last &&
-            last.function &&
-            typeof last.function.arguments === 'string' &&
-            typeof toolCall.function?.arguments === 'string'
-          ) {
+          if (last && last.function && typeof toolCall.function?.arguments === 'string') {
+            last.function.arguments = last.function.arguments || '';
             last.function.arguments += toolCall.function.arguments;
           }
           return;
@@ -422,7 +418,7 @@ export abstract class McpClientChat {
               logger.info('🛑 Tool calls aborted');
               break;
             }
-            
+
             // 首先添加包含 tool_calls 的 assistant 消息
             this.organizePromptMessages({
               role: Role.ASSISTANT,
@@ -456,11 +452,14 @@ export abstract class McpClientChat {
         logger.info('🛑 Skipping summary due to abort');
         return;
       }
-      if (this.messages[this.messages.length - 1].role === Role.ASSISTANT && this.messages[this.messages.length - 1].content?.length > 0) {
+      if (
+        this.messages[this.messages.length - 1].role === Role.ASSISTANT &&
+        this.messages[this.messages.length - 1].content?.length > 0
+      ) {
         if (this.iterationSteps === -1) {
           await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
         }
-      
+
         this.writeMessageEnd();
         return;
       }
