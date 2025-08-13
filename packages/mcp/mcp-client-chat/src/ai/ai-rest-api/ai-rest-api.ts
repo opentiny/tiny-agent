@@ -68,37 +68,6 @@ export class AiRestApi extends BaseAi {
 
       return this.generateErrorStream(`Failed to call chat API! ${error}`);
     }
-
-
-    // const { url, apiKey } = this.llmConfig;
-
-    // try {
-    //   const response = await fetch(url, {
-    //     method: 'POST',
-    //     headers: {
-    //       Authorization: `Bearer ${apiKey}`,
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ stream: true, ...chatBody }),
-    //   });
-
-    //   if (!response.ok) {
-    //     // 获取详细的错误信息
-    //     const errorText = await response.text();
-    //     console.error('API Error Response:', errorText);
-    //     throw new Error(`HTTP error! status: ${response.status}\nError details: ${errorText}`);
-    //   }
-
-    //   if (!response.body) {
-    //     throw new Error('Response body is null');
-    //   }
-
-    //   return response.body;
-    // } catch (error) {
-    //   console.error('Error calling streaming chat/complete:', error);
-
-    //   throw new Error(`Streaming chat API call failed: ${String(error)}`);
-    // }
   }
 
   protected generateErrorStream(errorMessage: string) {
