@@ -1,13 +1,16 @@
 import { McpClientChat } from '../mcp-client-chat.js';
 import type {
-  ChatCompleteRequest,
+  AvailableTool,
+  ChatBody,
   ChatCompleteResponse,
+  ChoiceMessage,
   MCPClientOptions,
   NonStreamingChoice,
-  Tool,
+  StreamingChoice,
+  ModelMessage,
   ToolCall,
-} from '../type.js';
-import { Role } from '../type.js';
+} from '../types/index.js';
+import { Role } from '../types/index.js';
 import { DEFAULT_SUMMARY_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT } from './systemPrompt.js';
 
 export class FunctionCallChat extends McpClientChat {
@@ -23,7 +26,13 @@ export class FunctionCallChat extends McpClientChat {
   protected async organizeToolCalls(
     response: ChatCompleteResponse,
   ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
-    const message = (response.choices[0] as NonStreamingChoice).message;
+    let message: ChoiceMessage;
+
+    if (this.options.streamSwitch) {
+      message = (response.choices[0] as StreamingChoice).delta;
+    } else {
+      message = (response.choices[0] as NonStreamingChoice).message;
+    }
 
     const toolCalls = message.tool_calls || [];
     let finalAnswer = '';
@@ -32,11 +41,13 @@ export class FunctionCallChat extends McpClientChat {
       finalAnswer = message.content ?? '';
     }
 
-    return { toolCalls, finalAnswer };
+    const thought = message.reasoning ?? message.content ?? '';
+
+    return { toolCalls, finalAnswer, thought };
   }
 
-  protected async getChatBody(): Promise<ChatCompleteRequest> {
-    let tools: Tool[] = [];
+  protected async getChatBody(): Promise<ChatBody> {
+    let tools: AvailableTool[] = [];
 
     try {
       tools = await this.fetchToolsList();
@@ -53,7 +64,7 @@ export class FunctionCallChat extends McpClientChat {
       return msg;
     });
     const { apiKey, url, systemPrompt, summarySystemPrompt, model, ...llmConfig } = this.options.llmConfig;
-    const chatBody: ChatCompleteRequest = {
+    const chatBody: ChatBody = {
       model,
       messages: processedMessages,
       ...llmConfig,
