@@ -60,14 +60,13 @@ export type ChatCompleteRequest = {
 };
 
 export type LlmConfig = {
-  apiKey: string; // Model API key
   systemPrompt: string; // Instructions
   summarySystemPrompt?: string; // Summary instructions for each round of chat
   streamSwitch?: boolean; // Whether to use streaming
 } & CallSettings &
   (
     | { useSDK: true; model: LanguageModel; url?: string }
-    | { useSDK?: false | undefined; url: string; model: string; provider?: never }
+    | { useSDK?: false | undefined; url: string; apiKey: string; model: string }
   );
 
 export interface MCPClientOptions {
