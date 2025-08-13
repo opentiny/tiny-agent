@@ -1,17 +1,5 @@
-import type {
-  AvailableTool,
-  ChatBody,
-  ChatCompleteResponse,
-  CustomTransportMcpServer,
-  IChatOptions,
-  MCPClientOptions,
-  McpServer,
-  Message,
-  NonStreamingChoice,
-  StreamingChoice,
-  ToolCall,
-  ToolResults,
-} from '../types/index.js';
+import type { ChatCompleteResponse, StreamingChoice, ToolCall } from '../types/index.js';
+import { Role } from '../types/index.js';
 
 export function mergeStreamingToolCalls(result: ToolCall[], tool_calls: ToolCall[]): void {
   try {
@@ -39,7 +27,6 @@ export function mergeStreamingResponses(responses: ChatCompleteResponse[]): Chat
     if (responses[0].choices[0].finish_reason === 'error') {
       return responses[0];
     }
-    const isStream = 'delta' in responses[0].choices[0];
     const mergedContent = responses
       .flatMap((r) => r.choices)
       .map((choice) => {
@@ -63,27 +50,18 @@ export function mergeStreamingResponses(responses: ChatCompleteResponse[]): Chat
       })
       .join('');
     const result = {
-      ...responses[0], // 以第一个为基础
+      ...responses[0],
       choices: [
         {
-          ...(responses[0].choices[0] as any),
+          ...responses[0].choices[0],
+          delta: {
+            ...(responses[0].choices[0] as StreamingChoice).delta,
+            content: mergedContent,
+            tool_calls: toolCalls,
+          },
         },
       ],
     };
-
-    if (isStream) {
-      result.choices[0].delta = {
-        ...(responses[0].choices[0] as StreamingChoice).delta,
-        content: mergedContent,
-        tool_calls: toolCalls,
-      };
-    } else {
-      result.choices[0].message = {
-        ...(responses[0].choices[0] as NonStreamingChoice).message,
-        content: mergedContent,
-        tool_calls: toolCalls,
-      };
-    }
 
     return result;
   } catch (error) {
@@ -94,7 +72,11 @@ export function mergeStreamingResponses(responses: ChatCompleteResponse[]): Chat
       choices: [
         {
           finish_reason: 'error',
-          text: 'merge streaming responses failed!',
+          native_finish_reason: 'error',
+          delta: {
+            role: Role.ASSISTANT,
+            content: 'merge streaming responses failed!',
+          },
           error: { code: 400, message: 'merge streaming responses failed!' },
         },
       ],
@@ -102,7 +84,10 @@ export function mergeStreamingResponses(responses: ChatCompleteResponse[]): Chat
   }
 }
 
-export async function generateStreamingResponses(stream: ReadableStream, streamWriter: (content: string) => Promise<void>): Promise<ChatCompleteResponse> {
+export async function generateStreamingResponses(
+  stream: ReadableStream,
+  streamWriter: (content: string) => Promise<void>,
+): Promise<ChatCompleteResponse> {
   try {
     const reader = stream.getReader();
     const decoder = new TextDecoder('utf-8');
@@ -135,7 +120,7 @@ export async function generateStreamingResponses(stream: ReadableStream, streamW
 
             result.push(obj);
 
-            if (obj.choices[0].delta.content && typeof streamWriter === 'function') {
+            if (obj.choices?.[0]?.delta?.content && typeof streamWriter === 'function') {
               await streamWriter(obj.choices[0].delta.content);
             }
           } catch (_error) {
@@ -158,7 +143,11 @@ export async function generateStreamingResponses(stream: ReadableStream, streamW
       choices: [
         {
           finish_reason: 'error',
-          text: 'parse streamable response failed!',
+          native_finish_reason: 'error',
+          delta: {
+            role: Role.ASSISTANT,
+            content: 'parse streamable response failed!',
+          },
           error: { code: 400, message: 'parse streamable response failed!' },
         },
       ],

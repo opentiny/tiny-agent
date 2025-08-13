@@ -1,12 +1,12 @@
 import type { LlmConfig } from '../types/index.js';
 import type { BaseAi } from './base-ai.js';
-import { AiSDK } from './ai-sdk/ai-sdk.js';
-import { AiRestApi } from './ai-rest-api/ai-rest-api.js';
 
-export function getAiInstance(llmConfig: LlmConfig): BaseAi {
+export async function getAiInstance(llmConfig: LlmConfig): Promise<BaseAi> {
   if (llmConfig.useSDK) {
+    const { AiSDK } = await import('./ai-sdk/ai-sdk.js');
     return new AiSDK(llmConfig);
   }
 
+  const { AiRestApi } = await import('./ai-rest-api/ai-rest-api.js');
   return new AiRestApi(llmConfig);
 }

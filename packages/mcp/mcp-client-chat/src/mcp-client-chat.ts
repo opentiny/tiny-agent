@@ -34,7 +34,7 @@ export abstract class McpClientChat {
   protected messages: Message[] = [];
   protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
-  protected aiInstance: BaseAi;
+  protected aiInstance: BaseAi | null = null;
 
   constructor(options: MCPClientOptions) {
     this.options = {
@@ -43,10 +43,11 @@ export abstract class McpClientChat {
       streamSwitch: options.llmConfig.streamSwitch ?? true,
     };
     this.iterationSteps = options.maxIterationSteps || 1;
-    this.aiInstance = getAiInstance(options.llmConfig);
   }
 
   async init(): Promise<void> {
+    this.aiInstance = await getAiInstance(this.options.llmConfig);
+
     const { mcpServers = {} } = this.options.mcpServersConfig;
 
     for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
@@ -221,13 +222,11 @@ export abstract class McpClientChat {
           continue;
         }
 
-
         const { toolCalls, thought, finalAnswer } = await this.organizeToolCalls(response as ChatCompleteResponse);
 
         if (!this.options.streamSwitch && thought && (toolCalls.length || thought !== finalAnswer)) {
           await this.writeMessageDelta(thought);
         }
-
 
         // 工具调用
         if (toolCalls.length) {

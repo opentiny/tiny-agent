@@ -22,9 +22,8 @@ import type {
   StreamTextOptions,
   LanguageModel,
 } from '../../types/index.js';
-import { jsonSchemaToZod } from '../../utils/index.js';
 import { getDefaultModel } from './defaultConfig.js';
-import { transformChatResult, toOpenAIChunk } from '../../utils/index.js';
+import { jsonSchemaToZod, transformChatResult, toOpenAIChunk } from '../../utils/index.js';
 
 type AiSDKConfig = LlmConfig & { useSDK: true };
 
@@ -58,7 +57,14 @@ export class AiSDK extends BaseAi {
               type: 'tool-call',
               toolCallId: toolCall.id,
               toolName: toolCall.function.name,
-              input: JSON.parse(toolCall.function.arguments),
+              input: (() => {
+                try {
+                  return JSON.parse(toolCall.function.arguments);
+                } catch (error) {
+                  console.error(`Failed to parse tool arguments: ${toolCall.function.arguments}`, error);
+                  return {};
+                }
+              })(),
             }));
 
             content = toolCallsContent;
@@ -139,10 +145,13 @@ export class AiSDK extends BaseAi {
 
       return response;
     } catch (error) {
-      console.error(error);
-
-      return error as Error;
-    }
+      console.error(error);      
+      return new Error(
+        error instanceof Error 
+          ? error.message 
+          : 'An unexpected error occurred during chat'
+      );
+    } 
   }
 
   async chatStream(chatBody: ChatBody): Promise<globalThis.ReadableStream> {
