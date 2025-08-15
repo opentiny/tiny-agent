@@ -145,13 +145,9 @@ export class AiSDK extends BaseAi {
 
       return response;
     } catch (error) {
-      console.error(error);      
-      return new Error(
-        error instanceof Error 
-          ? error.message 
-          : 'An unexpected error occurred during chat'
-      );
-    } 
+      console.error(error);
+      return new Error(error instanceof Error ? error.message : 'An unexpected error occurred during chat');
+    }
   }
 
   async chatStream(chatBody: ChatBody): Promise<globalThis.ReadableStream<Uint8Array>> {
@@ -165,11 +161,19 @@ export class AiSDK extends BaseAi {
 
       return new ReadableStream<Uint8Array>({
         async pull(controller) {
-          const { value, done } = await iterator.next();
-          if (done) {
+          try {
+            const { value, done } = await iterator.next();
+            if (done) {
+              controller.close();
+            } else {
+              controller.enqueue(value);
+            }
+          } catch (err) {
+            const encoder = new TextEncoder();
+            const errorMessage = err instanceof Error ? err.message : 'Stream failed';
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: errorMessage })}\n\n`));
+            controller.enqueue(encoder.encode('data: [DONE]\n\n'));
             controller.close();
-          } else {
-            controller.enqueue(value);
           }
         },
       });
@@ -181,7 +185,7 @@ export class AiSDK extends BaseAi {
       return new ReadableStream<Uint8Array>({
         start(controller) {
           const encoder = new TextEncoder();
-          controller.enqueue(encoder.encode(`data: {"error": "${errorMessage}"}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ error: errorMessage })}\n\n`));
           controller.enqueue(encoder.encode('data: [DONE]\n\n'));
           controller.close();
         },

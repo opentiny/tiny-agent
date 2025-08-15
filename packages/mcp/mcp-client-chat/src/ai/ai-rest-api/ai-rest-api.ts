@@ -88,11 +88,12 @@ export class AiRestApi extends BaseAi {
       ],
     };
     const data = `data: ${JSON.stringify(errorResponse)}\n`;
+    const encoder = new TextEncoder();
 
     return new ReadableStream({
       start(controller) {
-        controller.enqueue(data);
-        controller.enqueue('data: [DONE]\n');
+        controller.enqueue(encoder.encode(data));
+        controller.enqueue(encoder.encode('data: [DONE]\n'));
         controller.close();
       },
     });
