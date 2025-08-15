@@ -7,7 +7,6 @@ import type {
   MCPClientOptions,
   NonStreamingChoice,
   StreamingChoice,
-  ModelMessage,
   ToolCall,
 } from '../types/index.js';
 import { Role } from '../types/index.js';
@@ -28,10 +27,22 @@ export class FunctionCallChat extends McpClientChat {
   ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
     let message: ChoiceMessage;
 
-    if (this.options.streamSwitch) {
-      message = (response.choices[0] as StreamingChoice).delta;
+    if (!response.choices || response.choices.length === 0) {
+      throw new Error('Invalid response: no choices available');
+    }
+
+    if (this.streamSwitch) {
+      const choice = response.choices[0];
+      if (!('delta' in choice)) {
+        throw new Error('Invalid streaming response: delta not found');
+      }
+      message = (choice as StreamingChoice).delta;
     } else {
-      message = (response.choices[0] as NonStreamingChoice).message;
+      const choice = response.choices[0];
+      if (!('message' in choice)) {
+        throw new Error('Invalid non-streaming response: message not found');
+      }
+      message = (choice as NonStreamingChoice).message;
     }
 
     const toolCalls = message.tool_calls || [];

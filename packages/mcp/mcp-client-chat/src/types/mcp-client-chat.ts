@@ -65,17 +65,9 @@ export type LlmConfig = {
   streamSwitch?: boolean; // Whether to use streaming
 } & CallSettings &
   (
-    | { useSDK: true; model: LanguageModel; url?: string }
+    | { useSDK: true; model: LanguageModel; apiKey?: string; url?: string }
     | { useSDK?: false | undefined; url: string; apiKey: string; model: string }
   );
-
-export interface MCPClientOptions {
-  agentStrategy?: AgentStrategy;
-  llmConfig: LlmConfig;
-  mcpServersConfig: McpServersConfig; // MCP service configuration
-  maxIterationSteps?: number; // Maximum execution steps
-  streamSwitch?: boolean;
-}
 
 export interface MCPClientOptions {
   agentStrategy?: AgentStrategy;

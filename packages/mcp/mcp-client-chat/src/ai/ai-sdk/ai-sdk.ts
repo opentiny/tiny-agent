@@ -154,7 +154,7 @@ export class AiSDK extends BaseAi {
     } 
   }
 
-  async chatStream(chatBody: ChatBody): Promise<globalThis.ReadableStream> {
+  async chatStream(chatBody: ChatBody): Promise<globalThis.ReadableStream<Uint8Array>> {
     try {
       const chatOptions: StreamTextOptions = this.generateChatOptions(chatBody);
       const result: StreamTextResult<ToolSet, unknown> = streamText({
@@ -176,7 +176,16 @@ export class AiSDK extends BaseAi {
     } catch (error) {
       console.error(error);
 
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Stream failed';
+
+      return new ReadableStream<Uint8Array>({
+        start(controller) {
+          const encoder = new TextEncoder();
+          controller.enqueue(encoder.encode(`data: {"error": "${errorMessage}"}\n\n`));
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          controller.close();
+        },
+      });
     }
   }
 

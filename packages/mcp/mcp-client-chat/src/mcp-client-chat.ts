@@ -35,14 +35,15 @@ export abstract class McpClientChat {
   protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
   protected aiInstance: BaseAi | null = null;
+  protected streamSwitch: boolean;
 
   constructor(options: MCPClientOptions) {
     this.options = {
       ...options,
       agentStrategy: options.agentStrategy ?? DEFAULT_AGENT_STRATEGY,
-      streamSwitch: options.llmConfig.streamSwitch ?? true,
     };
     this.iterationSteps = options.maxIterationSteps || 1;
+    this.streamSwitch = options.llmConfig.streamSwitch ?? true;
   }
 
   async init(): Promise<void> {
@@ -195,9 +196,13 @@ export abstract class McpClientChat {
       while (this.iterationSteps > 0) {
         let response: ChatCompleteResponse | Error;
 
-        if (this.options.streamSwitch) {
-          const streamResponses: ReadableStream = await this.queryChatCompleteStreaming();
-          response = await generateStreamingResponses(streamResponses, this.writeMessageDelta.bind(this));
+        if (this.streamSwitch) {
+          try {
+            const streamResponses: ReadableStream = await this.queryChatCompleteStreaming();
+            response = await generateStreamingResponses(streamResponses, this.writeMessageDelta.bind(this));
+          } catch (error) {
+            response = error instanceof Error ? error : new Error(String(error));
+          }
         } else {
           response = await this.queryChatComplete();
         }
@@ -224,7 +229,7 @@ export abstract class McpClientChat {
 
         const { toolCalls, thought, finalAnswer } = await this.organizeToolCalls(response as ChatCompleteResponse);
 
-        if (!this.options.streamSwitch && thought && (toolCalls.length || thought !== finalAnswer)) {
+        if (!this.streamSwitch && thought && (toolCalls.length || thought !== finalAnswer)) {
           await this.writeMessageDelta(thought);
         }
 
@@ -288,10 +293,22 @@ export abstract class McpClientChat {
   }
 
   protected async writeMessageEnd() {
+    if (this.transformStream.writable.locked) {
+      console.warn('Stream is already locked, skipping end message');
+      return;
+    }
+
     const writer = this.transformStream.writable.getWriter();
-    await writer.ready;
-    await writer.write(new TextEncoder().encode('data: [DONE]\n\n'));
-    await writer.close();
+
+    try {
+      await writer.ready;
+      await writer.write(new TextEncoder().encode('data: [DONE]\n\n'));
+      await writer.close();
+    } catch (error) {
+      console.error('Failed to write end message:', error);
+    } finally {
+      writer.releaseLock();
+    }
   }
 
   protected async callTools(toolCalls: ToolCall[]): Promise<{ results: ToolResults; messages: Message[] }> {
@@ -439,7 +456,7 @@ export abstract class McpClientChat {
     const chatBody = await this.getChatBody();
 
     try {
-      const response = await this.aiInstance.chat(chatBody);
+      const response = await this.aiInstance!.chat(chatBody);
 
       return response;
     } catch (error) {
@@ -481,7 +498,7 @@ export abstract class McpClientChat {
     const chatBody = await this.getChatBody();
 
     try {
-      const response = await this.aiInstance.chatStream(chatBody);
+      const response = await this.aiInstance!.chatStream(chatBody);
 
       return response;
     } catch (error) {

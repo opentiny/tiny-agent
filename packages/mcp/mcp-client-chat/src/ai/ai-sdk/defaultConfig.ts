@@ -1,9 +1,10 @@
+import { createOpenAI, openai } from '@ai-sdk/openai';
+import type { OpenAIProviderSettings } from '@ai-sdk/openai';
 import type { LlmConfig } from '../../types/index.js';
-import { createOpenAI, OpenAIProviderSettings, openai } from '@ai-sdk/openai';
 
 export const getDefaultProvider = (llmConfig: LlmConfig) => {
   const options: OpenAIProviderSettings = {
-    apiKey: llmConfig.apiKey,
+    apiKey: llmConfig.apiKey || process.env.OPENAI_API_KEY,
     baseURL: llmConfig.url,
   };
 
@@ -14,6 +15,6 @@ export const getDefaultProvider = (llmConfig: LlmConfig) => {
   return createOpenAI(options);
 };
 
-export const getDefaultModel = () => {
-  return openai('deepseek-chat');
+export const getDefaultModel = (provider: ReturnType<typeof createOpenAI> = openai) => {
+  return provider('deepseek-chat');
 };

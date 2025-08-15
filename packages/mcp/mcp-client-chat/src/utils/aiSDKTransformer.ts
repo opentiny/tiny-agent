@@ -1,5 +1,5 @@
-import type { ChatCompleteResponse, StreamingChoice } from '../types/index.js';
 import type { GenerateTextResult, TextStreamPart, ToolSet } from 'ai';
+import type { ChatCompleteResponse, StreamingChoice } from '../types/index.js';
 import { Role } from '../types/index.js';
 import type { LanguageModel } from '../types/aiSDK.js';
 

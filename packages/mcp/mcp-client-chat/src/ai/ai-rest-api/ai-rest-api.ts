@@ -37,7 +37,7 @@ export class AiRestApi extends BaseAi {
     }
   }
 
-  async chatStream(chatBody: ChatBody): Promise<globalThis.ReadableStream> {
+  async chatStream(chatBody: ChatBody): Promise<globalThis.ReadableStream<Uint8Array>> {
     const { url, apiKey } = this.llmConfig;
 
     try {
