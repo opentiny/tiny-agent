@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "schema-card-renderer": ["../schema-card-renderer/src/index.ts"],
+      "schema-card-renderer/component": ["../schema-card-renderer/src/component.ts"],
+      "@opentiny/tiny-schema-renderer": ["../../tiny-schema-renderer/index.js"],
+      "dashboard-mcp-server": ["../dashboard-mcp-server/src/index.ts"],
+      "design-mcp-server/*": ["../design-mcp-server/src/*"]
+    }
+  },
+  "include": ["src", "../**", "../../tiny-schema-renderer/**"]
+}

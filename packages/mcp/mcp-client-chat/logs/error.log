@@ -1,0 +1,23 @@
+[2025-08-12T12:16:26.994Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-12T12:16:27.130Z] Failed to call streaming chat/complete: TypeError: fetch failed
+[2025-08-12T12:16:27.131Z] mergeStreamingResponses failed: TypeError: Cannot read properties of undefined (reading 'choices')
+[2025-08-12T12:16:27.132Z] queryChatComplete failed: merge streaming responses failed!
+[2025-08-12T12:16:54.088Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-12T12:16:54.116Z] Failed to call streaming chat/complete: TypeError: fetch failed
+[2025-08-12T12:16:54.117Z] mergeStreamingResponses failed: TypeError: Cannot read properties of undefined (reading 'choices')
+[2025-08-12T12:16:54.118Z] queryChatComplete failed: merge streaming responses failed!
+[2025-08-12T12:17:03.429Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-12T12:17:03.454Z] Failed to call streaming chat/complete: TypeError: fetch failed
+[2025-08-12T12:17:03.455Z] mergeStreamingResponses failed: TypeError: Cannot read properties of undefined (reading 'choices')
+[2025-08-12T12:17:03.456Z] queryChatComplete failed: merge streaming responses failed!
+[2025-08-12T12:19:40.978Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-12T12:19:41.117Z] Failed to call streaming chat/complete: TypeError: fetch failed
+[2025-08-12T12:19:41.118Z] mergeStreamingResponses failed: TypeError: Cannot read properties of undefined (reading 'choices')
+[2025-08-12T12:19:41.118Z] queryChatComplete failed: merge streaming responses failed!
+[2025-08-12T12:20:51.243Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-12T12:23:13.668Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-13T03:04:10.123Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-14T03:43:41.665Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-14T03:44:14.240Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-14T12:48:17.861Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
+[2025-08-14T12:48:34.074Z] Init cloud-service-mcp failed: Error: SSE error: TypeError: fetch failed: connect ECONNREFUSED 127.0.0.1:3006
