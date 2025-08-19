@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import packageJson from './package.json';
+import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 export default defineConfig({
   build: {
     lib: {
@@ -18,5 +19,6 @@ export default defineConfig({
     dts({
       tsconfigPath: './tsconfig.json',
     }),
+    cssInjectedByJsPlugin(),
   ],
 });
