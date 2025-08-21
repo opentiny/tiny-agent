@@ -2,7 +2,7 @@ import type { ChatBody, ChatCompleteResponse, LlmConfig } from '../../types/inde
 import { Role } from '../../types/index.js';
 import { BaseAi } from '../base-ai.js';
 
-type AiRestApiConfig = LlmConfig & { useSDK?: false };
+type AiRestApiConfig = Extract<LlmConfig, { useSDK?: false | undefined; url: string; apiKey: string; model: string }>;
 
 export class AiRestApi extends BaseAi {
   llmConfig: AiRestApiConfig;
@@ -20,6 +20,7 @@ export class AiRestApi extends BaseAi {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
+          ...(this.llmConfig.headers ?? {}),
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
@@ -44,6 +45,7 @@ export class AiRestApi extends BaseAi {
       const response = await fetch(url, {
         method: 'POST',
         headers: {
+          ...(this.llmConfig.headers ?? {}),
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
@@ -75,7 +77,7 @@ export class AiRestApi extends BaseAi {
       id: `chat-error-${Date.now()}`,
       object: 'chat.completion.chunk',
       created: Math.floor(Date.now() / 1000),
-      model: this.llmConfig.model as string,
+      model: this.llmConfig.model,
       choices: [
         {
           finish_reason: 'error',

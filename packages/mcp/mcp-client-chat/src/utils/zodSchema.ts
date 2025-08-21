@@ -141,8 +141,12 @@ const handleStringType = (schema: JsonSchema): ZodTypeAny => {
 
   if (typeof schema.pattern === 'string') {
     try {
-      stringSchema = stringSchema.regex(new RegExp(schema.pattern));
-    } catch (error) {
+      if (schema.pattern.length <= 2048) {
+        stringSchema = stringSchema.regex(new RegExp(schema.pattern));
+      } else {
+        console.warn('Regex pattern too long in schema, skipping:', schema.pattern.length);
+      }
+    } catch {
       console.warn('Invalid regex pattern in schema:', schema.pattern);
     }
   }
@@ -153,7 +157,7 @@ const handleStringType = (schema: JsonSchema): ZodTypeAny => {
         stringSchema = stringSchema.email();
         break;
       case 'url':
-        stringSchema = stringSchema.regex(/^https?:\/\/.+/, { message: 'Invalid URL format' });
+        stringSchema = stringSchema.url();
         break;
       case 'uuid':
         stringSchema = stringSchema.uuid();
@@ -188,10 +192,6 @@ const handleNumberType = (schema: JsonSchema, isInteger = false): ZodTypeAny => 
   }
   if (isNumber(schema.multipleOf)) {
     numberSchema = (numberSchema as z.ZodNumber).multipleOf(schema.multipleOf);
-  }
-
-  if (min === undefined && max === undefined && schema.multipleOf === undefined) {
-    numberSchema = (numberSchema as z.ZodNumber).or(z.nan());
   }
 
   return applyConstraints(numberSchema, schema);

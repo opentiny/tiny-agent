@@ -113,7 +113,7 @@ main();
 
 ## AI SDK 使用示例
 
-### 使用 (OpenAI)[https://ai-sdk.dev/providers/ai-sdk-providers/openai]
+### 使用 [OpenAI](https://ai-sdk.dev/providers/ai-sdk-providers/openai)
 
 ```typescript
 import { createMCPClientChat } from "@opentiny/tiny-agent-mcp-client-chat";
@@ -154,7 +154,7 @@ const mcpClientChat = await createMCPClientChat({
 });
 ```
 
-### 使用 (DeepSeek)[https://ai-sdk.dev/providers/ai-sdk-providers/deepseek] 
+### 使用 [DeepSeek](https://ai-sdk.dev/providers/ai-sdk-providers/deepseek)
 
 ```typescript
 import { createMCPClientChat } from "@opentiny/tiny-agent-mcp-client-chat";
