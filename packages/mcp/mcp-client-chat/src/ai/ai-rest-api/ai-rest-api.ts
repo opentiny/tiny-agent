@@ -25,6 +25,7 @@ export class AiRestApi extends BaseAi {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(chatBody),
+        signal: this.llmConfig.abortSignal,
       });
       if (!response.ok) {
         return new Error(`HTTP error ${response.status}: ${await response.text()}`);
@@ -50,6 +51,7 @@ export class AiRestApi extends BaseAi {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ ...chatBody, stream: true }),
+        signal: this.llmConfig.abortSignal,
       });
 
       if (!response.body) {
