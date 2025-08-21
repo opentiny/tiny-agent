@@ -8,8 +8,8 @@ export function transformChatResult(
   model: LanguageModel,
 ): ChatCompleteResponse {
   const response: ChatCompleteResponse = {
-    id: '',
-    created: 0,
+    id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+    created: Math.floor(Date.now() / 1000),
     object: 'chat.completion',
     model: typeof model === 'string' ? model : model.modelId,
     choices: [
@@ -53,8 +53,8 @@ export function toOpenAIChunk(chunk: TextStreamPart<ToolSet>, model: LanguageMod
     },
   };
   const result: ChatCompleteResponse = {
-    id: '',
-    created: 0,
+    id: `chat-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+    created: Math.floor(Date.now() / 1000),
     object: 'chat.completion.chunk',
     model: typeof model === 'string' ? model : model.modelId,
     choices: [choice],

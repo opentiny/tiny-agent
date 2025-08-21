@@ -122,13 +122,13 @@ import { createOpenAI } from '@ai-sdk/openai';
 const openai = createOpenAI({
   apiKey: "<your-openai-api-key>", // API key that is being sent using the Authorization header. It defaults to the OPENAI_API_KEY environment variable.
   baseURL: "https://api.openai.com/v1", // Use a different URL prefix for API calls, e.g. to use proxy servers. The default prefix is https://api.openai.com/v1.
-  // name: "", // The provider name. You can set this when using OpenAI compatible providers to change the model provider property. Defaults to openai.
-  // organization: "", // OpenAI Organization.
-  // project: "", // OpenAI project.
-  // fetch:  (input: RequestInfo, init?: RequestInit) => Promise<Response>, // Custom fetch implementation. Defaults to the global fetch function. You can use it as a middleware to intercept requests, or to provide a custom fetch implementation for e.g. testing.
-  // headers: { // Custom headers to include in the requests.
-  //   'header-name': 'header-value',
-  // },
+  name: "", // The provider name. You can set this when using OpenAI compatible providers to change the model provider property. Defaults to openai.
+  organization: "", // OpenAI Organization.
+  project: "", // OpenAI project.
+  fetch:  (input: RequestInfo, init?: RequestInit) => Promise<Response>, // Custom fetch implementation. Defaults to the global fetch function. You can use it as a middleware to intercept requests, or to provide a custom fetch implementation for e.g. testing.
+  headers: { // Custom headers to include in the requests.
+    'header-name': 'header-value',
+  },
 });
 
 const mcpClientChat = await createMCPClientChat({

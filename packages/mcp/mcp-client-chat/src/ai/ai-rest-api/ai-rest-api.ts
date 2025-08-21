@@ -47,7 +47,7 @@ export class AiRestApi extends BaseAi {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ stream: true, ...chatBody }),
+        body: JSON.stringify({ ...chatBody, stream: true }),
       });
 
       if (!response.body) {
@@ -70,7 +70,7 @@ export class AiRestApi extends BaseAi {
     }
   }
 
-  protected generateErrorStream(errorMessage: string) {
+  protected generateErrorStream(errorMessage: string): ReadableStream<Uint8Array> {
     const errorResponse: ChatCompleteResponse = {
       id: `chat-error-${Date.now()}`,
       object: 'chat.completion.chunk',
@@ -87,13 +87,13 @@ export class AiRestApi extends BaseAi {
         },
       ],
     };
-    const data = `data: ${JSON.stringify(errorResponse)}\n`;
+    const data = `data: ${JSON.stringify(errorResponse)}\n\n`;
     const encoder = new TextEncoder();
 
-    return new ReadableStream({
+    return new ReadableStream<Uint8Array>({
       start(controller) {
         controller.enqueue(encoder.encode(data));
-        controller.enqueue(encoder.encode('data: [DONE]\n'));
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
       },
     });
