@@ -54,16 +54,15 @@ export class AiRestApi extends BaseAi {
         signal: this.llmConfig.abortSignal,
       });
 
-      if (!response.body) {
-        return this.generateErrorStream('Response body is empty!');
-      }
-
       if (!response.ok) {
-        // 获取详细的错误信息
         const errorText = await response.text();
         const errorMessage = `Failed to call chat API! ${errorText}`;
         console.error('Failed to call chat API:', errorMessage);
         return this.generateErrorStream(errorMessage);
+      }
+
+      if (!response.body) {
+        return this.generateErrorStream('Response body is empty!');
       }
 
       return response.body;
