@@ -17,6 +17,11 @@ export class AiRestApi extends BaseAi {
     const { url, apiKey } = this.llmConfig;
 
     try {
+      const modelId =
+        typeof chatBody.model === 'string'
+          ? chatBody.model
+          : ((chatBody.model as any)?.modelId ?? String(chatBody.model));
+      const normalizedBody = { ...chatBody, model: modelId };
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -24,7 +29,7 @@ export class AiRestApi extends BaseAi {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(chatBody),
+        body: JSON.stringify(normalizedBody),
         signal: this.llmConfig.abortSignal,
       });
       if (!response.ok) {
@@ -43,6 +48,11 @@ export class AiRestApi extends BaseAi {
     const { url, apiKey } = this.llmConfig;
 
     try {
+      const modelId =
+        typeof chatBody.model === 'string'
+          ? chatBody.model
+          : ((chatBody.model as any)?.modelId ?? String(chatBody.model));
+      const normalizedBody = { ...chatBody, model: modelId };
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -50,7 +60,7 @@ export class AiRestApi extends BaseAi {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ ...chatBody, stream: true }),
+        body: JSON.stringify({ ...normalizedBody, stream: true }),
         signal: this.llmConfig.abortSignal,
       });
 
