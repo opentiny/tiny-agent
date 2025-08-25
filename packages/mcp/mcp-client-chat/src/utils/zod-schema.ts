@@ -56,12 +56,23 @@ const applyConstraints = (zodSchema: ZodTypeAny, schema: JsonSchema): ZodTypeAny
   return result;
 };
 
+function stableStringify(input: any): string {
+  if (input && typeof input === 'object') {
+    if (Array.isArray(input)) return `[${input.map(stableStringify).join(',')}]`;
+    const keys = Object.keys(input).sort();
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(input[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(input);
+}
+
 // 创建对象字面量 schema
 const createObjectLiteralSchema = (value: any): ZodTypeAny => {
   return z
     .object({})
     .passthrough()
-    .refine((data) => JSON.stringify(data) === JSON.stringify(value), { message: `Expected ${JSON.stringify(value)}` });
+    .refine((data) => stableStringify(data) === stableStringify(value), {
+      message: `Expected ${stableStringify(value)}`,
+    });
 };
 
 // 处理枚举值
@@ -97,26 +108,15 @@ const handleUnion = (schemas: JsonSchema[] | undefined, parentSchema: JsonSchema
 // 处理 allOf 交集类型
 const handleAllOf = (schema: JsonSchema): ZodTypeAny | null => {
   if (!Array.isArray(schema.allOf) || schema.allOf.length === 0) return null;
-
-  const mergedSchema = schema.allOf.reduce(
-    (acc: any, subSchema: any) => {
-      if (subSchema.type === 'object' && acc.type === 'object') {
-        return {
-          ...acc,
-          ...subSchema,
-          properties: { ...(acc.properties || {}), ...(subSchema.properties || {}) },
-          required: [...(acc.required || []), ...(subSchema.required || [])],
-        };
-      }
-      return acc;
-    },
-    { type: 'object' },
-  );
-
-  return jsonSchemaToZod(mergedSchema);
+  const [head, ...rest] = schema.allOf.map((s) => jsonSchemaToZod(s));
+  if (!head) return null;
+  let intersected = head;
+  for (const s of rest) {
+    intersected = z.intersection(intersected, s as ZodTypeAny);
+  }
+  return applyConstraints(intersected, schema);
 };
 
-// 处理多类型数组
 const handleMultipleTypes = (schema: JsonSchema): ZodTypeAny | null => {
   if (!Array.isArray(schema.type)) return null;
 
@@ -238,7 +238,7 @@ const handleArrayType = (schema: JsonSchema): ZodTypeAny => {
     arraySchema = arraySchema.max(schema.maxItems);
   }
   if (schema.uniqueItems === true) {
-    arraySchema = arraySchema.refine((arr) => new Set(arr.map((item) => JSON.stringify(item))).size === arr.length, {
+    arraySchema = arraySchema.refine((arr) => new Set(arr.map((item) => stableStringify(item))).size === arr.length, {
       message: 'Array items must be unique',
     }) as any;
   }
