@@ -291,7 +291,10 @@ export const jsonSchemaToZod = (schema: any): ZodTypeAny => {
   }
 
   if (schema.const !== undefined) {
-    return applyConstraints(z.literal(schema.const), schema);
+    const value = schema.const;
+    const constSchema =
+      typeof value === 'object' && value !== null ? createObjectLiteralSchema(value) : z.literal(value as any);
+    return applyConstraints(constSchema, schema);
   }
 
   return (

@@ -161,15 +161,16 @@ export class AiSDK extends BaseAi {
   async chatStream(chatBody: ChatBody): Promise<globalThis.ReadableStream<Uint8Array>> {
     try {
       const chatOptions: StreamTextOptions = this.generateChatOptions(chatBody);
+      const model = (chatBody as any).model ?? this.model;
       const { messages, tools, toolChoice, prompt, ...rest } = chatOptions;
       const result: StreamTextResult<ToolSet, unknown> = streamText({
-        model: this.model,
+        model,
         messages: messages || [],
         ...(tools && { tools }),
         ...(toolChoice && { toolChoice }),
         ...rest,
       });
-      const iterator = this.openaiChunkGenerator(result);
+      const iterator = this.openaiChunkGenerator(result, model);
 
       return new ReadableStream<Uint8Array>({
         async pull(controller) {
@@ -205,10 +206,13 @@ export class AiSDK extends BaseAi {
     }
   }
 
-  async *openaiChunkGenerator(result: StreamTextResult<ToolSet, unknown>): AsyncGenerator<Uint8Array> {
+  async *openaiChunkGenerator(
+    result: StreamTextResult<ToolSet, unknown>,
+    model: LanguageModel = this.model,
+  ): AsyncGenerator<Uint8Array> {
     const encoder = new TextEncoder();
     for await (const chunk of result.fullStream) {
-      const data = toOpenAIChunk(chunk, this.model);
+      const data = toOpenAIChunk(chunk, model);
 
       yield encoder.encode(`data: ${JSON.stringify(data)}\n\n`);
     }
