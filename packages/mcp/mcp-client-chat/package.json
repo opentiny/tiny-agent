@@ -14,11 +14,13 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.41.0",
     "@modelcontextprotocol/sdk": "^1.11.1",
+    "loglevel": "^1.8.1",
     "openai": "^4.98.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^22.15.17",
+    "@types/loglevel": "^1.0.4",
     "typescript": "^5.8.3",
     "vite": "^6.0.0",
     "vite-plugin-dts": "^4.0.0"
