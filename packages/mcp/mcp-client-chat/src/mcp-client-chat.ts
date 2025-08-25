@@ -3,11 +3,13 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import type { CallToolResult, Progress, Tool } from '@modelcontextprotocol/sdk/types.js';
 import { DEFAULT_REQUEST_TIMEOUT_MSEC } from '@modelcontextprotocol/sdk/shared/protocol.js';
-import { AgentStrategy, Role } from './type.js';
+import { AgentStrategy, Role } from './types/index.js';
+import { generateStreamingResponses } from './utils/index.js';
+import { type BaseAi, getAiInstance } from './ai/index.js';
 
 import type {
   AvailableTool,
-  ChatCompleteRequest,
+  ChatBody,
   ChatCompleteResponse,
   CustomTransportMcpServer,
   IChatOptions,
@@ -16,7 +18,7 @@ import type {
   Message,
   ToolCall,
   ToolResults,
-} from './type.js';
+} from './types/index.js';
 
 export function isCustomTransportMcpServer(
   serverConfig: McpServer | CustomTransportMcpServer,
@@ -32,6 +34,8 @@ export abstract class McpClientChat {
   protected messages: Message[] = [];
   protected transformStream = new TransformStream();
   protected chatOptions?: IChatOptions;
+  protected aiInstance: BaseAi | null = null;
+  protected streamSwitch: boolean;
 
   constructor(options: MCPClientOptions) {
     this.options = {
@@ -39,9 +43,12 @@ export abstract class McpClientChat {
       agentStrategy: options.agentStrategy ?? DEFAULT_AGENT_STRATEGY,
     };
     this.iterationSteps = options.maxIterationSteps || 1;
+    this.streamSwitch = options.llmConfig.streamSwitch ?? true;
   }
 
   async init(): Promise<void> {
+    this.aiInstance = await getAiInstance(this.options.llmConfig);
+
     const { mcpServers = {} } = this.options.mcpServersConfig;
 
     for (const [serverName, serverConfig] of Object.entries(mcpServers)) {
@@ -187,14 +194,25 @@ export abstract class McpClientChat {
   protected async chatIteration(): Promise<void> {
     try {
       while (this.iterationSteps > 0) {
-        const response: ChatCompleteResponse | Error = await this.queryChatComplete();
+        let response: ChatCompleteResponse | Error;
+
+        if (this.streamSwitch) {
+          try {
+            const streamResponses: ReadableStream = await this.queryChatCompleteStreaming();
+            response = await generateStreamingResponses(streamResponses, this.writeMessageDelta.bind(this));
+          } catch (error) {
+            response = error instanceof Error ? error : new Error(String(error));
+          }
+        } else {
+          response = await this.queryChatComplete();
+        }
 
         if (response instanceof Error) {
           this.organizePromptMessages({
             role: Role.ASSISTANT,
             content: response.message,
           });
-          this.iterationSteps = 0;
+          this.iterationSteps = -1; // 手动结束为-1
 
           continue;
         }
@@ -204,12 +222,16 @@ export abstract class McpClientChat {
             role: Role.ASSISTANT,
             content: response.choices[0].error.message,
           });
-          this.iterationSteps = 0;
+          this.iterationSteps = -1; // 手动结束为-1
 
           continue;
         }
 
-        const { toolCalls, finalAnswer } = await this.organizeToolCalls(response as ChatCompleteResponse);
+        const { toolCalls, thought, finalAnswer } = await this.organizeToolCalls(response as ChatCompleteResponse);
+
+        if (!this.streamSwitch && thought && (toolCalls.length || thought !== finalAnswer)) {
+          await this.writeMessageDelta(thought);
+        }
 
         // 工具调用
         if (toolCalls.length) {
@@ -245,6 +267,18 @@ export abstract class McpClientChat {
         }
       }
 
+      if (
+        this.messages[this.messages.length - 1].role === Role.ASSISTANT &&
+        this.messages[this.messages.length - 1].content?.length > 0
+      ) {
+        if (this.iterationSteps === -1) {
+          await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
+        }
+
+        this.writeMessageEnd();
+        return;
+      }
+
       const summaryPrompt = this.options.llmConfig.summarySystemPrompt || 'Please provide a brief summary.';
 
       this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
@@ -255,6 +289,25 @@ export abstract class McpClientChat {
     } catch (error) {
       console.error('Chat iteration failed:', error);
       throw error;
+    }
+  }
+
+  protected async writeMessageEnd() {
+    if (this.transformStream.writable.locked) {
+      console.warn('Stream is already locked, skipping end message');
+      return;
+    }
+
+    const writer = this.transformStream.writable.getWriter();
+
+    try {
+      await writer.ready;
+      await writer.write(new TextEncoder().encode('data: [DONE]\n\n'));
+      await writer.close();
+    } catch (error) {
+      console.error('Failed to write end message:', error);
+    } finally {
+      writer.releaseLock();
     }
   }
 
@@ -338,6 +391,7 @@ export abstract class McpClientChat {
         const message: Message = {
           role: Role.TOOL,
           tool_call_id: toolCall.id,
+          name: toolName,
           content: callToolContent,
         };
 
@@ -399,31 +453,16 @@ export abstract class McpClientChat {
   }
 
   protected async queryChatComplete(): Promise<ChatCompleteResponse | Error> {
-    const { url, apiKey } = this.options.llmConfig;
     const chatBody = await this.getChatBody();
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(chatBody),
-      });
-      if (!response.ok) {
-        return new Error(`HTTP error ${response.status}: ${await response.text()}`);
-      }
+      const response = await this.aiInstance!.chat(chatBody);
 
-      return (await response.json()) as ChatCompleteResponse;
+      return response;
     } catch (error) {
-      console.error('Error calling chat:', error);
+      console.error('Error calling chat/complete:', error);
 
-      if (error instanceof Error) {
-        return error;
-      } else {
-        return new Error(String(error));
-      }
+      return error as Error;
     }
   }
 
@@ -455,37 +494,17 @@ export abstract class McpClientChat {
     });
   }
 
-  protected async queryChatCompleteStreaming(): Promise<ReadableStream> {
-    const { url, apiKey } = this.options.llmConfig;
+  protected async queryChatCompleteStreaming(): Promise<globalThis.ReadableStream> {
     const chatBody = await this.getChatBody();
 
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ stream: true, ...chatBody }),
-      });
+      const response = await this.aiInstance!.chatStream(chatBody);
 
-      if (!response.body) {
-        return this.generateErrorStream('Response body is empty!');
-      }
-
-      if (!response.ok) {
-        // 获取详细的错误信息
-        const errorText = await response.text();
-        const errorMessage = `Failed to call chat API! ${errorText}`;
-        console.error('Failed to call chat API:', errorMessage);
-        return this.generateErrorStream(errorMessage);
-      }
-
-      return response.body;
+      return response;
     } catch (error) {
-      console.error('Failed to call streaming chat/complete:', error);
+      console.error('Error calling chat/complete:', error);
 
-      return this.generateErrorStream(`Failed to call chat API! ${error}`);
+      throw new Error(`Streaming chat API call failed: ${String(error)}`);
     }
   }
 
@@ -525,11 +544,11 @@ export abstract class McpClientChat {
     }
   }
 
-  protected abstract getChatBody(): Promise<ChatCompleteRequest>;
+  protected abstract getChatBody(): Promise<ChatBody>;
 
   protected abstract organizeToolCalls(
     response: ChatCompleteResponse,
-  ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }>;
+  ): Promise<{ toolCalls: ToolCall[]; finalAnswer: string; thought?: string }>;
 
   protected abstract initSystemPromptMessages(): Promise<string>;
 }

@@ -1,13 +1,14 @@
 import { McpClientChat } from '../mcp-client-chat.js';
 import type {
-  ChatCompleteRequest,
   ChatCompleteResponse,
+  ChatBody,
   MCPClientOptions,
   NonStreamingChoice,
+  StreamingChoice,
   Tool,
   ToolCall,
-} from '../type.js';
-import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
+} from '../types/index.js';
+import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './system-prompt.js';
 
 const FINAL_ANSWER_TAG = 'Final Answer:';
 const ACTION_TAG = '"action":';
@@ -39,7 +40,17 @@ export class ReActChat extends McpClientChat {
     response: ChatCompleteResponse,
   ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
     try {
-      const text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
+      let text = '';
+      const firstChoice = response.choices?.[0] as StreamingChoice | NonStreamingChoice | undefined;
+
+      if (firstChoice) {
+        if ('delta' in firstChoice) {
+          text = (firstChoice as StreamingChoice).delta.content ?? '';
+        } else {
+          text = (firstChoice as NonStreamingChoice).message.content ?? '';
+        }
+      }
+
       let thought: string | undefined;
       const thoughtActionRegex = /Thought(.*?)(?:Action|Final Answer|$)/gs;
       const matches = [...text.matchAll(thoughtActionRegex)];
@@ -116,9 +127,9 @@ export class ReActChat extends McpClientChat {
     }
   }
 
-  protected async getChatBody(): Promise<ChatCompleteRequest> {
+  protected async getChatBody(): Promise<ChatBody> {
     const { apiKey, url, systemPrompt, summarySystemPrompt, model, ...llmConfig } = this.options.llmConfig;
-    const chatBody: ChatCompleteRequest = {
+    const chatBody: ChatBody = {
       model,
       messages: this.messages,
       ...llmConfig,
