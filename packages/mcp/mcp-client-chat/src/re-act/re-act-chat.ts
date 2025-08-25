@@ -40,12 +40,15 @@ export class ReActChat extends McpClientChat {
     response: ChatCompleteResponse,
   ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
     try {
-      let text: string;
+      let text = '';
+      const firstChoice = response.choices?.[0] as StreamingChoice | NonStreamingChoice | undefined;
 
-      if (this.options.streamSwitch) {
-        text = (response.choices[0] as StreamingChoice).delta.content ?? '';
-      } else {
-        text = (response.choices[0] as NonStreamingChoice).message.content ?? '';
+      if (firstChoice) {
+        if ('delta' in firstChoice) {
+          text = (firstChoice as StreamingChoice).delta.content ?? '';
+        } else {
+          text = (firstChoice as NonStreamingChoice).message.content ?? '';
+        }
       }
 
       let thought: string | undefined;

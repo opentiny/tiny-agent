@@ -142,7 +142,12 @@ const handleStringType = (schema: JsonSchema): ZodTypeAny => {
   if (typeof schema.pattern === 'string') {
     try {
       if (schema.pattern.length <= 2048) {
-        stringSchema = stringSchema.regex(new RegExp(schema.pattern));
+        const unsafe = /(\.\*|\.\+|\[[^\]]+\]\+|\)[*+]){2,}/.test(schema.pattern);
+        if (!unsafe) {
+          stringSchema = stringSchema.regex(new RegExp(schema.pattern));
+        } else {
+          console.warn('Potentially unsafe regex pattern in schema, skipping:', schema.pattern);
+        }
       } else {
         console.warn('Regex pattern too long in schema, skipping:', schema.pattern.length);
       }

@@ -113,7 +113,11 @@ export class AiSDK extends BaseAi {
       messages.unshift({ role: 'system', content: systemPrompt });
     }
 
-    const chatOptions: GenerateTextOptions = { messages, ...rest };
+    const chatOptions: GenerateTextOptions = { messages: messages || [], ...rest };
+
+    if (typeof chatBody.temperature === 'number') {
+      chatOptions.temperature = chatBody.temperature;
+    }
 
     if (chatBody.tools?.length) {
       const tools: ToolSet = chatBody.tools.reduce((pre, cur) => {
@@ -136,9 +140,13 @@ export class AiSDK extends BaseAi {
   async chat(chatBody: ChatBody): Promise<ChatCompleteResponse | Error> {
     try {
       const chatOptions = this.generateChatOptions(chatBody);
+      const { messages, tools, toolChoice, prompt, ...rest } = chatOptions;
       const result: GenerateTextResult<ToolSet, unknown> = await generateText({
         model: this.model,
-        ...chatOptions,
+        messages: messages || [],
+        ...(tools && { tools }),
+        ...(toolChoice && { toolChoice }),
+        ...rest,
       });
 
       const response: ChatCompleteResponse = transformChatResult(result, this.llmConfig.model);
@@ -153,9 +161,13 @@ export class AiSDK extends BaseAi {
   async chatStream(chatBody: ChatBody): Promise<globalThis.ReadableStream<Uint8Array>> {
     try {
       const chatOptions: StreamTextOptions = this.generateChatOptions(chatBody);
+      const { messages, tools, toolChoice, prompt, ...rest } = chatOptions;
       const result: StreamTextResult<ToolSet, unknown> = streamText({
         model: this.model,
-        ...chatOptions,
+        messages: messages || [],
+        ...(tools && { tools }),
+        ...(toolChoice && { toolChoice }),
+        ...rest,
       });
       const iterator = this.openaiChunkGenerator(result);
 
