@@ -1,7 +1,7 @@
 import type { GenerateTextResult, TextStreamPart, ToolSet } from 'ai';
 import type { ChatCompleteResponse, StreamingChoice } from '../types/index.js';
 import { Role } from '../types/index.js';
-import type { LanguageModel } from '../types/aiSDK.js';
+import type { LanguageModel } from '../types/ai-SDK.js';
 
 export function transformChatResult(
   result: GenerateTextResult<ToolSet, unknown>,

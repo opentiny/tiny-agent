@@ -8,7 +8,7 @@ import type {
   Tool,
   ToolCall,
 } from '../types/index.js';
-import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './systemPrompt.js';
+import { FORMAT_INSTRUCTIONS, PREFIX, RE_ACT_DEFAULT_SUMMARY, SUFFIX } from './system-prompt.js';
 
 const FINAL_ANSWER_TAG = 'Final Answer:';
 const ACTION_TAG = '"action":';

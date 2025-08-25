@@ -10,7 +10,7 @@ import type {
   ToolCall,
 } from '../types/index.js';
 import { Role } from '../types/index.js';
-import { DEFAULT_SUMMARY_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT } from './systemPrompt.js';
+import { DEFAULT_SUMMARY_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT } from './system-prompt.js';
 
 export class FunctionCallChat extends McpClientChat {
   constructor(options: MCPClientOptions) {

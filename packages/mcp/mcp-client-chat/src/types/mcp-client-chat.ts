@@ -1,7 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { CallSettings } from 'ai';
-import type { LanguageModel } from './aiSDK.js';
+import type { LanguageModel } from './ai-SDK.js';
 
 export interface McpServer {
   url: string;

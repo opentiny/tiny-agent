@@ -22,7 +22,7 @@ import type {
   StreamTextOptions,
   LanguageModel,
 } from '../../types/index.js';
-import { getDefaultModel } from './defaultConfig.js';
+import { getDefaultModel } from './default-config.js';
 import { jsonSchemaToZod, transformChatResult, toOpenAIChunk } from '../../utils/index.js';
 
 type AiSDKConfig = LlmConfig & { useSDK: true };

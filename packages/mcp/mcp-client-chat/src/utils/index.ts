@@ -1,3 +1,3 @@
 export * from './transformer.js';
-export * from './zodSchema.js';
-export * from './aiSDKTransformer.js';
+export * from './zod-schema.js';
+export * from './ai-SDK-transformer.js';
