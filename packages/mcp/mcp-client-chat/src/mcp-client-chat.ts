@@ -455,17 +455,29 @@ export abstract class McpClientChat {
         logger.info('🛑 Skipping summary due to abort');
         return;
       }
-      if (
-        this.messages[this.messages.length - 1].role === Role.ASSISTANT &&
-        this.messages[this.messages.length - 1].content?.length > 0
-      ) {
-        if (this.iterationSteps === -1) {
-          await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
-        }
+      // if (
+      //   this.messages[this.messages.length - 1].role === Role.ASSISTANT &&
+      //   this.messages[this.messages.length - 1].content?.length > 0
+      // ) {
+      //   if (this.iterationSteps === -1) {
+      //     await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
+      //   }
 
-        this.writeMessageEnd();
-        return;
-      }
+      //   this.writeMessageEnd();
+      //   return;
+      // }
+
+      this.chatSummary();
+    } catch (error) {
+      logger.error('Chat iteration failed:', error);
+      throw error;
+    } finally {
+      this.abortController = null;
+    }
+  }
+
+  protected async chatSummary(): Promise<void> {
+    try {
       const summaryPrompt = this.options.llmConfig.summarySystemPrompt || 'Please provide a brief summary.';
 
       this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
@@ -474,10 +486,9 @@ export abstract class McpClientChat {
 
       result.pipeTo(this.transformStream.writable);
     } catch (error) {
-      logger.error('Chat iteration failed:', error);
+      logger.error('Chat summary failed:', error);
+
       throw error;
-    } finally {
-      this.abortController = null;
     }
   }
 
