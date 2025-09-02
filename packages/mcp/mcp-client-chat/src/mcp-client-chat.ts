@@ -335,9 +335,9 @@ export abstract class McpClientChat {
 
               result.push(obj);
 
-              if (obj.choices[0].delta.content) {
-                await this.writeMessageDelta(obj.choices[0].delta.content);
-              }
+              // if (obj.choices[0].delta.content) {
+              //   await this.writeMessageDelta(obj.choices[0].delta.content);
+              // }
             } catch (_error) {
               // 不是合法JSON可忽略或记录
               logger.error('invalid streamable response:', data);
