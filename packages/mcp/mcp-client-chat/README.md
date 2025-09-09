@@ -120,13 +120,13 @@ import { createMCPClientChat } from "@opentiny/tiny-agent-mcp-client-chat";
 import { createOpenAI } from '@ai-sdk/openai';
 
 const openai = createOpenAI({
-  apiKey: "<your-openai-api-key>", // API key that is being sent using the Authorization header. It defaults to the OPENAI_API_KEY environment variable.
-  baseURL: "https://api.openai.com/v1", // Use a different URL prefix for API calls, e.g. to use proxy servers. The default prefix is https://api.openai.com/v1.
-  name: "", // The provider name. You can set this when using OpenAI compatible providers to change the model provider property. Defaults to openai.
-  organization: "", // OpenAI Organization.
-  project: "", // OpenAI project.
-  fetch:  (input: RequestInfo, init?: RequestInit) => Promise<Response>, // Custom fetch implementation. Defaults to the global fetch function. You can use it as a middleware to intercept requests, or to provide a custom fetch implementation for e.g. testing.
-  headers: { // Custom headers to include in the requests.
+  apiKey: "<your-openai-api-key>", // 通过 Authorization 头部发送的 API 密钥。默认为 OPENAI_API_KEY 环境变量。
+  baseURL: "https://api.openai.com/v1", // 用于 API 调用的不同 URL 前缀，例如使用代理服务器。默认前缀是 https://api.openai.com/v1。
+  name: "", // 提供商名称。在使用 OpenAI 兼容提供商时，您可以设置此属性来更改模型提供商属性。默认为 openai。
+  organization: "", // OpenAI 组织。
+  project: "", // OpenAI 项目。
+  fetch:  (input: RequestInfo, init?: RequestInit) => Promise<Response>, // 自定义 fetch 实现。默认为全局 fetch 函数。您可以用它作为中间件来拦截请求，或为测试等提供自定义 fetch 实现。
+  headers: { // 要包含在请求中的自定义头部。
     'header-name': 'header-value',
   },
 });
@@ -134,10 +134,8 @@ const openai = createOpenAI({
 const mcpClientChat = await createMCPClientChat({
   llmConfig: {
     useSDK: true, // 启用 AI SDK
-    url: "https://api.openai.com/v1",
     model: openai("gpt-4o"), // 使用 AI SDK 模型
     systemPrompt: "You are a helpful assistant with access to tools.",
-    streamSwitch: true,
     temperature: 0.7,
     maxTokens: 1000,
   },
@@ -156,21 +154,20 @@ const mcpClientChat = await createMCPClientChat({
 
 ### 使用 [DeepSeek](https://ai-sdk.dev/providers/ai-sdk-providers/deepseek)
 
+```.env
+DEEPSEEK_API_KEY={your-deepseek-api-key}
+```
+
+
 ```typescript
 import { createMCPClientChat } from "@opentiny/tiny-agent-mcp-client-chat";
-import { createDeepSeek } from '@ai-sdk/deepseek';
-
-const deepseek = createDeepSeek({
-  apiKey: process.env.DEEPSEEK_API_KEY ?? '',
-});
+import { deepseek } from '@ai-sdk/deepseek';
 
 const mcpClientChat = await createMCPClientChat({
   llmConfig: {
     useSDK: true, // 启用 AI SDK
-    url: "https://api.deepseek.com",
-    model: deepseek("deepseek-chat"), // 使用 AI SDK 模型
+    model: deepseek("deepseek-chat"),
     systemPrompt: "You are a helpful assistant with access to tools.",
-    streamSwitch: true,
     temperature: 0.6,
     maxTokens: 1500,
   },

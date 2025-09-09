@@ -267,6 +267,16 @@ export abstract class McpClientChat {
         }
       }
 
+      await this.completeChatIteration();
+    } catch (error) {
+      console.error('Chat iteration failed:', error);
+      throw error;
+    }
+  }
+
+  protected async completeChatIteration(): Promise<void> {
+    try {
+      
       if (
         this.messages[this.messages.length - 1].role === Role.ASSISTANT &&
         this.messages[this.messages.length - 1].content?.length > 0
@@ -274,20 +284,20 @@ export abstract class McpClientChat {
         if (this.iterationSteps === -1) {
           await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
         }
-
+  
         this.writeMessageEnd();
         return;
       }
-
+  
       const summaryPrompt = this.options.llmConfig.summarySystemPrompt || 'Please provide a brief summary.';
-
+  
       this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
-
+  
       const result = await this.queryChatCompleteStreaming();
-
+  
       result.pipeTo(this.transformStream.writable);
     } catch (error) {
-      console.error('Chat iteration failed:', error);
+      console.error('Complete chat iteration failed:', error);
       throw error;
     }
   }
