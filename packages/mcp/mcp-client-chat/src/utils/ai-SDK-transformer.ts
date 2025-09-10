@@ -60,24 +60,33 @@ export function toOpenAIChunk(chunk: TextStreamPart<ToolSet>, model: LanguageMod
     choices: [choice],
   };
 
-  if (chunk.type === 'text-delta') {
-    choice.delta.content = chunk.text;
-    result.choices = [choice];
-  } else if (chunk.type === 'tool-call') {
-    choice.delta.tool_calls = [
-      {
-        id: chunk.toolCallId,
-        type: 'function',
-        function: {
-          name: chunk.toolName,
-          arguments: JSON.stringify(chunk.input),
+  switch (chunk.type) {
+    case 'tool-call':
+      choice.delta.tool_calls = [
+        {
+          id: chunk.toolCallId,
+          type: 'function',
+          function: {
+            name: chunk.toolName,
+            arguments: JSON.stringify(chunk.input),
+          },
         },
-      },
-    ];
-  } else if (chunk.type === 'text-end') {
-    choice.finish_reason = 'stop';
-    choice.native_finish_reason = 'stop';
-    result.choices = [choice];
+      ];
+      break;
+    case 'text-delta':
+      choice.delta.content = chunk.text;
+      break;
+    case 'finish':
+      choice.finish_reason = chunk.finishReason;
+      choice.native_finish_reason = chunk.finishReason;
+      result.usage = {
+        prompt_tokens: chunk.totalUsage.inputTokens || 0,
+        completion_tokens: chunk.totalUsage.outputTokens || 0,
+        total_tokens: chunk.totalUsage.totalTokens || 0,
+      };
+      break;
+    default:
+      break;
   }
 
   return result;
