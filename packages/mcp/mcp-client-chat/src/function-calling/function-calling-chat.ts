@@ -1,14 +1,16 @@
 import { McpClientChat } from '../mcp-client-chat.js';
 import type {
-  ChatCompleteRequest,
+  AvailableTool,
+  ChatBody,
   ChatCompleteResponse,
+  ChoiceMessage,
   MCPClientOptions,
   NonStreamingChoice,
-  Tool,
+  StreamingChoice,
   ToolCall,
-} from '../type.js';
-import { Role } from '../type.js';
-import { DEFAULT_SUMMARY_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT } from './systemPrompt.js';
+} from '../types/index.js';
+import { Role } from '../types/index.js';
+import { DEFAULT_SUMMARY_SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT } from './system-prompt.js';
 
 export class FunctionCallChat extends McpClientChat {
   constructor(options: MCPClientOptions) {
@@ -23,7 +25,25 @@ export class FunctionCallChat extends McpClientChat {
   protected async organizeToolCalls(
     response: ChatCompleteResponse,
   ): Promise<{ toolCalls: ToolCall[]; thought?: string; finalAnswer: string }> {
-    const message = (response.choices[0] as NonStreamingChoice).message;
+    let message: ChoiceMessage;
+
+    if (!response.choices || response.choices.length === 0) {
+      throw new Error('Invalid response: no choices available');
+    }
+
+    if (this.streamSwitch) {
+      const choice = response.choices[0];
+      if (!('delta' in choice)) {
+        throw new Error('Invalid streaming response: delta not found');
+      }
+      message = (choice as StreamingChoice).delta;
+    } else {
+      const choice = response.choices[0];
+      if (!('message' in choice)) {
+        throw new Error('Invalid non-streaming response: message not found');
+      }
+      message = (choice as NonStreamingChoice).message;
+    }
 
     const toolCalls = message.tool_calls || [];
     let finalAnswer = '';
@@ -32,11 +52,13 @@ export class FunctionCallChat extends McpClientChat {
       finalAnswer = message.content ?? '';
     }
 
-    return { toolCalls, finalAnswer };
+    const thought = message.reasoning ?? message.content ?? '';
+
+    return { toolCalls, finalAnswer, thought };
   }
 
-  protected async getChatBody(): Promise<ChatCompleteRequest> {
-    let tools: Tool[] = [];
+  protected async getChatBody(): Promise<ChatBody> {
+    let tools: AvailableTool[] = [];
 
     try {
       tools = await this.fetchToolsList();
@@ -53,7 +75,7 @@ export class FunctionCallChat extends McpClientChat {
       return msg;
     });
     const { apiKey, url, systemPrompt, summarySystemPrompt, model, ...llmConfig } = this.options.llmConfig;
-    const chatBody: ChatCompleteRequest = {
+    const chatBody: ChatBody = {
       model,
       messages: processedMessages,
       ...llmConfig,

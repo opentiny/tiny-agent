@@ -1,5 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import type { CallSettings } from 'ai';
+import type { LanguageModel } from './ai-SDK.js';
 
 export interface McpServer {
   url: string;
@@ -29,7 +31,7 @@ export enum AgentStrategy {
 export type ChatCompleteRequest = {
   messages: Message[];
   prompt?: string;
-  model?: string;
+  model?: LanguageModel;
   response_format?: { type: 'json_object' };
   stop?: string | string[];
   stream?: boolean; // Enable streaming
@@ -58,11 +60,14 @@ export type ChatCompleteRequest = {
 };
 
 export type LlmConfig = {
-  url: string; // AI interface address
-  apiKey: string;
   systemPrompt: string; // Instructions
   summarySystemPrompt?: string; // Summary instructions for each round of chat
-} & Omit<ChatCompleteRequest, 'messages'>;
+  streamSwitch?: boolean; // Whether to use streaming
+} & CallSettings &
+  (
+    | { useSDK: true; model: LanguageModel; apiKey?: string; url?: string }
+    | { useSDK?: false | undefined; url: string; apiKey: string; model: string }
+  );
 
 export interface MCPClientOptions {
   agentStrategy?: AgentStrategy;
@@ -90,7 +95,7 @@ export interface CallToolsParams {
 
 export interface ChatBody {
   stream?: boolean;
-  model: string;
+  model: LanguageModel;
   messages: Message[];
   tools?: AvailableTool[];
   temperature?: number;
@@ -133,6 +138,7 @@ export type NonChatChoice = {
 export type ChoiceMessage = {
   content: string | null;
   role: Role;
+  reasoning?: string | null;
   tool_calls?: ToolCall[];
 };
 
