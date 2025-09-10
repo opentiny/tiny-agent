@@ -1,12 +1,13 @@
 import { tool } from 'ai';
-import type { CoreMessage, CoreToolMessage, GenerateTextResult, StreamTextResult, TextStreamPart, ToolSet } from 'ai';
+import type { ModelMessage, GenerateTextResult, StreamTextResult, TextStreamPart, ToolSet } from 'ai';
 import { BaseAi } from '../base-ai.js';
 import { Role } from '../../type.js';
-import type { ChatBody, ChatCompleteResponse, LlmConfig, StreamingChoice } from '../../type.js';
+import type { ChatBody, ChatCompleteResponse, LlmConfig, StreamingChoice, Message } from '../../type.js';
 import { jsonSchemaToZod } from '../../utils/index.js';
 import { providers } from './providers/index.js';
 import type { GenerateTextOptions, Provider, ProviderInstance, StreamTextOptions } from './providers/index.js';
 import { logger } from '../../logger/index.js';
+import { transformMessagesToAiSdk } from './utils.js';
 
 export class AiSDK extends BaseAi {
   provider: ProviderInstance;
@@ -26,46 +27,8 @@ export class AiSDK extends BaseAi {
   }
 
   generateChatOptions(chatBody: ChatBody): GenerateTextOptions {
-    const messages: CoreMessage[] = chatBody.messages
-      .map((msg) => {
-        if (msg.role === 'user') {
-          return { role: 'user', content: msg.content };
-        }
-        if (msg.role === 'assistant') {
-          if (msg.tool_calls) {
-            return {
-              role: 'assistant',
-              content: msg.tool_calls.map((toolCall) => ({
-                type: 'tool-call',
-                toolCallId: toolCall.id,
-                toolName: toolCall.function.name,
-                args: JSON.parse(toolCall.function.arguments),
-              })),
-            };
-          }
-
-          return { role: 'assistant', content: msg.content };
-        }
-        if (msg.role === 'system') {
-          return { role: 'system', content: msg.content };
-        }
-        if (msg.role === 'tool') {
-          return {
-            role: 'tool',
-            content: [
-              {
-                type: 'tool-result',
-                toolCallId: msg.tool_call_id,
-                toolName: msg.name,
-                result: msg.content,
-              },
-            ],
-          } as CoreToolMessage;
-        }
-        return undefined;
-      })
-      .filter(Boolean) as CoreMessage[];
-
+    const openAiMessages: Message[] = chatBody.messages;
+    const messages: ModelMessage[] = transformMessagesToAiSdk(openAiMessages);
     const { model, provider, systemPrompt, summarySystemPrompt, url, useSDK, apiKey, ...rest } = this.llmConfig;
 
     if (provider === 'openai' && systemPrompt) {
@@ -80,7 +43,7 @@ export class AiSDK extends BaseAi {
           ...pre,
           [cur.function.name]: tool({
             description: cur.function.description,
-            parameters: jsonSchemaToZod(cur.function.parameters),
+            inputSchema: jsonSchemaToZod(cur.function.parameters),
           }),
         };
       }, {});
@@ -98,7 +61,7 @@ export class AiSDK extends BaseAi {
       const result: GenerateTextResult<ToolSet, unknown> = await this.provider.generateText(chatOptions);
       const response: ChatCompleteResponse = {
         id: '',
-        created: result.usage.completionTokens || 0,
+        created: Date.now(),
         object: 'chat.completion',
         model: this.llmConfig.model,
         choices: [
@@ -111,7 +74,7 @@ export class AiSDK extends BaseAi {
                 type: 'function',
                 function: {
                   name: toolCall.toolName,
-                  arguments: JSON.stringify(toolCall.args),
+                  arguments: JSON.stringify(toolCall.input),
                 },
               })),
             },
@@ -123,9 +86,9 @@ export class AiSDK extends BaseAi {
 
       if (result.usage) {
         response.usage = {
-          prompt_tokens: result.usage.promptTokens,
-          completion_tokens: result.usage.completionTokens,
-          total_tokens: result.usage.totalTokens,
+          prompt_tokens: result.usage.inputTokens || 0,
+          completion_tokens: result.usage.outputTokens || 0,
+          total_tokens: result.usage.totalTokens || 0,
         };
       }
 
@@ -180,40 +143,40 @@ export class AiSDK extends BaseAi {
       },
     };
     const result: ChatCompleteResponse = {
-      id: '',
+      id: 'id' in chunk ? chunk.id : '',
       created: 0,
       object: 'chat.completion.chunk',
       model: this.llmConfig.model,
       choices: [choice],
     };
 
-    if (chunk.type === 'step-start') {
-      return result;
-    }
-
-    if (chunk.type === 'text-delta') {
-      choice.delta.content = chunk.textDelta;
-      result.choices = [choice];
-    } else if (chunk.type === 'tool-call') {
-      choice.delta.tool_calls = [
-        {
-          id: chunk.toolCallId,
-          type: 'function',
-          function: {
-            name: chunk.toolName,
-            arguments: JSON.stringify(chunk.args),
+    switch (chunk.type) {
+      case 'tool-call':
+        choice.delta.tool_calls = [
+          {
+            id: chunk.toolCallId,
+            type: 'function',
+            function: {
+              name: chunk.toolName,
+              arguments: JSON.stringify(chunk.input),
+            },
           },
-        },
-      ];
-    } else if (chunk.type === 'step-finish' || chunk.type === 'finish') {
-      choice.finish_reason = 'stop';
-      choice.native_finish_reason = 'stop';
-      result.choices = [choice];
-    } else if (chunk.type === 'reasoning-signature') {
-      choice.delta.content = chunk.signature;
-      result.choices = [choice];
-      choice.finish_reason = 'stop';
-      choice.native_finish_reason = 'stop';
+        ];
+        break;
+      case 'text-delta':
+        choice.delta.content = chunk.text;
+        break;
+      case 'finish':
+        choice.finish_reason = chunk.finishReason;
+        choice.native_finish_reason = chunk.finishReason;
+        result.usage = {
+          prompt_tokens: chunk.totalUsage.inputTokens || 0,
+          completion_tokens: chunk.totalUsage.outputTokens || 0,
+          total_tokens: chunk.totalUsage.totalTokens || 0,
+        };
+        break;
+      default:
+        break;
     }
 
     return result;

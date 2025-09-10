@@ -226,6 +226,10 @@ export abstract class McpClientChat {
           return;
         }
 
+        if (!toolCall.function.arguments) {
+          toolCall.function.arguments = '';
+        }
+
         result.push(toolCall);
       });
     } catch (error) {
@@ -335,9 +339,6 @@ export abstract class McpClientChat {
 
               result.push(obj);
 
-              // if (obj.choices[0].delta.content) {
-              //   await this.writeMessageDelta(obj.choices[0].delta.content);
-              // }
             } catch (_error) {
               // 不是合法JSON可忽略或记录
               logger.error('invalid streamable response:', data);
@@ -455,19 +456,8 @@ export abstract class McpClientChat {
         logger.info('🛑 Skipping summary due to abort');
         return;
       }
-      // if (
-      //   this.messages[this.messages.length - 1].role === Role.ASSISTANT &&
-      //   this.messages[this.messages.length - 1].content?.length > 0
-      // ) {
-      //   if (this.iterationSteps === -1) {
-      //     await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
-      //   }
 
-      //   this.writeMessageEnd();
-      //   return;
-      // }
-
-      this.chatSummary();
+      this.completeChatIteration();
     } catch (error) {
       logger.error('Chat iteration failed:', error);
       throw error;
@@ -476,8 +466,20 @@ export abstract class McpClientChat {
     }
   }
 
-  protected async chatSummary(): Promise<void> {
+  protected async completeChatIteration(): Promise<void> {
     try {
+      if (
+        this.messages[this.messages.length - 1].role === Role.ASSISTANT &&
+        this.messages[this.messages.length - 1].content?.length > 0
+      ) {
+        if (this.iterationSteps === -1) {
+          await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
+        }
+
+        this.writeMessageEnd();
+        return;
+      }
+
       const summaryPrompt = this.options.llmConfig.summarySystemPrompt || 'Please provide a brief summary.';
 
       this.organizePromptMessages({ role: Role.USER, content: summaryPrompt });
@@ -527,7 +529,7 @@ export abstract class McpClientChat {
           toolArgs =
             typeof toolCall.function.arguments === 'string'
               ? JSON.parse(toolCall.function.arguments)
-              : toolCall.function.arguments;
+              : toolCall.function.arguments || {};
         } catch (error) {
           logger.error(`Failed to parse tool arguments for ${toolName}:`, error);
           toolArgs = {};
