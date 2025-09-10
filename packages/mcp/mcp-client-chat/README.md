@@ -118,7 +118,7 @@ main();
 ```typescript
 import { createMCPClientChat } from "@opentiny/tiny-agent-mcp-client-chat";
 import { createOpenAI } from '@ai-sdk/openai';
-
+// 创建 openai provider
 const openai = createOpenAI({
   apiKey: "<your-openai-api-key>", // 通过 Authorization 头部发送的 API 密钥。默认为 OPENAI_API_KEY 环境变量。
   baseURL: "https://api.openai.com/v1", // 用于 API 调用的不同 URL 前缀，例如使用代理服务器。默认前缀是 https://api.openai.com/v1。
