@@ -68,6 +68,7 @@ export class FunctionCallChat extends McpClientChat {
     // 避免传递空数组，因为某些API（如DeepSeek）不接受空的tools数组
     if (this.iterationSteps > 0 && tools.length > 0) {
       chatBody.tools = tools;
+      chatBody.tool_choice = 'auto';
     }
 
     return chatBody;

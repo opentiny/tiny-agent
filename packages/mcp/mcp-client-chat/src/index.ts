@@ -4,3 +4,4 @@ export * from './react/index.js';
 export * from './functionCalling/index.js';
 export * from './ai/index.js';
 export * from './utils/index.js';
+export * from './mcp-client-chat.js';

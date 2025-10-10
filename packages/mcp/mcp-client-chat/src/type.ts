@@ -68,6 +68,7 @@ export interface ChatBody {
   model: string;
   messages: Message[];
   tools?: AvailableTool[];
+  tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
   temperature?: number;
 }
 

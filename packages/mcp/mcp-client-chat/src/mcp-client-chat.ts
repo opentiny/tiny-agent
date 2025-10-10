@@ -21,6 +21,12 @@ import type {
 } from './type.js';
 import { type BaseAi, getAiInstance } from './ai/index.js';
 
+export enum ChatIterationSteps {
+  NORMAL = 0, // 正常结束
+  ERROR = -1, // 因大模型返回误而结束
+  FINISH = -2, // 工具调用完成且大模型已返回结论时结束
+}
+
 export function isCustomTransportMcpServer(
   serverConfig: McpServer | CustomTransportMcpServer,
 ): serverConfig is CustomTransportMcpServer {
@@ -338,7 +344,6 @@ export abstract class McpClientChat {
               const obj = JSON.parse(data);
 
               result.push(obj);
-
             } catch (_error) {
               // 不是合法JSON可忽略或记录
               logger.error('invalid streamable response:', data);
@@ -392,7 +397,7 @@ export abstract class McpClientChat {
             role: Role.ASSISTANT,
             content: response.message,
           });
-          this.iterationSteps = -1; // 手动结束为-1
+          this.iterationSteps = ChatIterationSteps.ERROR;
           logger.error(`queryChatComplete failed: ${response}`);
 
           continue;
@@ -403,7 +408,7 @@ export abstract class McpClientChat {
             role: Role.ASSISTANT,
             content: response.choices[0].error.message,
           });
-          this.iterationSteps = -1;
+          this.iterationSteps = ChatIterationSteps.ERROR;
           logger.error(`queryChatComplete failed: ${response.choices[0].error.message}`);
 
           continue;
@@ -448,7 +453,7 @@ export abstract class McpClientChat {
             role: Role.ASSISTANT,
             content: finalAnswer,
           });
-          this.iterationSteps = 0;
+          this.iterationSteps = ChatIterationSteps.FINISH;
         }
       }
 
@@ -470,12 +475,10 @@ export abstract class McpClientChat {
     try {
       if (
         this.messages[this.messages.length - 1].role === Role.ASSISTANT &&
-        this.messages[this.messages.length - 1].content?.length > 0
+        this.messages[this.messages.length - 1].content?.length > 0 &&
+        [ChatIterationSteps.FINISH, ChatIterationSteps.ERROR].includes(this.iterationSteps)
       ) {
-        if (this.iterationSteps === -1) {
-          await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
-        }
-
+        await this.writeMessageDelta(this.messages[this.messages.length - 1].content as string, 'assistant');
         this.writeMessageEnd();
         return;
       }
@@ -640,7 +643,8 @@ export abstract class McpClientChat {
     } catch (error) {
       logger.error('Error calling chat/complete:', error);
 
-      throw new Error(`Streaming chat API call failed: ${String(error)}`);
+      // 生成错误流而不是抛出异常，保持连接
+      return this.generateErrorStream(`Streaming chat API call failed: ${String(error)}`);
     }
   }
 
@@ -665,9 +669,14 @@ export abstract class McpClientChat {
 
     return new ReadableStream({
       start(controller) {
-        controller.enqueue(data);
-        controller.enqueue('data: [DONE]\n');
-        controller.close();
+        try {
+          controller.enqueue(new TextEncoder().encode(data));
+          controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+          controller.close();
+        } catch (error) {
+          logger.error('Error in generateErrorStream:', error);
+          controller.error(error);
+        }
       },
     });
   }
