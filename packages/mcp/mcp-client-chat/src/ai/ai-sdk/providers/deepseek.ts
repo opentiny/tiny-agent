@@ -1,6 +1,6 @@
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import type { DeepSeekProvider } from '@ai-sdk/deepseek';
-import type { LanguageModelV1 } from 'ai';
+import type { LanguageModel } from 'ai';
 import type { LlmConfig } from '../../../type.js';
 import { BaseProvider } from './base-provider.js';
 
@@ -16,7 +16,7 @@ export class DeepSeek extends BaseProvider {
     });
   }
 
-  getModel(): LanguageModelV1 {
+  getModel(): LanguageModel {
     return (this.provider as DeepSeekProvider)(this.llmConfig.model);
   }
 }

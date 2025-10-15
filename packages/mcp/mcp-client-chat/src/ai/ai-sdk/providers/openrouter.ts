@@ -1,5 +1,5 @@
 import { type OpenRouterProvider, createOpenRouter } from '@openrouter/ai-sdk-provider';
-import type { LanguageModelV1 } from 'ai';
+import type { LanguageModel } from 'ai';
 import type { LlmConfig } from '../../../type.js';
 import { BaseProvider } from './base-provider.js';
 
@@ -15,7 +15,7 @@ export class OpenRouter extends BaseProvider {
     });
   }
 
-  getModel(): LanguageModelV1 {
-    return (this.provider as OpenRouterProvider).chat(this.llmConfig.model);
+  getModel(): LanguageModel {
+    return (this.provider as OpenRouterProvider).chat(this.llmConfig.model) as unknown as LanguageModel;
   }
 }

@@ -1,4 +1,4 @@
-import type { GenerateTextResult, LanguageModelV1, StreamTextResult, ToolSet } from 'ai';
+import type { GenerateTextResult, LanguageModel, StreamTextResult, ToolSet } from 'ai';
 import { generateText, streamText } from 'ai';
 import type { LlmConfig } from '../../../type.js';
 import type { GenerateTextOptions, ProviderTypeMap, StreamTextOptions } from './types.js';
@@ -15,7 +15,7 @@ export abstract class BaseProvider {
 
   abstract getProvider(): ProviderTypeMap[keyof ProviderTypeMap];
 
-  abstract getModel(): LanguageModelV1;
+  abstract getModel(): LanguageModel;
 
   generateText(options: GenerateTextOptions): Promise<GenerateTextResult<ToolSet, unknown>> {
     try {
